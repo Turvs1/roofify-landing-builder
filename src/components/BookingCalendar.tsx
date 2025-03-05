@@ -1,7 +1,7 @@
-
 import React, { useState } from 'react';
 import { toast } from 'sonner';
 import AnimatedSection from './AnimatedSection';
+import { sendToGoogleSheets } from '../utils/googleSheetsApi';
 
 // Mock calendar data
 const generateCalendarDays = () => {
@@ -62,7 +62,7 @@ const BookingCalendar = () => {
     setSelectedTime(time);
   };
   
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedDate || !selectedTime || !name || !phone) {
       toast.error("Please fill in all fields");
@@ -71,15 +71,34 @@ const BookingCalendar = () => {
     
     setIsSubmitting(true);
     
-    // Simulate form submission
-    setTimeout(() => {
-      toast.success(`Appointment booked for ${selectedDate.toLocaleDateString()} at ${selectedTime}`);
-      setSelectedDate(null);
-      setSelectedTime(null);
-      setName('');
-      setPhone('');
+    try {
+      // Format date for better readability in the spreadsheet
+      const formattedDate = selectedDate.toLocaleDateString();
+      
+      // Send data to Google Sheets
+      const success = await sendToGoogleSheets({
+        name,
+        phone,
+        date: formattedDate,
+        time: selectedTime
+      });
+      
+      if (success) {
+        toast.success(`Appointment booked for ${formattedDate} at ${selectedTime}`);
+        // Reset form
+        setSelectedDate(null);
+        setSelectedTime(null);
+        setName('');
+        setPhone('');
+      } else {
+        toast.error("Failed to save booking. Please try again or contact us directly.");
+      }
+    } catch (error) {
+      console.error("Error in form submission:", error);
+      toast.error("Something went wrong. Please try again later.");
+    } finally {
       setIsSubmitting(false);
-    }, 1500);
+    }
   };
 
   return (
