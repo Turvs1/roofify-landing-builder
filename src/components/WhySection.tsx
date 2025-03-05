@@ -1,11 +1,15 @@
+
 import React from 'react';
 import AnimatedSection from './AnimatedSection';
+
 const WhySection = () => {
-  return <section id="why" className="py-12 relative overflow-hidden">
+  return (
+    <section id="why" className="py-12 relative overflow-hidden">
       <div className="absolute inset-0 bg-gradient-to-b from-white to-gray-50 z-0"></div>
-      <div style={{
-      backgroundImage: "url('https://images.unsplash.com/photo-1500673922987-e212871fec22?auto=format&fit=crop&w=1600&q=80')"
-    }} className="absolute inset-0 opacity-10 bg-cover bg-center z-0 py-0"></div>
+      <div 
+        className="absolute inset-0 opacity-10 bg-cover bg-center z-0" 
+        style={{ backgroundImage: "url('https://images.unsplash.com/photo-1500673922987-e212871fec22?auto=format&fit=crop&w=1600&q=80')" }}
+      ></div>
       
       <div className="section-container relative z-10">
         <AnimatedSection>
@@ -52,6 +56,8 @@ const WhySection = () => {
           </div>
         </AnimatedSection>
       </div>
-    </section>;
+    </section>
+  );
 };
+
 export default WhySection;
