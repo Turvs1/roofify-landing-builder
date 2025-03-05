@@ -33,7 +33,7 @@ const Header = () => {
       <nav className={`fixed top-0 w-full z-50 transition-all duration-300 ${
         scrolled 
           ? 'bg-white bg-opacity-90 backdrop-blur-md shadow-md py-4' 
-          : 'bg-transparent py-6'
+          : 'bg-transparent py-8'
       }`}>
         <div className="max-w-7xl mx-auto px-6 flex justify-between items-center">
           <div className="relative w-40 h-14">
