@@ -4,7 +4,7 @@
  */
 
 // The URL with the provided Google Apps Script ID
-const SHEETS_API_URL = "https://script.google.com/macros/s/1VwwqBbN5RmljZzEetNg2icb0qNTHr12RB4qFHwv7oEJ2571dSssXR37U/exec";
+const SHEETS_API_URL = "https://script.google.com/macros/s/AKfycbyYPBAvBCS7CMBe_pP0zp6wRMnQ7iV6ANFes1AE60crAgAVPsW_gaUyBHaS_vuxiTwytA/exec";
 
 interface BookingData {
   name: string;
