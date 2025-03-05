@@ -3,9 +3,8 @@
  * Utility for sending data to Google Sheets
  */
 
-// The URL needs to be your Google Apps Script web app URL
-// This is created by deploying a Google Apps Script to handle the form submission
-const SHEETS_API_URL = "https://script.google.com/macros/s/YOUR_SCRIPT_ID_HERE/exec";
+// The URL with the provided Google Apps Script ID
+const SHEETS_API_URL = "https://script.google.com/macros/s/1VwwqBbN5RmljZzEetNg2icb0qNTHr12RB4qFHwv7oEJ2571dSssXR37U/exec";
 
 interface BookingData {
   name: string;
