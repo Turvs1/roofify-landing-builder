@@ -36,14 +36,14 @@ const Header = () => {
           : 'bg-transparent py-6'
       }`}>
         <div className="max-w-7xl mx-auto px-6 flex justify-between items-center">
-          <div className="relative w-32 h-12">
-            {/* ARW Logo placeholder */}
+          <div className="relative w-40 h-14">
+            {/* ARW Logo */}
             <div className="absolute inset-0 flex items-center">
-              <h1 className={`font-bold text-2xl transition-colors duration-300 ${
-                scrolled ? 'text-arw-navy' : 'text-white'
-              }`}>
-                ARW
-              </h1>
+              <img 
+                src="/lovable-uploads/a8bff364-8251-4d33-98a6-e031c892c79d.png" 
+                alt="ARW Construction" 
+                className="h-full object-contain"
+              />
             </div>
           </div>
           <div className="hidden md:flex space-x-8">
@@ -86,7 +86,7 @@ const Header = () => {
         </div>
       </nav>
 
-      {/* Hero Section - Added mb-20 to create more space between menu and content */}
+      {/* Hero Section */}
       <div className="hero-parallax mt-16">
         <div 
           className="parallax-bg" 
