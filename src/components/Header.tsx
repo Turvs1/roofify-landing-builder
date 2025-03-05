@@ -36,7 +36,7 @@ const Header = () => {
           : 'bg-transparent py-8'
       }`}>
         <div className="max-w-7xl mx-auto px-6 flex justify-between items-center">
-          <div className="relative w-40 h-14">
+          <div className="relative w-40 h-14 z-10">
             {/* ARW Logo */}
             <div className="absolute inset-0 flex items-center">
               <img 
@@ -46,7 +46,7 @@ const Header = () => {
               />
             </div>
           </div>
-          <div className="hidden md:flex space-x-8">
+          <div className="hidden md:flex space-x-8 z-10">
             <button 
               onClick={() => scrollToSection('why')} 
               className={`font-medium tracking-wide transition-colors duration-300 ${
@@ -73,12 +73,12 @@ const Header = () => {
             </button>
             <button 
               onClick={() => scrollToSection('enquiry')} 
-              className={`button-primary py-2 px-4 text-sm`}
+              className={`button-primary py-2 px-4 text-sm z-10`}
             >
               BOOK IN YOUR INSPECTION
             </button>
           </div>
-          <button className="md:hidden text-arw-navy">
+          <button className="md:hidden text-arw-navy z-10">
             <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
             </svg>
