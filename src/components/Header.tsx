@@ -30,11 +30,11 @@ const Header = () => {
   return (
     <header className="relative w-full h-screen">
       {/* Navigation */}
-      <nav className={fixed top-0 w-full z-50 transition-all duration-300 ${
+      <nav className={`fixed top-0 w-full z-50 transition-all duration-300 ${
         scrolled 
           ? 'bg-white bg-opacity-90 backdrop-blur-md shadow-md py-4' 
           : 'bg-transparent py-8'
-      }}>
+      }`}>
         <div className="max-w-7xl mx-auto px-6 flex justify-between items-center">
           <div className="relative w-40 h-14 z-10">
             {/* ARW Logo */}
@@ -49,31 +49,31 @@ const Header = () => {
           <div className="hidden md:flex space-x-8 z-10">
             <button 
               onClick={() => scrollToSection('why')} 
-              className={font-medium tracking-wide transition-colors duration-300 ${
+              className={`font-medium tracking-wide transition-colors duration-300 ${
                 scrolled ? 'text-arw-navy hover:text-arw-blue' : 'text-white hover:text-arw-blue'
-              }}
+              }`}
             >
               Why
             </button>
             <button 
               onClick={() => scrollToSection('how')} 
-              className={font-medium tracking-wide transition-colors duration-300 ${
+              className={`font-medium tracking-wide transition-colors duration-300 ${
                 scrolled ? 'text-arw-navy hover:text-arw-blue' : 'text-white hover:text-arw-blue'
-              }}
+              }`}
             >
               How
             </button>
             <button 
               onClick={() => scrollToSection('what')} 
-              className={font-medium tracking-wide transition-colors duration-300 ${
+              className={`font-medium tracking-wide transition-colors duration-300 ${
                 scrolled ? 'text-arw-navy hover:text-arw-blue' : 'text-white hover:text-arw-blue'
-              }}
+              }`}
             >
               What
             </button>
             <button 
               onClick={() => scrollToSection('enquiry')} 
-              className={button-primary py-2 px-4 text-sm z-10}
+              className="button-primary py-2 px-4 text-sm z-10"
             >
               BOOK IN YOUR INSPECTION
             </button>
