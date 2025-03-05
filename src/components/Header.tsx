@@ -75,7 +75,7 @@ const Header = () => {
               onClick={() => scrollToSection('enquiry')} 
               className={`button-primary py-2 px-4 text-sm`}
             >
-              GET YOUR SOLUTION NOW
+              BOOK IN YOUR INSPECTION
             </button>
           </div>
           <button className="md:hidden text-arw-navy">
@@ -86,8 +86,8 @@ const Header = () => {
         </div>
       </nav>
 
-      {/* Hero Section */}
-      <div className="hero-parallax">
+      {/* Hero Section - Added mb-20 to create more space between menu and content */}
+      <div className="hero-parallax mt-16">
         <div 
           className="parallax-bg" 
           style={{ 
@@ -106,7 +106,7 @@ const Header = () => {
             className="button-primary mt-8 animate-fade-in"
             style={{ animationDelay: '400ms' }}
           >
-            GET YOUR SOLUTION NOW
+            BOOK IN YOUR INSPECTION
           </button>
         </div>
       </div>

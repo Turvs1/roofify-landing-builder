@@ -4,7 +4,7 @@ import AnimatedSection from './AnimatedSection';
 
 const WhySection = () => {
   return (
-    <section id="why" className="py-20 relative overflow-hidden">
+    <section id="why" className="py-12 relative overflow-hidden">
       <div className="absolute inset-0 bg-gradient-to-b from-white to-gray-50 z-0"></div>
       <div 
         className="absolute inset-0 opacity-10 bg-cover bg-center z-0" 

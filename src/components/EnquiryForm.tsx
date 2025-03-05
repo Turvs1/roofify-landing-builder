@@ -38,12 +38,12 @@ const EnquiryForm = () => {
   };
 
   return (
-    <section id="enquiry" className="py-20 bg-gray-50 relative overflow-hidden">
+    <section id="enquiry" className="py-12 bg-gray-50 relative overflow-hidden">
       <div className="absolute inset-0 bg-gradient-to-b from-white to-gray-100 z-0"></div>
       
       <div className="section-container relative z-10">
         <AnimatedSection>
-          <h2 className="section-heading text-center">YOUR ROOF, YOUR SOLUTION</h2>
+          <h2 className="section-heading text-center">YOUR ROOF YOUR SOLUTION</h2>
         </AnimatedSection>
         
         <AnimatedSection delay={200}>

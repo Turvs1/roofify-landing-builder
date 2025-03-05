@@ -58,7 +58,7 @@ const HowSection = () => {
   ];
 
   return (
-    <section id="how" className="py-20 bg-gray-50 relative overflow-hidden">
+    <section id="how" className="py-12 bg-gray-50 relative overflow-hidden">
       <div className="absolute inset-0 bg-gradient-to-r from-white via-gray-50 to-white opacity-70 z-0"></div>
       
       <div className="section-container relative z-10">

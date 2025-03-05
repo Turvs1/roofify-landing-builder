@@ -62,7 +62,7 @@ const Index = () => {
             href="#booking" 
             className="text-xs md:text-sm bg-arw-blue hover:bg-opacity-90 text-white px-3 py-1 rounded"
           >
-            Book Now
+            Book In Your Inspection
           </a>
           <button 
             className="ml-4 text-gray-300 hover:text-white"

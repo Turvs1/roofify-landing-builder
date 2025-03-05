@@ -38,7 +38,7 @@ const WhatSection = () => {
   ];
 
   return (
-    <section id="what" className="py-20 bg-white relative overflow-hidden">
+    <section id="what" className="py-12 bg-white relative overflow-hidden">
       <div 
         className="absolute inset-0 opacity-5 bg-cover bg-center z-0" 
         style={{ backgroundImage: "url('https://images.unsplash.com/photo-1497604401993-f2e922e5cb0a?auto=format&fit=crop&w=1600&q=80')" }}
