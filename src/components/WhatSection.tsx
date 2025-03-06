@@ -1,3 +1,4 @@
+
 import React from 'react';
 import AnimatedSection from './AnimatedSection';
 
@@ -7,13 +8,13 @@ const WhatSection = () => {
     {
       title: "Insurance Repairs",
       description: "Fast, reliable recovery.",
-      image: "/lovable-uploads/3ee46c44-f951-4697-8c7f-201d5b6d0708.png", // Updated image for Insurance Repairs
+      image: "/lovable-uploads/3ee46c44-f951-4697-8c7f-201d5b6d0708.png", // Image for Insurance Repairs
       delay: 100
     },
     {
       title: "Heritage Restoration",
       description: "Preserving history with care.",
-      image: "https://images.unsplash.com/photo-1466442929976-97f336a657be?auto=format&fit=crop&w=600&q=80",
+      image: "/lovable-uploads/f0a7bbfd-220d-4009-9574-ef3579097d62.png", // Updated image for Heritage Restoration
       delay: 200
     },
     {
