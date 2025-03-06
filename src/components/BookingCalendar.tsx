@@ -20,6 +20,7 @@ interface Booking {
   time: string;
   name: string;
   phone: string;
+  email: string;
 }
 
 const BookingCalendar = () => {
@@ -29,6 +30,7 @@ const BookingCalendar = () => {
   const [selectedTime, setSelectedTime] = useState<string | null>(null);
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
+  const [email, setEmail] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [bookings, setBookings] = useState<Booking[]>([]);
@@ -158,7 +160,7 @@ const BookingCalendar = () => {
   
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!date || !selectedTime || !name || !phone) {
+    if (!date || !selectedTime || !name || !phone || !email) {
       toast.error("Please fill in all fields");
       return;
     }
@@ -189,6 +191,7 @@ const BookingCalendar = () => {
       const success = await saveBookingToSupabase({
         name,
         phone,
+        email,
         date: formattedDate,
         time: selectedTime
       });
@@ -200,6 +203,7 @@ const BookingCalendar = () => {
         setSelectedTime(null);
         setName('');
         setPhone('');
+        setEmail('');
         // Refresh available time slots
         const updatedBookings = await getBookingsFromSupabase();
         setBookings(updatedBookings);
@@ -328,7 +332,7 @@ const BookingCalendar = () => {
                     <h3 className="text-xl font-bold text-arw-navy mb-2">Your Details</h3>
                     
                     <div>
-                      <label htmlFor="booking-name" className="block text-sm font-medium text-arw-navy mb-1">Name</label>
+                      <label htmlFor="booking-name" className="block text-sm font-medium text-arw-navy mb-1">Name <span className="text-red-500">*</span></label>
                       <input
                         type="text"
                         id="booking-name"
@@ -340,7 +344,19 @@ const BookingCalendar = () => {
                     </div>
                     
                     <div>
-                      <label htmlFor="booking-phone" className="block text-sm font-medium text-arw-navy mb-1">Phone</label>
+                      <label htmlFor="booking-email" className="block text-sm font-medium text-arw-navy mb-1">Email <span className="text-red-500">*</span></label>
+                      <input
+                        type="email"
+                        id="booking-email"
+                        value={email}
+                        onChange={e => setEmail(e.target.value)}
+                        required
+                        className="form-input"
+                      />
+                    </div>
+                    
+                    <div>
+                      <label htmlFor="booking-phone" className="block text-sm font-medium text-arw-navy mb-1">Phone <span className="text-red-500">*</span></label>
                       <input
                         type="tel"
                         id="booking-phone"
