@@ -51,7 +51,7 @@ const Footer = () => {
             <address className="not-italic text-gray-300 space-y-2">
               <p>Queensland, Australia</p>
               <p>Email: info@arwc.com.au</p>
-              <p>Phone: 0423736921/p>
+              <p>Phone: 0423736921</p>
             </address>
           </div>
         </div>
