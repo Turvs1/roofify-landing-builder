@@ -87,7 +87,7 @@ const Header = () => {
           
           {/* Completed Roof Image (Fades in as user scrolls) */}
           <img 
-            src="/lovable-uploads/cba15185-88a7-4963-951d-cfe66b0c72c3.png" 
+            src="/lovable-uploads/d89d330e-42bb-4ce6-9501-7dc621d40ab6.png" 
             alt="Completed roof aerial view" 
             className="absolute w-full h-full object-cover transition-opacity duration-700 ease-in-out"
             style={{ opacity: transitionProgress }}
