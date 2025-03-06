@@ -1,6 +1,10 @@
 
 import React, { useState, useEffect } from 'react';
 import { toast } from 'sonner';
+import { format, addMonths, subMonths, startOfMonth, addDays, isSameDay } from 'date-fns';
+import { Calendar } from '@/components/ui/calendar';
+import { Button } from '@/components/ui/button';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 import AnimatedSection from './AnimatedSection';
 import { saveBookingToSupabase, getBookingsFromSupabase } from '../utils/supabaseApi';
 import { supabase } from '@/integrations/supabase/client';
@@ -11,60 +15,37 @@ interface TimeSlot {
   available: boolean;
 }
 
-interface CalendarDay {
-  date: Date;
-  day: number;
-  month: string;
-  weekday: string;
-  slots: TimeSlot[];
-  isCycloneDay: boolean;
+interface Booking {
+  date: string;
+  time: string;
+  name: string;
+  phone: string;
 }
 
 const BookingCalendar = () => {
-  const [calendarDays, setCalendarDays] = useState<CalendarDay[]>([]);
-  const [selectedDate, setSelectedDate] = useState<Date | null>(null);
+  const [date, setDate] = useState<Date>(new Date());
+  const [month, setMonth] = useState<Date>(new Date());
+  const [availableTimeSlots, setAvailableTimeSlots] = useState<TimeSlot[]>([]);
   const [selectedTime, setSelectedTime] = useState<string | null>(null);
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [bookings, setBookings] = useState<Booking[]>([]);
   
-  // Generate calendar days with available time slots
-  const generateCalendarDays = async (existingBookings: any[]) => {
-    const days: CalendarDay[] = [];
-    const currentDate = new Date(2025, 2, 1); // March 1, 2025
-    
-    // Generate 14 days from March 1
-    for (let i = 0; i < 14; i++) {
-      const date = new Date(currentDate);
-      date.setDate(date.getDate() + i);
-      
-      // March 7 is Cyclone Alfred day
-      const isCycloneDay = date.getDate() === 7 && date.getMonth() === 2;
-      
-      // Format date string to match the format stored in Supabase (e.g., "3/1/2025")
-      const formattedDate = `${date.getMonth() + 1}/${date.getDate()}/${date.getFullYear()}`;
-      
-      // Generate time slots and mark booked ones as unavailable
-      const slots = isCycloneDay ? [] : generateTimeSlots(date, formattedDate, existingBookings);
-      
-      days.push({
-        date,
-        day: date.getDate(),
-        month: date.toLocaleString('default', { month: 'short' }),
-        weekday: date.toLocaleString('default', { weekday: 'short' }),
-        slots,
-        isCycloneDay
-      });
-    }
-    
-    return days;
+  // Function to check if a date is March 7, 2025 (Cyclone Alfred day)
+  const isCycloneDay = (date: Date) => {
+    return date.getDate() === 7 && date.getMonth() === 2 && date.getFullYear() === 2025;
   };
-
-  const generateTimeSlots = (date: Date, formattedDate: string, existingBookings: any[]): TimeSlot[] => {
+  
+  // Generate time slots for the selected date
+  const generateTimeSlots = (selectedDate: Date, existingBookings: Booking[]): TimeSlot[] => {
     // Generate 8 time slots from 8:00 AM to 4:00 PM
     const slots: TimeSlot[] = [];
     const startHour = 8;
+    
+    // Format date string to match the format stored in Supabase (e.g., "3/1/2025")
+    const formattedDate = `${selectedDate.getMonth() + 1}/${selectedDate.getDate()}/${selectedDate.getFullYear()}`;
     
     for (let i = 0; i < 8; i++) {
       const hour = startHour + i;
@@ -84,16 +65,30 @@ const BookingCalendar = () => {
     return slots;
   };
   
+  // Navigate to previous month
+  const previousMonth = () => {
+    setMonth(subMonths(month, 1));
+  };
+  
+  // Navigate to next month
+  const nextMonth = () => {
+    setMonth(addMonths(month, 1));
+  };
+  
   // Fetch bookings from Supabase and set up calendar
   useEffect(() => {
     const fetchBookings = async () => {
       setIsLoading(true);
       try {
-        const bookings = await getBookingsFromSupabase();
-        console.log('Fetched bookings:', bookings);
+        const fetchedBookings = await getBookingsFromSupabase();
+        console.log('Fetched bookings:', fetchedBookings);
+        setBookings(fetchedBookings);
         
-        const days = await generateCalendarDays(bookings);
-        setCalendarDays(days);
+        // If a date is selected, generate time slots for it
+        if (date) {
+          const slots = isCycloneDay(date) ? [] : generateTimeSlots(date, fetchedBookings);
+          setAvailableTimeSlots(slots);
+        }
       } catch (error) {
         console.error('Error fetching bookings:', error);
         toast.error('Failed to load calendar data');
@@ -111,15 +106,20 @@ const BookingCalendar = () => {
         { event: 'INSERT', schema: 'public', table: 'bookings' }, 
         async (payload) => {
           console.log('New booking received:', payload);
-          // Refresh calendar when new booking is made
-          const bookings = await getBookingsFromSupabase();
-          const days = await generateCalendarDays(bookings);
-          setCalendarDays(days);
+          // Refresh bookings when new booking is made
+          const fetchedBookings = await getBookingsFromSupabase();
+          setBookings(fetchedBookings);
+          
+          // Update available time slots for selected date
+          if (date) {
+            const slots = isCycloneDay(date) ? [] : generateTimeSlots(date, fetchedBookings);
+            setAvailableTimeSlots(slots);
+          }
           
           // Clear selection if the selected slot was just booked
-          if (selectedDate && selectedTime) {
-            const formattedSelectedDate = `${selectedDate.getMonth() + 1}/${selectedDate.getDate()}/${selectedDate.getFullYear()}`;
-            const isSelectedSlotBooked = bookings.some(booking => 
+          if (date && selectedTime) {
+            const formattedSelectedDate = `${date.getMonth() + 1}/${date.getDate()}/${date.getFullYear()}`;
+            const isSelectedSlotBooked = fetchedBookings.some(booking => 
               booking.date === formattedSelectedDate && booking.time === selectedTime
             );
             
@@ -134,11 +134,22 @@ const BookingCalendar = () => {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [selectedDate, selectedTime]);
+  }, [date, selectedTime]);
   
-  const handleDateSelect = (date: Date) => {
-    setSelectedDate(date);
+  // Handle date selection from calendar
+  const handleDateSelect = (selectedDate: Date | undefined) => {
+    if (!selectedDate) return;
+    
+    setDate(selectedDate);
     setSelectedTime(null);
+    
+    if (isCycloneDay(selectedDate)) {
+      setAvailableTimeSlots([]);
+      toast.info('March 7, 2025 is Cyclone Alfred day. No appointments available.');
+    } else {
+      const slots = generateTimeSlots(selectedDate, bookings);
+      setAvailableTimeSlots(slots);
+    }
   };
   
   const handleTimeSelect = (time: string) => {
@@ -147,7 +158,7 @@ const BookingCalendar = () => {
   
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!selectedDate || !selectedTime || !name || !phone) {
+    if (!date || !selectedTime || !name || !phone) {
       toast.error("Please fill in all fields");
       return;
     }
@@ -156,20 +167,20 @@ const BookingCalendar = () => {
     
     try {
       // Format date for better readability
-      const formattedDate = `${selectedDate.getMonth() + 1}/${selectedDate.getDate()}/${selectedDate.getFullYear()}`;
+      const formattedDate = `${date.getMonth() + 1}/${date.getDate()}/${date.getFullYear()}`;
       
       // Check once more if the slot is still available (in case someone else booked it)
-      const bookings = await getBookingsFromSupabase();
-      const isSlotTaken = bookings.some(booking => 
+      const currentBookings = await getBookingsFromSupabase();
+      const isSlotTaken = currentBookings.some(booking => 
         booking.date === formattedDate && booking.time === selectedTime
       );
       
       if (isSlotTaken) {
         toast.error("This slot was just booked by someone else. Please select another time.");
         
-        // Refresh calendar
-        const days = await generateCalendarDays(bookings);
-        setCalendarDays(days);
+        // Refresh available time slots
+        const slots = isCycloneDay(date) ? [] : generateTimeSlots(date, currentBookings);
+        setAvailableTimeSlots(slots);
         setSelectedTime(null);
         return;
       }
@@ -185,10 +196,13 @@ const BookingCalendar = () => {
       if (success) {
         toast.success(`Appointment booked for ${formattedDate} at ${selectedTime}`);
         // Reset form
-        setSelectedDate(null);
+        setDate(new Date());
         setSelectedTime(null);
         setName('');
         setPhone('');
+        // Refresh available time slots
+        const updatedBookings = await getBookingsFromSupabase();
+        setBookings(updatedBookings);
       } else {
         toast.error("Failed to save booking. Please try again.");
       }
@@ -226,66 +240,90 @@ const BookingCalendar = () => {
               <>
                 <div className="mb-8">
                   <h3 className="text-xl font-bold text-arw-navy mb-4">Select Date</h3>
-                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-7 gap-3">
-                    {calendarDays.map((day, index) => (
-                      <button
-                        key={index}
-                        onClick={() => !day.isCycloneDay && handleDateSelect(day.date)}
-                        className={`
-                          p-3 rounded-md text-center transition-all duration-300
-                          ${day.isCycloneDay 
-                            ? 'bg-red-100 text-red-800 cursor-not-allowed' 
-                            : selectedDate && selectedDate.getTime() === day.date.getTime()
-                              ? 'bg-arw-navy text-white ring-2 ring-arw-blue ring-offset-2'
-                              : 'bg-white hover:bg-gray-50 text-arw-navy border border-gray-200'
-                          }
-                        `}
-                        disabled={day.isCycloneDay}
+                  
+                  <div className="flex flex-col items-center space-y-4">
+                    <div className="flex items-center justify-between w-full mb-2">
+                      <Button 
+                        variant="outline" 
+                        size="icon" 
+                        onClick={previousMonth}
+                        className="border-arw-navy text-arw-navy hover:text-arw-blue hover:border-arw-blue"
                       >
-                        <p className="text-xs font-medium">{day.weekday}</p>
-                        <p className="text-lg font-bold my-1">{day.day}</p>
-                        <p className="text-xs">{day.month}</p>
-                        {day.isCycloneDay && (
-                          <p className="text-xs mt-1 bg-red-200 rounded px-1 py-0.5">Cyclone Alfred</p>
-                        )}
-                      </button>
-                    ))}
+                        <ChevronLeft className="h-4 w-4" />
+                      </Button>
+                      <h4 className="text-lg font-semibold">
+                        {format(month, 'MMMM yyyy')}
+                      </h4>
+                      <Button 
+                        variant="outline" 
+                        size="icon" 
+                        onClick={nextMonth}
+                        className="border-arw-navy text-arw-navy hover:text-arw-blue hover:border-arw-blue"
+                      >
+                        <ChevronRight className="h-4 w-4" />
+                      </Button>
+                    </div>
+                    
+                    <Calendar
+                      mode="single"
+                      selected={date}
+                      onSelect={handleDateSelect}
+                      month={month}
+                      onMonthChange={setMonth}
+                      className="rounded-md border p-3 pointer-events-auto"
+                      disabled={(currentDate) => {
+                        // Disable dates before today
+                        const today = new Date();
+                        today.setHours(0, 0, 0, 0);
+                        return currentDate < today;
+                      }}
+                      modifiers={{
+                        cyclone: [new Date(2025, 2, 7)], // March 7, 2025
+                      }}
+                      modifiersClassNames={{
+                        cyclone: "bg-red-100 text-red-800 opacity-75",
+                      }}
+                    />
+                    
+                    {isCycloneDay(date) && (
+                      <div className="w-full bg-red-100 text-red-800 p-3 rounded-md mt-4 text-center">
+                        <p className="font-medium">Cyclone Alfred Day</p>
+                        <p className="text-sm">No appointments available on March 7, 2025.</p>
+                      </div>
+                    )}
                   </div>
                 </div>
                 
-                {selectedDate && (
+                {date && availableTimeSlots.length > 0 && (
                   <div className="mb-8 animate-fade-in">
-                    <h3 className="text-xl font-bold text-arw-navy mb-4">Select Time</h3>
+                    <h3 className="text-xl font-bold text-arw-navy mb-4">Select Time for {format(date, 'MMMM d, yyyy')}</h3>
                     <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
-                      {calendarDays
-                        .find(day => day.date.getTime() === selectedDate.getTime())?.slots
-                        .map((slot, index) => (
-                          <button
-                            key={index}
-                            onClick={() => slot.available && handleTimeSelect(slot.time)}
-                            className={`
-                              p-3 rounded-md text-center transition-all duration-300
-                              ${!slot.available 
-                                ? 'bg-gray-100 text-gray-400 cursor-not-allowed' 
-                                : selectedTime === slot.time
-                                  ? 'bg-arw-blue text-white'
-                                  : 'bg-white hover:bg-gray-50 text-arw-navy border border-gray-200'
-                              }
-                            `}
-                            disabled={!slot.available}
-                          >
-                            <p className="font-medium">{slot.time}</p>
-                            <p className="text-xs mt-1">
-                              {slot.available ? 'Available' : 'Booked'}
-                            </p>
-                          </button>
-                        ))
-                      }
+                      {availableTimeSlots.map((slot, index) => (
+                        <button
+                          key={index}
+                          onClick={() => slot.available && handleTimeSelect(slot.time)}
+                          className={`
+                            p-3 rounded-md text-center transition-all duration-300
+                            ${!slot.available 
+                              ? 'bg-gray-100 text-gray-400 cursor-not-allowed' 
+                              : selectedTime === slot.time
+                                ? 'bg-arw-blue text-white'
+                                : 'bg-white hover:bg-gray-50 text-arw-navy border border-gray-200'
+                            }
+                          `}
+                          disabled={!slot.available}
+                        >
+                          <p className="font-medium">{slot.time}</p>
+                          <p className="text-xs mt-1">
+                            {slot.available ? 'Available' : 'Booked'}
+                          </p>
+                        </button>
+                      ))}
                     </div>
                   </div>
                 )}
                 
-                {selectedDate && selectedTime && (
+                {date && selectedTime && (
                   <form onSubmit={handleSubmit} className="grid gap-4 animate-fade-in">
                     <h3 className="text-xl font-bold text-arw-navy mb-2">Your Details</h3>
                     
