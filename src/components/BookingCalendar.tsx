@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { toast } from 'sonner';
 import AnimatedSection from './AnimatedSection';
-import { sendToGoogleSheets } from '../utils/googleSheetsApi';
+import { saveBookingToLocalStorage } from '../utils/localStorageApi';
 
 // Mock calendar data
 const generateCalendarDays = () => {
@@ -72,11 +72,11 @@ const BookingCalendar = () => {
     setIsSubmitting(true);
     
     try {
-      // Format date for better readability in the spreadsheet
+      // Format date for better readability
       const formattedDate = selectedDate.toLocaleDateString();
       
-      // Send data to Google Sheets
-      const success = await sendToGoogleSheets({
+      // Save booking to local storage instead of Google Sheets
+      const success = saveBookingToLocalStorage({
         name,
         phone,
         date: formattedDate,
@@ -91,7 +91,7 @@ const BookingCalendar = () => {
         setName('');
         setPhone('');
       } else {
-        toast.error("Failed to save booking. Please try again or contact us directly.");
+        toast.error("Failed to save booking. Please try again.");
       }
     } catch (error) {
       console.error("Error in form submission:", error);
