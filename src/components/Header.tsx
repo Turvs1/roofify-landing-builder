@@ -19,9 +19,10 @@ const Header = () => {
       }
 
       // Calculate transition progress based on scroll position
+      // Make the transition happen much faster - almost immediately on scroll
       if (headerRef.current) {
-        const headerHeight = headerRef.current.offsetHeight;
-        const scrollProgress = Math.min(offset / (headerHeight * 0.5), 1);
+        // Reduced the divisor from 0.5 to 0.1 to make transition happen much faster
+        const scrollProgress = Math.min(offset / (headerRef.current.offsetHeight * 0.1), 1);
         setTransitionProgress(scrollProgress);
       }
     };
@@ -81,7 +82,7 @@ const Header = () => {
           <img 
             src="/lovable-uploads/4507aff9-e454-4cb3-90f1-f6ff248c35ec.png" 
             alt="Roof construction aerial view" 
-            className="absolute w-full h-full object-cover transition-opacity duration-700 ease-in-out"
+            className="absolute w-full h-full object-cover transition-opacity duration-300 ease-in-out"
             style={{ opacity: 1 - transitionProgress }}
           />
           
@@ -89,7 +90,7 @@ const Header = () => {
           <img 
             src="/lovable-uploads/d89d330e-42bb-4ce6-9501-7dc621d40ab6.png" 
             alt="Completed roof aerial view" 
-            className="absolute w-full h-full object-cover transition-opacity duration-700 ease-in-out"
+            className="absolute w-full h-full object-cover transition-opacity duration-300 ease-in-out"
             style={{ opacity: transitionProgress }}
           />
         </div>
