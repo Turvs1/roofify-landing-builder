@@ -8,7 +8,7 @@ const WhatSection = () => {
     {
       title: "Insurance Repairs",
       description: "Fast, reliable recovery.",
-      image: "https://images.unsplash.com/photo-1543323769-452ee6666af9?auto=format&fit=crop&w=600&q=80", // Updated image - damaged roof after storm
+      image: "https://images.unsplash.com/photo-1487958449943-2429e8be8625?auto=format&fit=crop&w=600&q=80", // Updated image - white concrete building
       delay: 100
     },
     {
@@ -26,13 +26,13 @@ const WhatSection = () => {
     {
       title: "Industrial & Commercial",
       description: "Built for strength.",
-      image: "https://images.unsplash.com/photo-1449157291145-7efd050a4d0e?auto=format&fit=crop&w=600&q=80", // Low angle photography of building
+      image: "https://images.unsplash.com/photo-1449157291145-7efd050a4d0e?auto=format&fit=crop&w=600&q=80", // Updated image - low angle photography of building
       delay: 400
     },
     {
       title: "Residential Roofing",
       description: "Homes that last.",
-      image: "https://images.unsplash.com/photo-1632778149955-e80f8ceca2e8?auto=format&fit=crop&w=600&q=80", // Updated image - house with damaged roof
+      image: "https://images.unsplash.com/photo-1721322800607-8c38375eef04?auto=format&fit=crop&w=600&q=80", // Updated image - living room with couch and table
       delay: 500
     }
   ];
