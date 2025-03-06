@@ -69,7 +69,7 @@ const Header = () => {
             loop 
             playsInline
           >
-            <source src="https://storage.googleapis.com/coverr-main/mp4/Mt_Baker.mp4" type="video/mp4" />
+            <source src="/lovable-uploads/ARWC Video (1).mov" type="video/mov" />
             Your browser does not support the video tag.
           </video>
         </div>
