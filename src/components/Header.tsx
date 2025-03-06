@@ -1,9 +1,11 @@
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 
 const Header = () => {
   const [scrolled, setScrolled] = useState(false);
   const [videoError, setVideoError] = useState(false);
+  const [videoLoaded, setVideoLoaded] = useState(false);
+  const videoRef = useRef<HTMLVideoElement>(null);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -18,6 +20,23 @@ const Header = () => {
     return () => {
       window.removeEventListener('scroll', handleScroll);
     };
+  }, []);
+
+  useEffect(() => {
+    // Debug video loading
+    if (videoRef.current) {
+      console.log("Video element exists");
+      
+      videoRef.current.addEventListener('loadeddata', () => {
+        console.log("Video loaded successfully");
+        setVideoLoaded(true);
+      });
+      
+      videoRef.current.addEventListener('error', (e) => {
+        console.error("Video error occurred:", e);
+        setVideoError(true);
+      });
+    }
   }, []);
 
   const scrollToSection = (id: string) => {
@@ -64,19 +83,37 @@ const Header = () => {
         <div className="absolute inset-0 w-full h-full overflow-hidden">
           <div className="absolute inset-0 bg-black bg-opacity-50 z-10"></div>
           {videoError ? (
-            <div className="absolute inset-0 bg-gray-800"></div>
+            <div className="absolute inset-0 bg-gray-800">
+              <div className="absolute inset-0 flex items-center justify-center text-white">
+                <p>Video could not be loaded</p>
+              </div>
+            </div>
           ) : (
             <video 
+              ref={videoRef}
               className="absolute w-full h-full object-cover" 
               autoPlay 
               muted 
               loop 
               playsInline
-              onError={() => setVideoError(true)}
+              onError={() => {
+                console.error("Video error event triggered");
+                setVideoError(true);
+              }}
+              onLoadedData={() => {
+                console.log("Video loaded data event triggered");
+                setVideoLoaded(true);
+              }}
             >
               <source src="/lovable-uploads/ARWC_Video.mp4" type="video/mp4" />
               Your browser does not support the video tag.
             </video>
+          )}
+          
+          {!videoLoaded && !videoError && (
+            <div className="absolute inset-0 flex items-center justify-center bg-gray-800">
+              <p className="text-white">Loading video...</p>
+            </div>
           )}
         </div>
         
@@ -98,3 +135,4 @@ const Header = () => {
 };
 
 export default Header;
+
