@@ -74,10 +74,7 @@ const Header = () => {
               playsInline
               onError={() => setVideoError(true)}
             >
-              <source src="/lovable-uploads/ARWC_Video" type="video/mp4" />
               <source src="/lovable-uploads/ARWC_Video.mp4" type="video/mp4" />
-              <source src="/lovable-uploads/ARWC_Video.mov" type="video/quicktime" />
-              <source src="/lovable-uploads/ARWC Video (1).mov" type="video/quicktime" />
               Your browser does not support the video tag.
             </video>
           )}
