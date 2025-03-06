@@ -57,35 +57,32 @@ const Header = () => {
         </div>
       </nav>
 
-      {/* Hero Section with Video Background */}
+      {/* Hero Section with Background Image */}
       <div className="hero-parallax mt-16">
-        {/* Video Background */}
+        {/* Background Image */}
         <div className="absolute inset-0 w-full h-full overflow-hidden">
-          <div className="absolute inset-0 bg-black bg-opacity-50 z-10"></div>
-          <video 
-            className="absolute w-full h-full object-cover" 
-            autoPlay 
-            muted 
-            loop 
-            playsInline
-          >
-            <source src="/lovable-uploads/ARWC Video (1).mov" type="video/mov" />
-            Your browser does not support the video tag.
-          </video>
+          <div className="absolute inset-0 bg-black bg-opacity-40 z-10"></div>
+          <img 
+            src="/lovable-uploads/4507aff9-e454-4cb3-90f1-f6ff248c35ec.png" 
+            alt="Roof construction aerial view" 
+            className="absolute w-full h-full object-cover"
+          />
         </div>
         
         <div className="parallax-content text-center px-6 relative z-20">
-          <h1 className="section-heading text-white mb-6 animate-fade-in">
-            WE BELIEVE EVERY PROPERTY<br />DESERVES A STRONG ROOF
-          </h1>
-          <p className="section-subheading text-arw-blue animate-fade-in">
-            Protect what matters most—starting with the roof.
-          </p>
-          <button onClick={() => scrollToSection('enquiry')} className="button-primary mt-8 animate-fade-in" style={{
-          animationDelay: '400ms'
-        }}>
-            BOOK IN YOUR INSPECTION
-          </button>
+          <div className="bg-black bg-opacity-30 p-6 rounded-lg backdrop-blur-sm inline-block">
+            <h1 className="section-heading text-white mb-6 animate-fade-in">
+              WE BELIEVE EVERY PROPERTY<br />DESERVES A STRONG ROOF
+            </h1>
+            <p className="section-subheading text-arw-blue animate-fade-in">
+              Protect what matters most—starting with the roof.
+            </p>
+            <button onClick={() => scrollToSection('enquiry')} className="button-primary mt-8 animate-fade-in" style={{
+              animationDelay: '400ms'
+            }}>
+              BOOK IN YOUR INSPECTION
+            </button>
+          </div>
         </div>
       </div>
     </header>;
