@@ -1,4 +1,3 @@
-
 import React from 'react';
 import AnimatedSection from './AnimatedSection';
 
@@ -8,7 +7,7 @@ const WhatSection = () => {
     {
       title: "Insurance Repairs",
       description: "Fast, reliable recovery.",
-      image: "https://images.unsplash.com/photo-1543323769-452ee6666af9?auto=format&fit=crop&w=600&q=80", // Updated image - damaged roof after storm
+      image: "/lovable-uploads/3ee46c44-f951-4697-8c7f-201d5b6d0708.png", // Updated image for Insurance Repairs
       delay: 100
     },
     {
