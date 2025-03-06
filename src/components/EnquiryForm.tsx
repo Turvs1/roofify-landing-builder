@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { toast } from 'sonner';
 import AnimatedSection from './AnimatedSection';
@@ -9,7 +10,7 @@ const EnquiryForm = () => {
     phone: '',
     email: '',
     service: '',
-    budget: ''
+    budget: '' // We'll keep this in the state for compatibility with existing data
   });
   
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -106,43 +107,25 @@ const EnquiryForm = () => {
                 />
               </div>
               
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                  <label htmlFor="service" className="block text-sm font-medium text-arw-navy mb-1">Service Needed</label>
-                  <select
-                    id="service"
-                    name="service"
-                    required
-                    className="form-input"
-                    value={formData.service}
-                    onChange={handleChange}
-                  >
-                    <option value="" disabled>Select a service</option>
-                    <option value="insurance">Insurance Repair</option>
-                    <option value="heritage">Heritage Restoration</option>
-                    <option value="cladding">Architectural Cladding</option>
-                    <option value="commercial">Industrial/Commercial</option>
-                    <option value="residential">Residential</option>
-                    <option value="cyclone">Cyclone Prep</option>
-                  </select>
-                </div>
-                
-                <div>
-                  <label htmlFor="budget" className="block text-sm font-medium text-arw-navy mb-1">Budget Range</label>
-                  <select
-                    id="budget"
-                    name="budget"
-                    required
-                    className="form-input"
-                    value={formData.budget}
-                    onChange={handleChange}
-                  >
-                    <option value="" disabled>Select a range</option>
-                    <option value="under10k">Under $10K</option>
-                    <option value="10k-50k">$10K–$50K</option>
-                    <option value="over50k">Over $50K</option>
-                  </select>
-                </div>
+              <div>
+                <label htmlFor="service" className="block text-sm font-medium text-arw-navy mb-1">Service Needed</label>
+                <select
+                  id="service"
+                  name="service"
+                  required
+                  className="form-input"
+                  value={formData.service}
+                  onChange={handleChange}
+                >
+                  <option value="" disabled>Select a service</option>
+                  <option value="architectural">Architectural Cladding</option>
+                  <option value="commercial">Industrial/Commercial</option>
+                  <option value="cyclone">Cyclone Prep</option>
+                  <option value="heritage">Heritage Restoration</option>
+                  <option value="insurance">Insurance Repair</option>
+                  <option value="maintenance">Maintenance Quote</option>
+                  <option value="residential">Residential</option>
+                </select>
               </div>
               
               <div className="pt-4">
