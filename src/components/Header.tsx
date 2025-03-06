@@ -105,7 +105,12 @@ const Header = () => {
                 setVideoLoaded(true);
               }}
             >
+              {/* Try multiple source variations */}
+              <source src={import.meta.env.BASE_URL + "lovable-uploads/ARWC_Video.mp4"} type="video/mp4" />
               <source src="/lovable-uploads/ARWC_Video.mp4" type="video/mp4" />
+              <source src="lovable-uploads/ARWC_Video.mp4" type="video/mp4" />
+              <source src="./lovable-uploads/ARWC_Video.mp4" type="video/mp4" />
+              <source src="/lovable-uploads/ARWC Video (1).mov" type="video/quicktime" />
               Your browser does not support the video tag.
             </video>
           )}
@@ -135,4 +140,3 @@ const Header = () => {
 };
 
 export default Header;
-
