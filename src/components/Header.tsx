@@ -33,7 +33,7 @@ const Header = () => {
       <nav className={`fixed top-0 w-full z-50 transition-all duration-300 ${
         scrolled 
           ? 'bg-white bg-opacity-90 backdrop-blur-md shadow-md py-4' 
-          : 'bg-transparent py-8'
+          : 'bg-white bg-opacity-90 backdrop-blur-md py-6'
       }`}>
         <div className="max-w-7xl mx-auto px-6 flex justify-between items-center">
           <div className="relative w-40 h-14 z-10">
@@ -50,7 +50,7 @@ const Header = () => {
             <button 
               onClick={() => scrollToSection('why')} 
               className={`font-medium tracking-wide transition-colors duration-300 ${
-                scrolled ? 'text-arw-navy hover:text-arw-blue' : 'text-white hover:text-arw-blue'
+                scrolled ? 'text-arw-navy hover:text-arw-blue' : 'text-arw-navy hover:text-arw-blue'
               }`}
             >
               Why
@@ -58,7 +58,7 @@ const Header = () => {
             <button 
               onClick={() => scrollToSection('how')} 
               className={`font-medium tracking-wide transition-colors duration-300 ${
-                scrolled ? 'text-arw-navy hover:text-arw-blue' : 'text-white hover:text-arw-blue'
+                scrolled ? 'text-arw-navy hover:text-arw-blue' : 'text-arw-navy hover:text-arw-blue'
               }`}
             >
               How
@@ -66,7 +66,7 @@ const Header = () => {
             <button 
               onClick={() => scrollToSection('what')} 
               className={`font-medium tracking-wide transition-colors duration-300 ${
-                scrolled ? 'text-arw-navy hover:text-arw-blue' : 'text-white hover:text-arw-blue'
+                scrolled ? 'text-arw-navy hover:text-arw-blue' : 'text-arw-navy hover:text-arw-blue'
               }`}
             >
               What
