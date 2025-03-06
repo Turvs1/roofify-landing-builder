@@ -46,43 +46,34 @@ const Header = () => {
               />
             </div>
           </div>
-          <div className="hidden md:flex space-x-8 z-10">
+          
+          {/* Navigation links - visible on all screen sizes */}
+          <div className="flex space-x-4 md:space-x-8 z-10">
             <button 
               onClick={() => scrollToSection('why')} 
-              className={`font-medium tracking-wide transition-colors duration-300 ${
-                scrolled ? 'text-arw-navy hover:text-arw-blue' : 'text-arw-navy hover:text-arw-blue'
-              }`}
+              className="font-medium tracking-wide transition-colors duration-300 text-arw-navy hover:text-arw-blue text-xs md:text-base"
             >
               Why
             </button>
             <button 
               onClick={() => scrollToSection('how')} 
-              className={`font-medium tracking-wide transition-colors duration-300 ${
-                scrolled ? 'text-arw-navy hover:text-arw-blue' : 'text-arw-navy hover:text-arw-blue'
-              }`}
+              className="font-medium tracking-wide transition-colors duration-300 text-arw-navy hover:text-arw-blue text-xs md:text-base"
             >
               How
             </button>
             <button 
               onClick={() => scrollToSection('what')} 
-              className={`font-medium tracking-wide transition-colors duration-300 ${
-                scrolled ? 'text-arw-navy hover:text-arw-blue' : 'text-arw-navy hover:text-arw-blue'
-              }`}
+              className="font-medium tracking-wide transition-colors duration-300 text-arw-navy hover:text-arw-blue text-xs md:text-base"
             >
               What
             </button>
             <button 
               onClick={() => scrollToSection('enquiry')} 
-              className="button-primary py-2 px-4 text-sm z-10"
+              className="button-primary py-1 px-2 md:py-2 md:px-4 text-xs md:text-sm z-10"
             >
-              BOOK IN YOUR INSPECTION
+              BOOK INSPECTION
             </button>
           </div>
-          <button className="md:hidden text-arw-navy z-10">
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-            </svg>
-          </button>
         </div>
       </nav>
 
