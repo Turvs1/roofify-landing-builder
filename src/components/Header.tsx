@@ -73,10 +73,6 @@ const Header = () => {
           <div className="bg-black bg-opacity-30 px-6 py-0 rounded-lg backdrop-blur-sm inline-block">
             <h1 className="section-heading text-white mb-0 animate-fade-in">
               WE BELIEVE EVERY PROPERTY<br />DESERVES A STRONG ROOF
-            </h1>
-            <p className="section-subheading text-arw-blue animate-fade-in mb-0">
-              Protect what matters most—starting with the roof.
-            </p>
           </div>
           
           <button onClick={() => scrollToSection('enquiry')} className="button-primary mt-8 animate-fade-in" style={{
