@@ -69,7 +69,7 @@ const Header = () => {
             loop 
             playsInline
           >
-            <source src="/lovable-uploads/ARWC Video (1).mov" type="video/mov" />
+            <source src="/lovable-uploads/ARWC_Video" type="video/mp4" />
             Your browser does not support the video tag.
           </video>
         </div>
