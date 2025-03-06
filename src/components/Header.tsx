@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 
 const Header = () => {
@@ -70,7 +69,7 @@ const Header = () => {
         </div>
         
         <div className="parallax-content text-center px-6 relative z-20">
-          <div className="bg-black bg-opacity-30 px-6 py-0 pb-3 rounded-lg backdrop-blur-sm inline-block">
+          <div className="bg-black bg-opacity-30 px-6 py-0 rounded-lg backdrop-blur-sm inline-block">
             <h1 className="section-heading text-white mb-6 animate-fade-in">
               WE BELIEVE EVERY PROPERTY<br />DESERVES A STRONG ROOF
             </h1>
