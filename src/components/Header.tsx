@@ -1,11 +1,9 @@
 
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState } from 'react';
+import VideoBackground from './VideoBackground';
 
 const Header = () => {
   const [scrolled, setScrolled] = useState(false);
-  const [videoError, setVideoError] = useState(false);
-  const [videoLoaded, setVideoLoaded] = useState(false);
-  const videoRef = useRef<HTMLVideoElement>(null);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -20,23 +18,6 @@ const Header = () => {
     return () => {
       window.removeEventListener('scroll', handleScroll);
     };
-  }, []);
-
-  useEffect(() => {
-    // Debug video loading
-    if (videoRef.current) {
-      console.log("Video element exists");
-      
-      videoRef.current.addEventListener('loadeddata', () => {
-        console.log("Video loaded successfully");
-        setVideoLoaded(true);
-      });
-      
-      videoRef.current.addEventListener('error', (e) => {
-        console.error("Video error occurred:", e);
-        setVideoError(true);
-      });
-    }
   }, []);
 
   const scrollToSection = (id: string) => {
@@ -79,52 +60,8 @@ const Header = () => {
 
       {/* Hero Section with Video Background */}
       <div className="hero-parallax mt-16">
-        {/* Video Background or Image Fallback */}
-        <div className="absolute inset-0 w-full h-full overflow-hidden">
-          <div className="absolute inset-0 bg-black bg-opacity-50 z-10"></div>
-          
-          {/* Fallback image - always displayed */}
-          <img 
-            src="/lovable-uploads/7c65c431-125a-4ddf-a074-0aa214d57e37.jpg" 
-            alt="ARW Construction Background"
-            className="absolute w-full h-full object-cover"
-          />
-          
-          {/* Only try video if not in error state */}
-          {!videoError && (
-            <video 
-              ref={videoRef}
-              className="absolute w-full h-full object-cover" 
-              autoPlay 
-              muted 
-              loop 
-              playsInline
-              onError={() => {
-                console.error("Video error event triggered");
-                setVideoError(true);
-              }}
-              onLoadedData={() => {
-                console.log("Video loaded data event triggered");
-                setVideoLoaded(true);
-              }}
-              style={{display: videoLoaded ? 'block' : 'none'}}
-            >
-              {/* Try MOV file first, then fall back to MP4 variations */}
-              <source src="/lovable-uploads/ARWC Video (1).mov" type="video/quicktime" />
-              <source src="lovable-uploads/ARWC Video (1).mov" type="video/quicktime" />
-              <source src={import.meta.env.BASE_URL + "lovable-uploads/ARWC Video (1).mov"} type="video/quicktime" />
-              <source src="/lovable-uploads/ARWC_Video.mp4" type="video/mp4" />
-              <source src="lovable-uploads/ARWC_Video.mp4" type="video/mp4" />
-              Your browser does not support the video tag.
-            </video>
-          )}
-          
-          {!videoLoaded && !videoError && (
-            <div className="absolute inset-0 flex items-center justify-center">
-              <p className="text-white">Loading video...</p>
-            </div>
-          )}
-        </div>
+        {/* Use the new VideoBackground component */}
+        <VideoBackground />
         
         <div className="parallax-content text-center px-6 relative z-20">
           <h1 className="section-heading text-white mb-6 animate-fade-in">
