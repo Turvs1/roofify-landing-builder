@@ -26,7 +26,7 @@ const WhatSection = () => {
     {
       title: "Industrial & Commercial",
       description: "Built for strength.",
-      image: "https://images.unsplash.com/photo-1449157291145-7efd050a4d0e?auto=format&fit=crop&w=600&q=80", // Low angle photography of building
+      image: "/lovable-uploads/a367a18e-7a29-461c-9437-c9bc50124e33.png", // Updated image for Industrial & Commercial
       delay: 400
     },
     {
