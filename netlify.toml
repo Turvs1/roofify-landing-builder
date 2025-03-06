@@ -1,0 +1,28 @@
+
+# Netlify configuration file
+
+[build]
+  publish = "dist"
+  command = "npm run build"
+
+# Ensure proper MIME types for JavaScript modules
+[[headers]]
+  for = "/*.js"
+  [headers.values]
+    Content-Type = "application/javascript"
+
+[[headers]]
+  for = "/*.mjs"
+  [headers.values]
+    Content-Type = "application/javascript"
+
+[[headers]]
+  for = "/assets/*.js"
+  [headers.values]
+    Content-Type = "application/javascript"
+
+# Handle SPA routing by redirecting all requests to index.html
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
