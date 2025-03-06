@@ -1,7 +1,7 @@
-
 import React, { useState } from 'react';
 import { toast } from 'sonner';
 import AnimatedSection from './AnimatedSection';
+import { saveEnquiryToSupabase } from '../utils/supabaseApi';
 
 const EnquiryForm = () => {
   const [formData, setFormData] = useState({
@@ -19,22 +19,32 @@ const EnquiryForm = () => {
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
     
-    // Simulate form submission
-    setTimeout(() => {
-      toast.success("Enquiry submitted successfully! We'll call you within 24 hours.");
-      setFormData({
-        name: '',
-        phone: '',
-        email: '',
-        service: '',
-        budget: ''
-      });
+    try {
+      // Save enquiry to Supabase
+      const success = await saveEnquiryToSupabase(formData);
+      
+      if (success) {
+        toast.success("Enquiry submitted successfully! We'll call you within 24 hours.");
+        setFormData({
+          name: '',
+          phone: '',
+          email: '',
+          service: '',
+          budget: ''
+        });
+      } else {
+        toast.error("Failed to submit enquiry. Please try again.");
+      }
+    } catch (error) {
+      console.error("Error submitting enquiry:", error);
+      toast.error("Something went wrong. Please try again later.");
+    } finally {
       setIsSubmitting(false);
-    }, 1500);
+    }
   };
 
   return (

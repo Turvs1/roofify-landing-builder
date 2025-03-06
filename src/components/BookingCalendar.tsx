@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { toast } from 'sonner';
 import AnimatedSection from './AnimatedSection';
-import { saveBookingToLocalStorage } from '../utils/localStorageApi';
+import { saveBookingToSupabase } from '../utils/supabaseApi';
 
 // Mock calendar data
 const generateCalendarDays = () => {
@@ -75,8 +75,8 @@ const BookingCalendar = () => {
       // Format date for better readability
       const formattedDate = selectedDate.toLocaleDateString();
       
-      // Save booking to local storage instead of Google Sheets
-      const success = saveBookingToLocalStorage({
+      // Save booking to Supabase instead of local storage
+      const success = await saveBookingToSupabase({
         name,
         phone,
         date: formattedDate,
