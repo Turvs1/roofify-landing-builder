@@ -3,6 +3,7 @@ import React, { useEffect, useState } from 'react';
 
 const Header = () => {
   const [scrolled, setScrolled] = useState(false);
+  const [videoError, setVideoError] = useState(false);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -62,16 +63,24 @@ const Header = () => {
         {/* Video Background */}
         <div className="absolute inset-0 w-full h-full overflow-hidden">
           <div className="absolute inset-0 bg-black bg-opacity-50 z-10"></div>
-          <video 
-            className="absolute w-full h-full object-cover" 
-            autoPlay 
-            muted 
-            loop 
-            playsInline
-          >
-            <source src="/lovable-uploads/ARWC_Video" type="video/mp4" />
-            Your browser does not support the video tag.
-          </video>
+          {videoError ? (
+            <div className="absolute inset-0 bg-gray-800"></div>
+          ) : (
+            <video 
+              className="absolute w-full h-full object-cover" 
+              autoPlay 
+              muted 
+              loop 
+              playsInline
+              onError={() => setVideoError(true)}
+            >
+              <source src="/lovable-uploads/ARWC_Video" type="video/mp4" />
+              <source src="/lovable-uploads/ARWC_Video.mp4" type="video/mp4" />
+              <source src="/lovable-uploads/ARWC_Video.mov" type="video/quicktime" />
+              <source src="/lovable-uploads/ARWC Video (1).mov" type="video/quicktime" />
+              Your browser does not support the video tag.
+            </video>
+          )}
         </div>
         
         <div className="parallax-content text-center px-6 relative z-20">
