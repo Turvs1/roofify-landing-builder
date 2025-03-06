@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 
 export interface BookingData {
@@ -67,7 +66,16 @@ export const getBookingsFromSupabase = async (): Promise<BookingData[]> => {
       return [];
     }
     
-    return data || [];
+    // Ensure all records have the required fields according to BookingData interface
+    const bookingsWithEmail = data?.map(booking => ({
+      name: booking.name,
+      phone: booking.phone,
+      email: booking.email || '', // Provide default empty string if email is null
+      date: booking.date,
+      time: booking.time
+    })) || [];
+    
+    return bookingsWithEmail;
   } catch (error) {
     console.error('Error retrieving bookings from Supabase:', error);
     return [];
