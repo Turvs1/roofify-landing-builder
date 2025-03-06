@@ -1,9 +1,6 @@
-
 import React, { useEffect, useState } from 'react';
-
 const Header = () => {
   const [scrolled, setScrolled] = useState(false);
-
   useEffect(() => {
     const handleScroll = () => {
       const offset = window.scrollY;
@@ -18,7 +15,6 @@ const Header = () => {
       window.removeEventListener('scroll', handleScroll);
     };
   }, []);
-
   const scrollToSection = (id: string) => {
     const element = document.getElementById(id);
     if (element) {
@@ -27,7 +23,6 @@ const Header = () => {
       });
     }
   };
-
   return <header className="relative w-full h-screen">
       {/* Navigation */}
       <nav className={`fixed top-0 w-full z-50 transition-all duration-300 ${scrolled ? 'bg-white bg-opacity-90 backdrop-blur-md shadow-md py-4' : 'bg-white bg-opacity-90 backdrop-blur-md py-6'}`}>
@@ -62,15 +57,11 @@ const Header = () => {
         {/* Background Image */}
         <div className="absolute inset-0 w-full h-full overflow-hidden">
           <div className="absolute inset-0 bg-black bg-opacity-40 z-10"></div>
-          <img 
-            src="/lovable-uploads/4507aff9-e454-4cb3-90f1-f6ff248c35ec.png" 
-            alt="Roof construction aerial view" 
-            className="absolute w-full h-full object-cover"
-          />
+          <img src="/lovable-uploads/4507aff9-e454-4cb3-90f1-f6ff248c35ec.png" alt="Roof construction aerial view" className="absolute w-full h-full object-cover" />
         </div>
         
         <div className="parallax-content text-center px-6 relative z-20">
-          <div className="bg-black bg-opacity-30 p-6 pb-3 rounded-lg backdrop-blur-sm inline-block">
+          <div className="bg-black bg-opacity-30 p-6 pb- rounded-lg backdrop-blur-sm inline-block py-[18px]">
             <h1 className="section-heading text-white mb-6 animate-fade-in">
               WE BELIEVE EVERY PROPERTY<br />DESERVES A STRONG ROOF
             </h1>
@@ -80,13 +71,12 @@ const Header = () => {
           </div>
           
           <button onClick={() => scrollToSection('enquiry')} className="button-primary mt-8 animate-fade-in" style={{
-            animationDelay: '400ms'
-          }}>
+          animationDelay: '400ms'
+        }}>
             BOOK IN YOUR INSPECTION
           </button>
         </div>
       </div>
     </header>;
 };
-
 export default Header;
