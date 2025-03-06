@@ -77,11 +77,6 @@ const Header = () => {
             <p className="section-subheading text-arw-blue animate-fade-in">
               Protect what matters most—starting with the roof.
             </p>
-            <button onClick={() => scrollToSection('enquiry')} className="button-primary mt-8 animate-fade-in" style={{
-              animationDelay: '400ms'
-            }}>
-              BOOK IN YOUR INSPECTION
-            </button>
           </div>
         </div>
       </div>
