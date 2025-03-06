@@ -16,6 +16,9 @@ const Footer = () => {
               alt="ARW Construction" 
               className="h-16 mb-4"
             />
+            <p className="text-gray-300 mb-2">
+              ARW Construction
+            </p>
             <p className="text-gray-300 mb-4">
               Building Trust, Delivering Results. 
             </p>
