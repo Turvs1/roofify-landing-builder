@@ -1,4 +1,3 @@
-
 import React, { useEffect } from 'react';
 import Header from '../components/Header';
 import WhySection from '../components/WhySection';
@@ -7,7 +6,6 @@ import WhatSection from '../components/WhatSection';
 import EnquiryForm from '../components/EnquiryForm';
 import BookingCalendar from '../components/BookingCalendar';
 import Footer from '../components/Footer';
-
 const Index = () => {
   useEffect(() => {
     const handleIntersection = (entries: IntersectionObserverEntry[]) => {
@@ -17,26 +15,21 @@ const Index = () => {
         }
       });
     };
-
     const observer = new IntersectionObserver(handleIntersection, {
       root: null,
       rootMargin: '0px',
       threshold: 0.1
     });
-
     document.querySelectorAll('.section-appear').forEach(section => {
       observer.observe(section);
     });
-
     return () => {
       document.querySelectorAll('.section-appear').forEach(section => {
         observer.unobserve(section);
       });
     };
   }, []);
-
-  return (
-    <div className="min-h-screen overflow-hidden">
+  return <div className="">
       <Header />
       <main>
         <WhySection />
@@ -58,25 +51,16 @@ const Index = () => {
           </p>
         </div>
         <div className="ml-4 flex items-center">
-          <a 
-            href="#booking" 
-            className="text-xs md:text-sm bg-arw-blue hover:bg-opacity-90 text-white px-3 py-1 rounded"
-          >
+          <a href="#booking" className="text-xs md:text-sm bg-arw-blue hover:bg-opacity-90 text-white px-3 py-1 rounded">
             Book In Your Inspection
           </a>
-          <button 
-            className="ml-4 text-gray-300 hover:text-white"
-            aria-label="Close alert"
-            onClick={(e) => (e.target as HTMLElement).closest('div')?.parentElement?.remove()}
-          >
+          <button className="ml-4 text-gray-300 hover:text-white" aria-label="Close alert" onClick={e => (e.target as HTMLElement).closest('div')?.parentElement?.remove()}>
             <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
               <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
             </svg>
           </button>
         </div>
       </div>
-    </div>
-  );
+    </div>;
 };
-
 export default Index;
