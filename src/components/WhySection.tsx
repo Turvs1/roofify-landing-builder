@@ -19,7 +19,7 @@ const WhySection = () => {
         <AnimatedSection delay={200}>
           <div className="glass-card max-w-4xl mx-auto">
             <p className="section-text text-center">
-              At ARW Construction, we believe a roof is more than just cover—it's the heart of a property's strength and longevity, second only to its foundation. For us, every roof is a promise to ensure your peace of mind for decades.
+              At ARW Construction, we believe a roof is more than just cover—it's the heart of a property's strength and longevity, second only to its foundation. For us, every roof is a promise to protect what matters most, no matter the storm, the history, or the budget. That's why we're here: to ensure your peace of mind for decades.
             </p>
           </div>
         </AnimatedSection>
