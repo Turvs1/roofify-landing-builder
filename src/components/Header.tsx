@@ -79,16 +79,19 @@ const Header = () => {
 
       {/* Hero Section with Video Background */}
       <div className="hero-parallax mt-16">
-        {/* Video Background */}
+        {/* Video Background or Image Fallback */}
         <div className="absolute inset-0 w-full h-full overflow-hidden">
           <div className="absolute inset-0 bg-black bg-opacity-50 z-10"></div>
-          {videoError ? (
-            <div className="absolute inset-0 bg-gray-800">
-              <div className="absolute inset-0 flex items-center justify-center text-white">
-                <p>Video could not be loaded</p>
-              </div>
-            </div>
-          ) : (
+          
+          {/* Fallback image - always displayed */}
+          <img 
+            src="/lovable-uploads/7c65c431-125a-4ddf-a074-0aa214d57e37.jpg" 
+            alt="ARW Construction Background"
+            className="absolute w-full h-full object-cover"
+          />
+          
+          {/* Only try video if not in error state */}
+          {!videoError && (
             <video 
               ref={videoRef}
               className="absolute w-full h-full object-cover" 
@@ -104,6 +107,7 @@ const Header = () => {
                 console.log("Video loaded data event triggered");
                 setVideoLoaded(true);
               }}
+              style={{display: videoLoaded ? 'block' : 'none'}}
             >
               {/* Try MOV file first, then fall back to MP4 variations */}
               <source src="/lovable-uploads/ARWC Video (1).mov" type="video/quicktime" />
@@ -116,7 +120,7 @@ const Header = () => {
           )}
           
           {!videoLoaded && !videoError && (
-            <div className="absolute inset-0 flex items-center justify-center bg-gray-800">
+            <div className="absolute inset-0 flex items-center justify-center">
               <p className="text-white">Loading video...</p>
             </div>
           )}
