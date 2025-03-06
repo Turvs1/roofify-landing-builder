@@ -8,7 +8,6 @@ import EnquiryForm from '../components/EnquiryForm';
 import BookingCalendar from '../components/BookingCalendar';
 import Footer from '../components/Footer';
 import { supabase } from '@/integrations/supabase/client';
-import { toast } from "sonner";
 
 const Index = () => {
   useEffect(() => {
