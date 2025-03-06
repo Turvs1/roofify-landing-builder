@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import VideoBackground from './VideoBackground';
 
@@ -8,11 +7,7 @@ const Header = () => {
   useEffect(() => {
     const handleScroll = () => {
       const offset = window.scrollY;
-      if (offset > 50) {
-        setScrolled(true);
-      } else {
-        setScrolled(false);
-      }
+      setScrolled(offset > 50);
     };
     window.addEventListener('scroll', handleScroll);
     return () => {
@@ -23,24 +18,31 @@ const Header = () => {
   const scrollToSection = (id: string) => {
     const element = document.getElementById(id);
     if (element) {
-      element.scrollIntoView({
-        behavior: 'smooth'
-      });
+      element.scrollIntoView({ behavior: 'smooth' });
     }
   };
 
-  return <header className="relative w-full h-screen">
+  return (
+    <header className="relative w-full h-screen">
       {/* Navigation */}
-      <nav className={`fixed top-0 w-full z-50 transition-all duration-300 ${scrolled ? 'bg-white bg-opacity-90 backdrop-blur-md shadow-md py-4' : 'bg-white bg-opacity-90 backdrop-blur-md py-6'}`}>
+      <nav
+        className={`fixed top-0 w-full z-50 transition-all duration-300 ${
+          scrolled ? 'bg-white bg-opacity-90 backdrop-blur-md shadow-md py-4' : 'bg-white bg-opacity-90 backdrop-blur-md py-6'
+        }`}
+      >
         <div className="max-w-7xl mx-auto px-6 flex justify-between items-center">
           <div className="relative w-40 h-14 z-10">
             {/* ARW Logo */}
             <div className="absolute inset-0 flex items-center">
-              <img alt="ARW Construction" className="h-full object-contain" src="/lovable-uploads/2ad4d34b-5d39-43bf-82db-a8d5a53727a5.png" />
+              <img
+                alt="ARW Construction"
+                className="h-full object-contain"
+                src="/lovable-uploads/2ad4d34b-5d39-43bf-82db-a8d5a53727a5.png"
+              />
             </div>
           </div>
-          
-          {/* Navigation links - visible on all screen sizes */}
+
+          {/* Navigation links */}
           <div className="flex space-x-4 md:space-x-8 z-10">
             <button onClick={() => scrollToSection('why')} className="font-medium tracking-wide transition-colors duration-300 text-arw-navy hover:text-arw-blue text-xs md:text-base">
               Why
@@ -60,9 +62,8 @@ const Header = () => {
 
       {/* Hero Section with Video Background */}
       <div className="hero-parallax mt-16">
-        {/* Use the new VideoBackground component */}
-        <VideoBackground />
-        
+        <VideoBackground /> {/* Added Video Background Component */}
+
         <div className="parallax-content text-center px-6 relative z-20">
           <h1 className="section-heading text-white mb-6 animate-fade-in">
             WE BELIEVE EVERY PROPERTY<br />DESERVES A STRONG ROOF
@@ -70,14 +71,13 @@ const Header = () => {
           <p className="section-subheading text-arw-blue animate-fade-in">
             Protect what matters most—starting with the roof.
           </p>
-          <button onClick={() => scrollToSection('enquiry')} className="button-primary mt-8 animate-fade-in" style={{
-          animationDelay: '400ms'
-        }}>
+          <button onClick={() => scrollToSection('enquiry')} className="button-primary mt-8 animate-fade-in" style={{ animationDelay: '400ms' }}>
             BOOK IN YOUR INSPECTION
           </button>
         </div>
       </div>
-    </header>;
+    </header>
+  );
 };
 
 export default Header;
