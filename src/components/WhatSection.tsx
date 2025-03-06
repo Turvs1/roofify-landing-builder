@@ -26,7 +26,7 @@ const WhatSection = () => {
     {
       title: "24/7 Make Safe Service",
       description: "Non-invasive Protection for Your Property",
-      image: "/lovable-uploads/d38686c3-f4db-4130-9a4a-b7ddd6372326.png", // New image for Make Safe Service
+      image: "/lovable-uploads/8e7b1182-2bf4-4869-b6a0-4deaedd1cec9.png", // Updated image for Make Safe Service
       delay: 400
     },
     {
