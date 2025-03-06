@@ -1,3 +1,4 @@
+
 import React from 'react';
 import AnimatedSection from './AnimatedSection';
 
@@ -19,7 +20,7 @@ const WhatSection = () => {
     {
       title: "Architectural Cladding",
       description: "Modern, durable designs.",
-      image: "https://images.unsplash.com/photo-1486718448742-163732cd1544?auto=format&fit=crop&w=600&q=80",
+      image: "/lovable-uploads/fb563d81-45ca-4e5c-897c-7e75e4b99205.png", // Updated image for Architectural Cladding
       delay: 300
     },
     {
