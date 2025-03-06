@@ -17,7 +17,7 @@ const Footer = () => {
               className="h-16 mb-4"
             />
             <p className="text-gray-300 mb-4">
-              Your trusted partner for quality roofing solutions in Queensland.
+              Building Trust, Delivering Results. 
             </p>
             <div className="flex space-x-4">
               <a href="#" className="text-gray-300 hover:text-white transition-colors">
@@ -49,10 +49,9 @@ const Footer = () => {
           <div>
             <h3 className="text-lg font-bold mb-4">Contact Us</h3>
             <address className="not-italic text-gray-300 space-y-2">
-              <p>123 Roofing Street</p>
               <p>Queensland, Australia</p>
               <p>Email: info@arwc.com.au</p>
-              <p>Phone: (07) 1234 5678</p>
+              <p>Phone: 0423736921/p>
             </address>
           </div>
         </div>
