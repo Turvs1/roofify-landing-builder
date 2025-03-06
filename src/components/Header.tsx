@@ -1,6 +1,9 @@
+
 import React, { useEffect, useState } from 'react';
+
 const Header = () => {
   const [scrolled, setScrolled] = useState(false);
+
   useEffect(() => {
     const handleScroll = () => {
       const offset = window.scrollY;
@@ -15,6 +18,7 @@ const Header = () => {
       window.removeEventListener('scroll', handleScroll);
     };
   }, []);
+
   const scrollToSection = (id: string) => {
     const element = document.getElementById(id);
     if (element) {
@@ -23,6 +27,7 @@ const Header = () => {
       });
     }
   };
+
   return <header className="relative w-full h-screen">
       {/* Navigation */}
       <nav className={`fixed top-0 w-full z-50 transition-all duration-300 ${scrolled ? 'bg-white bg-opacity-90 backdrop-blur-md shadow-md py-4' : 'bg-white bg-opacity-90 backdrop-blur-md py-6'}`}>
@@ -52,12 +57,24 @@ const Header = () => {
         </div>
       </nav>
 
-      {/* Hero Section */}
+      {/* Hero Section with Video Background */}
       <div className="hero-parallax mt-16">
-        <div className="parallax-bg" style={{
-        backgroundImage: "linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)), url('https://images.unsplash.com/photo-1497604401993-f2e922e5cb0a?auto=format&fit=crop&w=1600&q=80')"
-      }} />
-        <div className="parallax-content text-center px-6">
+        {/* Video Background */}
+        <div className="absolute inset-0 w-full h-full overflow-hidden">
+          <div className="absolute inset-0 bg-black bg-opacity-50 z-10"></div>
+          <video 
+            className="absolute w-full h-full object-cover" 
+            autoPlay 
+            muted 
+            loop 
+            playsInline
+          >
+            <source src="https://storage.googleapis.com/coverr-main/mp4/Mt_Baker.mp4" type="video/mp4" />
+            Your browser does not support the video tag.
+          </video>
+        </div>
+        
+        <div className="parallax-content text-center px-6 relative z-20">
           <h1 className="section-heading text-white mb-6 animate-fade-in">
             WE BELIEVE EVERY PROPERTY<br />DESERVES A STRONG ROOF
           </h1>
@@ -73,4 +90,5 @@ const Header = () => {
       </div>
     </header>;
 };
+
 export default Header;
