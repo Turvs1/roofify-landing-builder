@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { toast } from 'sonner';
 import AnimatedSection from './AnimatedSection';
 import { saveBookingToSupabase, getBookingsFromSupabase } from '../utils/supabaseApi';
+import { supabase } from '@/integrations/supabase/client';
 
 // Types for our calendar data
 interface TimeSlot {
