@@ -1,17 +1,10 @@
-
 import React from 'react';
-
 const Footer = () => {
-  return (
-    <footer className="bg-arw-dark text-white py-10">
+  return <footer className="bg-arw-dark text-white py-10">
       <div className="max-w-7xl mx-auto px-6">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-center">
           <div className="flex justify-center md:justify-start">
-            <img 
-              src="/lovable-uploads/a8bff364-8251-4d33-98a6-e031c892c79d.png" 
-              alt="ARW Construction" 
-              className="h-16 object-contain"
-            />
+            <img alt="ARW Construction" className="h-16 object-contain" src="/lovable-uploads/90d995f7-ca02-4ab5-b57d-14f3110d46cb.png" />
           </div>
           
           <div className="text-center">
@@ -39,8 +32,6 @@ const Footer = () => {
           </div>
         </div>
       </div>
-    </footer>
-  );
+    </footer>;
 };
-
 export default Footer;
