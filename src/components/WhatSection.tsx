@@ -32,7 +32,7 @@ const WhatSection = () => {
     {
       title: "Residential Roofing",
       description: "Homes that last.",
-      image: "https://images.unsplash.com/photo-1632778149955-e80f8ceca2e8?auto=format&fit=crop&w=600&q=80", // Updated image - house with damaged roof
+      image: "/lovable-uploads/cba15185-88a7-4963-951d-cfe66b0c72c3.png", // Updated image for Residential Roofing
       delay: 500
     }
   ];
