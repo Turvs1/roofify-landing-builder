@@ -1,19 +1,31 @@
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { Button } from './ui/button';
 
 const Header = () => {
   const [scrolled, setScrolled] = useState(false);
+  const [transitionProgress, setTransitionProgress] = useState(0);
+  const headerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const handleScroll = () => {
       const offset = window.scrollY;
+      
+      // Set scrolled state for navigation bar
       if (offset > 50) {
         setScrolled(true);
       } else {
         setScrolled(false);
       }
+
+      // Calculate transition progress based on scroll position
+      if (headerRef.current) {
+        const headerHeight = headerRef.current.offsetHeight;
+        const scrollProgress = Math.min(offset / (headerHeight * 0.5), 1);
+        setTransitionProgress(scrollProgress);
+      }
     };
+    
     window.addEventListener('scroll', handleScroll);
     return () => {
       window.removeEventListener('scroll', handleScroll);
@@ -29,7 +41,8 @@ const Header = () => {
     }
   };
 
-  return <header className="relative w-full h-screen">
+  return (
+    <header ref={headerRef} className="relative w-full h-screen">
       {/* Navigation */}
       <nav className={`fixed top-0 w-full z-50 transition-all duration-300 ${scrolled ? 'bg-white bg-opacity-90 backdrop-blur-md shadow-md py-4' : 'bg-white bg-opacity-90 backdrop-blur-md py-6'}`}>
         <div className="max-w-7xl mx-auto px-6 flex justify-between items-center">
@@ -58,15 +71,26 @@ const Header = () => {
         </div>
       </nav>
 
-      {/* Hero Section with Background Image */}
+      {/* Hero Section with Background Image Transition */}
       <div className="hero-parallax mt-16">
-        {/* Background Image */}
+        {/* Background Images with Transition Effect */}
         <div className="absolute inset-0 w-full h-full overflow-hidden">
           <div className="absolute inset-0 bg-black bg-opacity-40 z-10"></div>
+          
+          {/* Construction Image (Fades out as user scrolls) */}
           <img 
             src="/lovable-uploads/4507aff9-e454-4cb3-90f1-f6ff248c35ec.png" 
             alt="Roof construction aerial view" 
-            className="absolute w-full h-full object-cover"
+            className="absolute w-full h-full object-cover transition-opacity duration-700 ease-in-out"
+            style={{ opacity: 1 - transitionProgress }}
+          />
+          
+          {/* Completed Roof Image (Fades in as user scrolls) */}
+          <img 
+            src="/lovable-uploads/cba15185-88a7-4963-951d-cfe66b0c72c3.png" 
+            alt="Completed roof aerial view" 
+            className="absolute w-full h-full object-cover transition-opacity duration-700 ease-in-out"
+            style={{ opacity: transitionProgress }}
           />
         </div>
         
@@ -84,7 +108,8 @@ const Header = () => {
           </button>
         </div>
       </div>
-    </header>;
+    </header>
+  );
 };
 
 export default Header;
