@@ -70,12 +70,19 @@ const Header = () => {
         </div>
         
         <div className="parallax-content text-center px-6 relative z-20">
-          <h1 className="section-heading text-white mb-6 animate-fade-in">
-            WE BELIEVE EVERY PROPERTY<br />DESERVES A STRONG ROOF
-          </h1>
-          <p className="section-subheading text-arw-blue animate-fade-in">
-            Protect what matters most—starting with the roof.
-          </p>
+          <div className="bg-black bg-opacity-30 p-6 rounded-lg backdrop-blur-sm inline-block">
+            <h1 className="section-heading text-white mb-6 animate-fade-in">
+              WE BELIEVE EVERY PROPERTY<br />DESERVES A STRONG ROOF
+            </h1>
+            <p className="section-subheading text-arw-blue animate-fade-in">
+              Protect what matters most—starting with the roof.
+            </p>
+            <button onClick={() => scrollToSection('enquiry')} className="button-primary mt-8 animate-fade-in" style={{
+              animationDelay: '400ms'
+            }}>
+              BOOK IN YOUR INSPECTION
+            </button>
+          </div>
         </div>
       </div>
     </header>;
