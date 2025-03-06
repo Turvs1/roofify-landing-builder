@@ -7,6 +7,7 @@ import WhatSection from '../components/WhatSection';
 import EnquiryForm from '../components/EnquiryForm';
 import BookingCalendar from '../components/BookingCalendar';
 import Footer from '../components/Footer';
+import { supabase } from '@/integrations/supabase/client';
 
 const Index = () => {
   useEffect(() => {
