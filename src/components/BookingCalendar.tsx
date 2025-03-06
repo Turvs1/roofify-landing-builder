@@ -68,7 +68,7 @@ const BookingCalendar = () => {
     
     for (let i = 0; i < 8; i++) {
       const hour = startHour + i;
-      const time = `${hour}:00 ${hour < 12 ? 'AM' : 'PM'}`.replace('0:00', '12:00');
+      const time = `${hour === 12 ? 12 : hour % 12}:00 ${hour < 12 ? 'AM' : 'PM'}`;
       
       // Check if this slot is already booked
       const isBooked = existingBookings.some(booking => 
@@ -77,7 +77,7 @@ const BookingCalendar = () => {
       
       slots.push({
         time,
-        available: !isBooked && Math.random() > 0.3 // 70% chance of being available if not already booked
+        available: !isBooked // Only unavailable if actually booked in Supabase
       });
     }
     
