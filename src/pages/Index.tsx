@@ -30,13 +30,34 @@ const Index = () => {
       observer.observe(section);
     });
 
-    // Preload video
+    // Attempt to preload the MOV file
     const preloadVideo = () => {
-      const videoPreload = new Image();
-      videoPreload.src = "/lovable-uploads/ARWC_Video.mp4";
+      // Create a video element to preload the video
+      const videoPreload = document.createElement('video');
+      videoPreload.style.display = 'none';
+      videoPreload.preload = 'auto';
+      
+      // Try to load the MOV file
+      const sourceElement = document.createElement('source');
+      sourceElement.src = "/lovable-uploads/ARWC Video (1).mov";
+      sourceElement.type = "video/quicktime";
+      videoPreload.appendChild(sourceElement);
+      
+      // Add error handling
       videoPreload.onerror = () => {
-        console.error("Failed to preload video");
+        console.error("Failed to preload MOV video");
       };
+      
+      // Add load event
+      videoPreload.onloadeddata = () => {
+        console.log("Successfully preloaded MOV video");
+      };
+      
+      // Add to DOM temporarily, then remove
+      document.body.appendChild(videoPreload);
+      setTimeout(() => {
+        document.body.removeChild(videoPreload);
+      }, 5000);
     };
 
     preloadVideo();
