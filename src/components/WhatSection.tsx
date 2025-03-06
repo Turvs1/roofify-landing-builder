@@ -1,4 +1,3 @@
-
 import React from 'react';
 import AnimatedSection from './AnimatedSection';
 
@@ -24,16 +23,22 @@ const WhatSection = () => {
       delay: 300
     },
     {
+      title: "24/7 Make Safe Service",
+      description: "Non-invasive Protection for Your Property",
+      image: "/lovable-uploads/d38686c3-f4db-4130-9a4a-b7ddd6372326.png", // New image for Make Safe Service
+      delay: 400
+    },
+    {
       title: "Industrial & Commercial",
       description: "Built for strength.",
       image: "/lovable-uploads/a367a18e-7a29-461c-9437-c9bc50124e33.png", // Updated image for Industrial & Commercial
-      delay: 400
+      delay: 500
     },
     {
       title: "Residential Roofing",
       description: "Homes that last.",
       image: "/lovable-uploads/cba15185-88a7-4963-951d-cfe66b0c72c3.png", // Updated image for Residential Roofing
-      delay: 500
+      delay: 600
     }
   ];
 
