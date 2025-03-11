@@ -15,6 +15,8 @@ const Index = () => {
       entries.forEach(entry => {
         if (entry.isIntersecting) {
           entry.target.classList.add('appear');
+          // Ensure the element stays visible even after scrolling away and back
+          observer.unobserve(entry.target);
         }
       });
     };
