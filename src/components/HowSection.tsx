@@ -68,7 +68,7 @@ const HowSection = () => {
         
         <AnimatedSection delay={200}>
           <p className="section-text text-center max-w-4xl mx-auto">
-            We combine integrity, design, and detail to craft roofs that stand the test of time. Our process is transparent, our solutions are tailored, and our quality is unmatched—whether it's a cyclone-ready fix, a heritage restoration, or a modern cladding project.
+            We combine integrity, design, and detail to craft roofs that stand the test of time. Our process is transparent, our solutions are tailored, and our quality is unmatched—whether it's a storm-ready fix, a heritage restoration, or a modern cladding project.
           </p>
         </AnimatedSection>
         
@@ -95,7 +95,7 @@ const HowSection = () => {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
               <p className="text-lg font-medium italic text-arw-navy">
-                With Cyclone Alfred approaching Friday, March 7, 2025, we're ready to act fast—secure your roof today.
+                Your roof matters—trust ARW Construction for quality results and peace of mind.
               </p>
             </div>
           </div>
