@@ -30,15 +30,29 @@ const EnquiryForm = () => {
       const success = await saveEnquiryToSupabase(formData);
       
       if (success) {
-        // Trigger webhook for email notification (handled by database trigger)
-        toast.success("Enquiry submitted successfully! We'll call you within 24 hours.");
-        setFormData({
-          name: '',
-          phone: '',
-          email: '',
-          service: '',
-          budget: ''
+        // Explicitly call our edge function to send email notification
+        const response = await supabase.functions.invoke('send-form-notification', {
+          body: {
+            table: 'enquiries',
+            record: formData
+          }
         });
+        
+        console.log('Edge function response:', response);
+        
+        if (!response.error) {
+          toast.success("Enquiry submitted successfully! We'll call you within 24 hours.");
+          setFormData({
+            name: '',
+            phone: '',
+            email: '',
+            service: '',
+            budget: ''
+          });
+        } else {
+          console.error("Edge function error:", response.error);
+          toast.success("Enquiry submitted successfully, but there was an issue with the notification.");
+        }
       } else {
         toast.error("Failed to submit enquiry. Please try again.");
       }

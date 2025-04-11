@@ -1,3 +1,4 @@
+
 import { supabase } from '@/integrations/supabase/client';
 
 export interface BookingData {
@@ -28,6 +29,26 @@ export const saveBookingToSupabase = async (bookingData: BookingData): Promise<b
     }
     
     console.log('Booking saved to Supabase:', bookingData);
+    
+    // Send email notification via edge function
+    try {
+      const response = await supabase.functions.invoke('send-form-notification', {
+        body: {
+          table: 'bookings',
+          record: bookingData
+        }
+      });
+      
+      console.log('Edge function response for booking:', response);
+      
+      if (response.error) {
+        console.error("Edge function error:", response.error);
+      }
+    } catch (notificationError) {
+      console.error('Error sending notification:', notificationError);
+      // We don't want to fail the booking if only the notification fails
+    }
+    
     return true;
   } catch (error) {
     console.error('Error saving booking to Supabase:', error);
