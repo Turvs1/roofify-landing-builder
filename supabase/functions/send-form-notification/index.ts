@@ -3,19 +3,11 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { Resend } from "npm:resend@2.0.0";
 
-// Initialize Resend with API key
-const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
-
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers":
     "authorization, x-client-info, apikey, content-type",
 };
-
-// Supabase client
-const supabaseUrl = "https://uwsunqlxehadmqikkdhm.supabase.co";
-const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
-const supabase = createClient(supabaseUrl, supabaseKey);
 
 serve(async (req) => {
   // Handle CORS preflight requests
@@ -24,6 +16,26 @@ serve(async (req) => {
   }
 
   try {
+    // Get the Resend API key from environment variables
+    const resendApiKey = Deno.env.get("RESEND_API_KEY");
+    
+    if (!resendApiKey) {
+      console.error("RESEND_API_KEY environment variable is not set");
+      return new Response(
+        JSON.stringify({ 
+          success: false, 
+          error: "Missing Resend API key in environment variables" 
+        }),
+        {
+          status: 500,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        }
+      );
+    }
+    
+    // Initialize Resend with API key
+    const resend = new Resend(resendApiKey);
+
     const { record, table } = await req.json();
     console.log(`Received ${table} submission:`, record);
 
@@ -39,7 +51,7 @@ serve(async (req) => {
         <p><strong>Email:</strong> ${record.email}</p>
         <p><strong>Phone:</strong> ${record.phone}</p>
         <p><strong>Service Required:</strong> ${record.service}</p>
-        <p><strong>Budget Range:</strong> ${record.budget}</p>
+        <p><strong>Budget Range:</strong> ${record.budget || "Not specified"}</p>
         <p><strong>Submitted:</strong> ${new Date().toLocaleString()}</p>
       `;
     } else if (table === "bookings") {
@@ -57,6 +69,8 @@ serve(async (req) => {
       throw new Error("Unknown form type");
     }
 
+    console.log("Attempting to send email with subject:", subject);
+    
     // Send email notification
     const emailResult = await resend.emails.send({
       from: "ARW Construction <notifications@arwconstruction.au>",
@@ -77,7 +91,11 @@ serve(async (req) => {
   } catch (error) {
     console.error("Error in send-form-notification function:", error);
     return new Response(
-      JSON.stringify({ success: false, error: error.message }),
+      JSON.stringify({ 
+        success: false, 
+        error: error.message,
+        stack: error.stack 
+      }),
       {
         status: 500,
         headers: { ...corsHeaders, "Content-Type": "application/json" },

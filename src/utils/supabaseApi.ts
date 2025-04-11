@@ -68,6 +68,26 @@ export const saveEnquiryToSupabase = async (enquiryData: EnquiryData): Promise<b
     }
     
     console.log('Enquiry saved to Supabase:', enquiryData);
+    
+    // Send email notification via edge function
+    try {
+      const response = await supabase.functions.invoke('send-form-notification', {
+        body: {
+          table: 'enquiries',
+          record: enquiryData
+        }
+      });
+      
+      console.log('Edge function response for enquiry:', response);
+      
+      if (response.error) {
+        console.error("Edge function error:", response.error);
+      }
+    } catch (notificationError) {
+      console.error('Error sending notification for enquiry:', notificationError);
+      // We don't want to fail the enquiry submission if only the notification fails
+    }
+    
     return true;
   } catch (error) {
     console.error('Error saving enquiry to Supabase:', error);
