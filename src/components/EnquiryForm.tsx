@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 import { toast } from 'sonner';
 import AnimatedSection from './AnimatedSection';
 import { saveEnquiryToSupabase } from '../utils/supabaseApi';
+import { supabase } from '@/integrations/supabase/client';
 
 const EnquiryForm = () => {
   const [formData, setFormData] = useState({
@@ -29,6 +30,7 @@ const EnquiryForm = () => {
       const success = await saveEnquiryToSupabase(formData);
       
       if (success) {
+        // Trigger webhook for email notification (handled by database trigger)
         toast.success("Enquiry submitted successfully! We'll call you within 24 hours.");
         setFormData({
           name: '',
