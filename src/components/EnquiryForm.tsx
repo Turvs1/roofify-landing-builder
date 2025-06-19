@@ -3,7 +3,6 @@ import React, { useState } from 'react';
 import { toast } from 'sonner';
 import AnimatedSection from './AnimatedSection';
 import { saveEnquiryToSupabase } from '../utils/supabaseApi';
-import { supabase } from '@/integrations/supabase/client';
 
 const EnquiryForm = () => {
   const [formData, setFormData] = useState({
@@ -26,33 +25,18 @@ const EnquiryForm = () => {
     setIsSubmitting(true);
     
     try {
-      // Save enquiry to Supabase
+      // Save enquiry to Supabase (also triggers notification)
       const success = await saveEnquiryToSupabase(formData);
-      
+
       if (success) {
-        // Explicitly call our edge function to send email notification
-        const response = await supabase.functions.invoke('send-form-notification', {
-          body: {
-            table: 'enquiries',
-            record: formData
-          }
+        toast.success("Enquiry submitted successfully! We'll call you within 24 hours.");
+        setFormData({
+          name: '',
+          phone: '',
+          email: '',
+          service: '',
+          budget: ''
         });
-        
-        console.log('Edge function response:', response);
-        
-        if (!response.error) {
-          toast.success("Enquiry submitted successfully! We'll call you within 24 hours.");
-          setFormData({
-            name: '',
-            phone: '',
-            email: '',
-            service: '',
-            budget: ''
-          });
-        } else {
-          console.error("Edge function error:", response.error);
-          toast.success("Enquiry submitted successfully, but there was an issue with the notification.");
-        }
       } else {
         toast.error("Failed to submit enquiry. Please try again.");
       }
