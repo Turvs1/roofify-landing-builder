@@ -1,7 +1,13 @@
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue
+} from '@/components/ui/select';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
@@ -15,17 +21,17 @@ interface Job {
 
 const RoofReport = () => {
   const [jobs, setJobs] = useState<Job[]>([]);
-  const [selectedDescription, setSelectedDescription] = useState<string>('');
+  const [selectedDescription, setSelectedDescription] = useState('');
   const [selectedJob, setSelectedJob] = useState<Job | null>(null);
-  const [notes, setNotes] = useState<string>('');
+  const [notes, setNotes] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [isLoadingJobs, setIsLoadingJobs] = useState(true);
   const { toast } = useToast();
 
-  const sheetApiUrl = "https://script.google.com/macros/s/AKfycbxAeT0tXnBGwhw7NaoAvgdhUHz412L4ESPi62gtx0SUruZnEdUOn6nUi6APrOWxlrlekg/exec";
-  const webhookUrl = "https://n8n.wayvvault.cc/webhook/form-builder";
+  const sheetApiUrl =
+    'https://script.google.com/macros/s/AKfycbxAeT0tXnBGwhw7NaoAvgdhUHz412L4ESPi62gtx0SUruZnEdUOn6nUi6APrOWxlrlekg/exec';
+  const webhookUrl = 'https://n8n.wayvvault.cc/webhook/form-builder';
 
-  // Load jobs from Google Sheets
   useEffect(() => {
     const loadJobs = async () => {
       try {
@@ -35,9 +41,9 @@ const RoofReport = () => {
       } catch (err) {
         console.error('Error loading jobs:', err);
         toast({
-          title: "Error",
-          description: "Failed to load jobs from the database",
-          variant: "destructive",
+          title: 'Error',
+          description: 'Failed to load jobs from the database',
+          variant: 'destructive'
         });
       } finally {
         setIsLoadingJobs(false);
@@ -49,7 +55,7 @@ const RoofReport = () => {
 
   const handleJobChange = (description: string) => {
     setSelectedDescription(description);
-    const matchedJob = jobs.find(job => job.description === description);
+    const matchedJob = jobs.find((job) => job.description === description);
     setSelectedJob(matchedJob || null);
   };
 
@@ -58,9 +64,9 @@ const RoofReport = () => {
 
     if (!selectedJob || !notes.trim()) {
       toast({
-        title: "Error",
-        description: "Please select a job and provide notes.",
-        variant: "destructive",
+        title: 'Error',
+        description: 'Please select a job and provide notes.',
+        variant: 'destructive'
       });
       return;
     }
@@ -75,14 +81,14 @@ const RoofReport = () => {
           job: selectedDescription,
           number: selectedJob.number,
           clientName: selectedJob.clientName,
-          notes,
+          notes
         })
       });
 
       if (response.ok) {
         toast({
-          title: "Success",
-          description: "Report submitted successfully.",
+          title: 'Success',
+          description: 'Report submitted successfully.'
         });
         setSelectedDescription('');
         setSelectedJob(null);
@@ -93,32 +99,45 @@ const RoofReport = () => {
     } catch (err) {
       console.error('Submit error:', err);
       toast({
-        title: "Error",
-        description: "Failed to submit report. Please try again.",
-        variant: "destructive",
+        title: 'Error',
+        description: 'Failed to submit report. Please try again.',
+        variant: 'destructive'
       });
     } finally {
       setIsLoading(false);
     }
   };
 
-  // Unique list of job descriptions
-  const uniqueDescriptions = Array.from(new Set(jobs.map(job => job.description)));
+  const uniqueDescriptions = Array.from(
+    new Set(jobs.map((job) => job.description))
+  );
 
   return (
     <div className="min-h-screen bg-background p-4">
       <div className="max-w-2xl mx-auto">
         <Card>
           <CardHeader>
-            <CardTitle className="text-center text-2xl">Submit Job Report</CardTitle>
+            <CardTitle className="text-center text-2xl">
+              Submit Job Report
+            </CardTitle>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-6">
               <div className="space-y-2">
                 <Label htmlFor="description">Job Description</Label>
-                <Select value={selectedDescription} onValueChange={handleJobChange} disabled={isLoadingJobs}>
+                <Select
+                  value={selectedDescription}
+                  onValueChange={handleJobChange}
+                  disabled={isLoadingJobs}
+                >
                   <SelectTrigger>
-                    <SelectValue placeholder={isLoadingJobs ? "Loading jobs..." : "Select a description..."} />
+                    <SelectValue
+                      placeholder={
+                        isLoadingJobs
+                          ? 'Loading jobs...'
+                          : 'Select a description...'
+                      }
+                    />
                   </SelectTrigger>
                   <SelectContent>
                     {uniqueDescriptions.map((desc, index) => (
@@ -132,12 +151,22 @@ const RoofReport = () => {
 
               <div className="space-y-2">
                 <Label htmlFor="number">Job Number</Label>
-                <Input id="number" value={selectedJob?.number || ''} readOnly className="bg-muted" />
+                <Input
+                  id="number"
+                  value={selectedJob?.number || ''}
+                  readOnly
+                  className="bg-muted"
+                />
               </div>
 
               <div className="space-y-2">
                 <Label htmlFor="client">Client Name</Label>
-                <Input id="client" value={selectedJob?.clientName || ''} readOnly className="bg-muted" />
+                <Input
+                  id="client"
+                  value={selectedJob?.clientName || ''}
+                  readOnly
+                  className="bg-muted"
+                />
               </div>
 
               <div className="space-y-2">
@@ -152,8 +181,12 @@ const RoofReport = () => {
                 />
               </div>
 
-              <Button type="submit" className="w-full" disabled={isLoading || isLoadingJobs}>
-                {isLoading ? "Submitting..." : "Submit Report"}
+              <Button
+                type="submit"
+                className="w-full"
+                disabled={isLoading || isLoadingJobs}
+              >
+                {isLoading ? 'Submitting...' : 'Submit Report'}
               </Button>
             </form>
           </CardContent>
