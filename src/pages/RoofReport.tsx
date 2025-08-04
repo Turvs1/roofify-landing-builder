@@ -389,7 +389,85 @@ const RoofReport = () => {
                 </div>
               </div>
 
-              {/* …repeat for all remaining fields… */}
+              {/* Additional inspection fields */}
+              <div>
+                <Label>Ceiling Inspection</Label>
+                <Textarea
+                  rows={3}
+                  value={ceilingInspection}
+                  onChange={(e) => setCeilingInspection(e.target.value)}
+                  placeholder="Describe ceiling inspection findings..."
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label>Truss Spacing</Label>
+                  <Input value={trussSpacing} onChange={(e) => setTrussSpacing(e.target.value)} />
+                </div>
+                <div>
+                  <Label>Battens Type</Label>
+                  <Input value={battensType} onChange={(e) => setBattensType(e.target.value)} />
+                </div>
+              </div>
+
+              <div>
+                <Label>Membrane Type</Label>
+                <Input value={membraneType} onChange={(e) => setMembraneType(e.target.value)} />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label>Comply with Standards</Label>
+                  <Select
+                    value={complyStandards}
+                    onValueChange={setComplyStandards}
+                  >
+                    <SelectTrigger><SelectValue placeholder="Yes/No" /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Yes">Yes</SelectItem>
+                      <SelectItem value="No">No</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label>Comply with Manufacturers</Label>
+                  <Select
+                    value={complyManufacturers}
+                    onValueChange={setComplyManufacturers}
+                  >
+                    <SelectTrigger><SelectValue placeholder="Yes/No" /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Yes">Yes</SelectItem>
+                      <SelectItem value="No">No</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
+              <div>
+                <Label>Maintenance Issues</Label>
+                <Textarea
+                  rows={3}
+                  value={maintenanceIssues}
+                  onChange={(e) => setMaintenanceIssues(e.target.value)}
+                  placeholder="Describe any maintenance issues found..."
+                />
+              </div>
+
+              <div>
+                <Label>Informed Insured</Label>
+                <Select
+                  value={informedInsured}
+                  onValueChange={setInformedInsured}
+                >
+                  <SelectTrigger><SelectValue placeholder="Yes/No" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Yes">Yes</SelectItem>
+                    <SelectItem value="No">No</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
 
               {/* Notes (existing) */}
               <div>
