@@ -4,22 +4,25 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
+import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 
 interface Job {
-  jobId?: string;
-  name?: string;
+  description: string;
+  number: string;
+  clientName: string;
 }
 
 const RoofReport = () => {
   const [jobs, setJobs] = useState<Job[]>([]);
-  const [selectedJob, setSelectedJob] = useState<string>('');
+  const [selectedDescription, setSelectedDescription] = useState<string>('');
+  const [selectedJob, setSelectedJob] = useState<Job | null>(null);
   const [notes, setNotes] = useState<string>('');
   const [isLoading, setIsLoading] = useState(false);
   const [isLoadingJobs, setIsLoadingJobs] = useState(true);
   const { toast } = useToast();
 
-  const sheetApiUrl = "https://opensheet.elk.sh/1mWDHjH6XhKrHtuJhhHlhT6LUx4Yj-4VD9m8JXsE6cYQ/FormJobs";
+  const sheetApiUrl = "https://script.google.com/macros/s/AKfycbxAeT0tXnBGwhw7NaoAvgdhUHz412L4ESPi62gtx0SUruZnEdUOn6nUi6APrOWxlrlekg/exec";
   const webhookUrl = "https://n8n.wayvvault.cc/webhook/form-builder";
 
   // Load dropdown options from Google Sheets
@@ -44,6 +47,12 @@ const RoofReport = () => {
     loadJobs();
   }, [toast]);
 
+  const handleJobChange = (description: string) => {
+    setSelectedDescription(description);
+    const matchedJob = jobs.find(job => job.description === description);
+    setSelectedJob(matchedJob || null);
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -62,7 +71,7 @@ const RoofReport = () => {
       const response = await fetch(webhookUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ job: selectedJob, notes })
+        body: JSON.stringify({ job: selectedDescription, notes })
       });
 
       if (response.ok) {
@@ -70,7 +79,8 @@ const RoofReport = () => {
           title: "Success",
           description: "Report submitted successfully",
         });
-        setSelectedJob('');
+        setSelectedDescription('');
+        setSelectedJob(null);
         setNotes('');
       } else {
         throw new Error('Failed to submit report');
@@ -97,19 +107,39 @@ const RoofReport = () => {
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-6">
               <div className="space-y-2">
-                <Label htmlFor="job">Select Job</Label>
-                <Select value={selectedJob} onValueChange={setSelectedJob} disabled={isLoadingJobs}>
+                <Label htmlFor="description">Job Description</Label>
+                <Select value={selectedDescription} onValueChange={handleJobChange} disabled={isLoadingJobs}>
                   <SelectTrigger>
-                    <SelectValue placeholder={isLoadingJobs ? "Loading jobs..." : "Select a job..."} />
+                    <SelectValue placeholder={isLoadingJobs ? "Loading jobs..." : "Select a description..."} />
                   </SelectTrigger>
                   <SelectContent>
                     {jobs.map((job, index) => (
-                      <SelectItem key={index} value={job.jobId || job.name || `job-${index}`}>
-                        {job.name || job.jobId || `Job ${index + 1}`}
+                      <SelectItem key={index} value={job.description}>
+                        {job.description}
                       </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="number">Job Number</Label>
+                <Input
+                  id="number"
+                  value={selectedJob?.number || ''}
+                  readOnly
+                  className="bg-muted"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="client">Client Name</Label>
+                <Input
+                  id="client"
+                  value={selectedJob?.clientName || ''}
+                  readOnly
+                  className="bg-muted"
+                />
               </div>
 
               <div className="space-y-2">
