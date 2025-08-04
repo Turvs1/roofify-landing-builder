@@ -95,8 +95,8 @@ const RoofReport = () => {
       formData.append('notes', notes);
 
       images.forEach((file, index) => {
-        formData.append(`images`, file);
-        formData.append(`captions`, captions[index] || '');
+        formData.append('images[]', file);
+        formData.append('captions[]', captions[index] || '');
       });
 
       const response = await fetch(webhookUrl, {
