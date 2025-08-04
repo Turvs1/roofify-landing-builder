@@ -25,7 +25,7 @@ const RoofReport = () => {
   const sheetApiUrl = "https://script.google.com/macros/s/AKfycbxAeT0tXnBGwhw7NaoAvgdhUHz412L4ESPi62gtx0SUruZnEdUOn6nUi6APrOWxlrlekg/exec";
   const webhookUrl = "https://n8n.wayvvault.cc/webhook/form-builder";
 
-  // Load dropdown options from Google Sheets
+  // Load jobs from Google Sheets
   useEffect(() => {
     const loadJobs = async () => {
       try {
@@ -55,11 +55,11 @@ const RoofReport = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!selectedJob || !notes.trim()) {
       toast({
         title: "Error",
-        description: "Please select a job and provide notes",
+        description: "Please select a job and provide notes.",
         variant: "destructive",
       });
       return;
@@ -71,22 +71,27 @@ const RoofReport = () => {
       const response = await fetch(webhookUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ job: selectedDescription, notes })
+        body: JSON.stringify({
+          job: selectedDescription,
+          number: selectedJob.number,
+          clientName: selectedJob.clientName,
+          notes,
+        })
       });
 
       if (response.ok) {
         toast({
           title: "Success",
-          description: "Report submitted successfully",
+          description: "Report submitted successfully.",
         });
         setSelectedDescription('');
         setSelectedJob(null);
         setNotes('');
       } else {
-        throw new Error('Failed to submit report');
+        throw new Error('Failed to submit report.');
       }
     } catch (err) {
-      console.error('Error submitting report:', err);
+      console.error('Submit error:', err);
       toast({
         title: "Error",
         description: "Failed to submit report. Please try again.",
@@ -96,6 +101,9 @@ const RoofReport = () => {
       setIsLoading(false);
     }
   };
+
+  // Unique list of job descriptions
+  const uniqueDescriptions = Array.from(new Set(jobs.map(job => job.description)));
 
   return (
     <div className="min-h-screen bg-background p-4">
@@ -113,9 +121,9 @@ const RoofReport = () => {
                     <SelectValue placeholder={isLoadingJobs ? "Loading jobs..." : "Select a description..."} />
                   </SelectTrigger>
                   <SelectContent>
-                    {jobs.map((job, index) => (
-                      <SelectItem key={index} value={job.description}>
-                        {job.description}
+                    {uniqueDescriptions.map((desc, index) => (
+                      <SelectItem key={index} value={desc}>
+                        {desc}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -124,22 +132,12 @@ const RoofReport = () => {
 
               <div className="space-y-2">
                 <Label htmlFor="number">Job Number</Label>
-                <Input
-                  id="number"
-                  value={selectedJob?.number || ''}
-                  readOnly
-                  className="bg-muted"
-                />
+                <Input id="number" value={selectedJob?.number || ''} readOnly className="bg-muted" />
               </div>
 
               <div className="space-y-2">
                 <Label htmlFor="client">Client Name</Label>
-                <Input
-                  id="client"
-                  value={selectedJob?.clientName || ''}
-                  readOnly
-                  className="bg-muted"
-                />
+                <Input id="client" value={selectedJob?.clientName || ''} readOnly className="bg-muted" />
               </div>
 
               <div className="space-y-2">
@@ -154,11 +152,7 @@ const RoofReport = () => {
                 />
               </div>
 
-              <Button 
-                type="submit" 
-                className="w-full" 
-                disabled={isLoading || isLoadingJobs}
-              >
+              <Button type="submit" className="w-full" disabled={isLoading || isLoadingJobs}>
                 {isLoading ? "Submitting..." : "Submit Report"}
               </Button>
             </form>
