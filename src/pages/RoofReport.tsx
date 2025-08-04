@@ -95,8 +95,8 @@ const RoofReport = () => {
       formData.append('notes', notes);
 
       images.forEach((file, index) => {
-        formData.append(`image${index + 1}`, file);
-        formData.append(`caption${index + 1}`, captions[index]);
+        formData.append(`images`, file);
+        formData.append(`captions`, captions[index] || '');
       });
 
       const response = await fetch(webhookUrl, {
@@ -217,11 +217,8 @@ const RoofReport = () => {
                 <div className="space-y-4">
                   {images.map((img, index) => (
                     <div key={index}>
-                      <Label htmlFor={`caption-${index}`}>
-                        Caption for {img.name}
-                      </Label>
+                      <Label>Caption for {img.name}</Label>
                       <Input
-                        id={`caption-${index}`}
                         type="text"
                         value={captions[index]}
                         onChange={(e) =>
