@@ -73,61 +73,61 @@ const RoofReport = () => {
     setCaptions(newCaptions);
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+const handleSubmit = async (e: React.FormEvent) => {
+  e.preventDefault();
 
-    if (!selectedJob || !notes.trim()) {
+  if (!selectedJob || !notes.trim()) {
+    toast({
+      title: 'Error',
+      description: 'Please select a job and provide notes.',
+      variant: 'destructive'
+    });
+    return;
+  }
+
+  setIsLoading(true);
+
+  try {
+    const formData = new FormData();
+    formData.append('job', selectedDescription);
+    formData.append('number', selectedJob.number);
+    formData.append('clientName', selectedJob.clientName);
+    formData.append('notes', notes);
+
+    images.forEach((file, index) => {
+      formData.append(`image_${index}`, file);
+      formData.append(`caption_${index}`, captions[index] || '');
+    });
+
+    const response = await fetch(webhookUrl, {
+      method: 'POST',
+      body: formData
+    });
+
+    if (response.ok) {
       toast({
-        title: 'Error',
-        description: 'Please select a job and provide notes.',
-        variant: 'destructive'
+        title: 'Success',
+        description: 'Report submitted successfully.'
       });
-      return;
+      setSelectedDescription('');
+      setSelectedJob(null);
+      setNotes('');
+      setImages([]);
+      setCaptions([]);
+    } else {
+      throw new Error('Failed to submit report.');
     }
-
-    setIsLoading(true);
-
-    try {
-      const formData = new FormData();
-      formData.append('job', selectedDescription);
-      formData.append('number', selectedJob.number);
-      formData.append('clientName', selectedJob.clientName);
-      formData.append('notes', notes);
-
-      images.forEach((file, index) => {
-        formData.append('images[]', file);
-        formData.append('captions[]', captions[index] || '');
-      });
-
-      const response = await fetch(webhookUrl, {
-        method: 'POST',
-        body: formData
-      });
-
-      if (response.ok) {
-        toast({
-          title: 'Success',
-          description: 'Report submitted successfully.'
-        });
-        setSelectedDescription('');
-        setSelectedJob(null);
-        setNotes('');
-        setImages([]);
-        setCaptions([]);
-      } else {
-        throw new Error('Failed to submit report.');
-      }
-    } catch (err) {
-      console.error('Submit error:', err);
-      toast({
-        title: 'Error',
-        description: 'Failed to submit report. Please try again.',
-        variant: 'destructive'
-      });
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  } catch (err) {
+    console.error('Submit error:', err);
+    toast({
+      title: 'Error',
+      description: 'Failed to submit report. Please try again.',
+      variant: 'destructive'
+    });
+  } finally {
+    setIsLoading(false);
+  }
+};
 
   const uniqueDescriptions = Array.from(
     new Set(jobs.map((job) => job.description))
