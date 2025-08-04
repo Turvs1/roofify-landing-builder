@@ -24,6 +24,8 @@ const RoofReport = () => {
   const [selectedDescription, setSelectedDescription] = useState('');
   const [selectedJob, setSelectedJob] = useState<Job | null>(null);
   const [notes, setNotes] = useState('');
+  const [images, setImages] = useState<File[]>([]);
+  const [captions, setCaptions] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isLoadingJobs, setIsLoadingJobs] = useState(true);
   const { toast } = useToast();
@@ -59,6 +61,18 @@ const RoofReport = () => {
     setSelectedJob(matchedJob || null);
   };
 
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []);
+    setImages(files);
+    setCaptions(files.map(() => ''));
+  };
+
+  const handleCaptionChange = (index: number, value: string) => {
+    const newCaptions = [...captions];
+    newCaptions[index] = value;
+    setCaptions(newCaptions);
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -81,7 +95,9 @@ const RoofReport = () => {
           job: selectedDescription,
           number: selectedJob.number,
           clientName: selectedJob.clientName,
-          notes
+          notes,
+          images: images.map((file) => file.name),
+          captions
         })
       });
 
@@ -93,6 +109,8 @@ const RoofReport = () => {
         setSelectedDescription('');
         setSelectedJob(null);
         setNotes('');
+        setImages([]);
+        setCaptions([]);
       } else {
         throw new Error('Failed to submit report.');
       }
@@ -180,6 +198,35 @@ const RoofReport = () => {
                   required
                 />
               </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="images">Upload Images</Label>
+                <Input
+                  type="file"
+                  id="images"
+                  accept="image/*"
+                  multiple
+                  onChange={handleImageChange}
+                />
+              </div>
+
+              {images.length > 0 && (
+                <div className="space-y-4">
+                  {images.map((img, index) => (
+                    <div key={index}>
+                      <Label>Caption for {img.name}</Label>
+                      <Input
+                        type="text"
+                        value={captions[index]}
+                        onChange={(e) =>
+                          handleCaptionChange(index, e.target.value)
+                        }
+                        placeholder="Enter caption..."
+                      />
+                    </div>
+                  ))}
+                </div>
+              )}
 
               <Button
                 type="submit"
