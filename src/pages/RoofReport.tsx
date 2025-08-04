@@ -88,17 +88,20 @@ const RoofReport = () => {
     setIsLoading(true);
 
     try {
+      const formData = new FormData();
+      formData.append('job', selectedDescription);
+      formData.append('number', selectedJob.number);
+      formData.append('clientName', selectedJob.clientName);
+      formData.append('notes', notes);
+
+      images.forEach((file, index) => {
+        formData.append(`image${index + 1}`, file);
+        formData.append(`caption${index + 1}`, captions[index]);
+      });
+
       const response = await fetch(webhookUrl, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          job: selectedDescription,
-          number: selectedJob.number,
-          clientName: selectedJob.clientName,
-          notes,
-          images: images.map((file) => file.name),
-          captions
-        })
+        body: formData
       });
 
       if (response.ok) {
@@ -214,8 +217,11 @@ const RoofReport = () => {
                 <div className="space-y-4">
                   {images.map((img, index) => (
                     <div key={index}>
-                      <Label>Caption for {img.name}</Label>
+                      <Label htmlFor={`caption-${index}`}>
+                        Caption for {img.name}
+                      </Label>
                       <Input
+                        id={`caption-${index}`}
                         type="text"
                         value={captions[index]}
                         onChange={(e) =>
