@@ -17,10 +17,11 @@ interface Job {
   description: string;
   number: string;
   clientName: string;
-  street:     string;
-  suburb:     string;
-  state:      string;
-  postcode:   string;
+  worksLocationAddress: string;
+  worksLocationSuburb: string;
+  worksLocationState: string;
+  worksLocationPostcode: string;
+  buildingType: string;
 }
 
 const RoofReport = () => {
@@ -116,10 +117,10 @@ const RoofReport = () => {
     setSelectedJob(matchedJob);
     if (matchedJob) {
       const addrParts = [
-        matchedJob.street,
-        matchedJob.suburb,
-        matchedJob.state,
-        matchedJob.postcode,
+        matchedJob.worksLocationAddress,
+        matchedJob.worksLocationSuburb,
+        matchedJob.worksLocationState,
+        matchedJob.worksLocationPostcode,
       ].filter(Boolean);
       const addr = addrParts.join(', ');
       setLocationAddress(addr);
