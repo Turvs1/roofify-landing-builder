@@ -17,10 +17,10 @@ interface Job {
   description: string;
   number: string;
   clientName: string;
-  street: string;      // column Q
-  suburb: string;      // column R
-  state: string;       // column S
-  postcode: string;    // column T
+  street:     string;
+  suburb:     string;
+  state:      string;
+  postcode:   string;
 }
 
 const RoofReport = () => {
@@ -121,17 +121,34 @@ const RoofReport = () => {
 
   useEffect(() => {
     if (!locationAddress) return;
+    const apiKey = 'c5bceca9364900a58deb67ec79d3d0b0';
+    // 1) Geocode to get precise lat/lon
     fetch(
-      `https://api.openweathermap.org/data/2.5/weather?q=${encodeURIComponent(
+      `https://api.openweathermap.org/geo/1.0/direct?q=${encodeURIComponent(
         locationAddress,
-      )}&appid=c5bceca9364900a58deb67ec79d3d0b0`
+      )}&limit=1&appid=${apiKey}`
     )
       .then(res => res.json())
-      .then(data => {
-        setWeather(data.weather[0].description || '');
-        setLightConditions(data.weather[0].main || '');
+      .then(geo => {
+        if (!geo || geo.length === 0) {
+          throw new Error('Geocoding failed');
+        }
+        const { lat, lon } = geo[0];
+        // 2) Fetch weather by coordinates
+        return fetch(
+          `https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&units=metric&appid=${apiKey}`
+        );
       })
-      .catch(err => console.error('Weather API error', err));
+      .then(res => res.json())
+      .then(data => {
+        setWeather(data.weather?.[0]?.description ?? '');
+        setLightConditions(data.weather?.[0]?.main ?? '');
+      })
+      .catch(err => {
+        console.error('Weather lookup error', err);
+        setWeather('');
+        setLightConditions('');
+      });
   }, [locationAddress]);
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
