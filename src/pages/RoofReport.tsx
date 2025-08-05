@@ -17,7 +17,6 @@ interface Job {
   description: string;
   number: string;
   clientName: string;
-  worksLocationAddress: string;
   worksLocationSuburb: string;
   worksLocationState: string;
   worksLocationPostcode: string;
@@ -117,7 +116,6 @@ const RoofReport = () => {
     setSelectedJob(matchedJob);
     if (matchedJob) {
       const addrParts = [
-        matchedJob.worksLocationAddress,
         matchedJob.worksLocationSuburb,
         matchedJob.worksLocationState,
         matchedJob.worksLocationPostcode,
@@ -129,36 +127,50 @@ const RoofReport = () => {
   };
 
   useEffect(() => {
-    console.log('Triggering weather lookup for:', locationAddress);
     if (!locationAddress) return;
     const apiKey = 'c5bceca9364900a58deb67ec79d3d0b0';
     setWeatherLoading(true);
-    // 1) Geocode to get precise lat/lon
-    fetch(
-      `https://api.openweathermap.org/geo/1.0/direct?q=${encodeURIComponent(
-        locationAddress,
-      )}&limit=1&appid=${apiKey}`
-    )
-      .then(res => res.json())
+
+    // split out suburb & state for the q= parameter
+    const [suburb, state] = locationAddress.split(',').map(s => s.trim());
+
+    // 1) direct geocoding
+    const geoUrl = `https://api.openweathermap.org/geo/1.0/direct`
+      + `?q=${encodeURIComponent(suburb)},${encodeURIComponent(state)},AU`
+      + `&limit=1&appid=${apiKey}`;
+
+    fetch(geoUrl)
+      .then(res => {
+        if (!res.ok) throw new Error(`Geo ${res.status}`);
+        return res.json();
+      })
       .then(geo => {
-        console.log('Geocode result:', geo);
         if (!Array.isArray(geo) || geo.length === 0) {
-          throw new Error(`Geocoding returned no results for: ${locationAddress}`);
+          throw new Error(`No geocode for ${suburb}, ${state}`);
         }
         const { lat, lon } = geo[0];
-        // 2) Fetch weather by coordinates
-        return fetch(
-          `https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&units=metric&appid=${apiKey}`
-        );
+
+        // 2) one-call 3.0 for current weather
+        const oneCallUrl = `https://api.openweathermap.org/data/3.0/onecall`
+          + `?lat=${lat}&lon=${lon}`
+          + `&exclude=minutely,alerts`
+          + `&units=metric`
+          + `&appid=${apiKey}`;
+
+        return fetch(oneCallUrl);
       })
-      .then(res => res.json())
+      .then(res => {
+        if (!res.ok) throw new Error(`OneCall ${res.status}`);
+        return res.json();
+      })
       .then(data => {
-        setWeather(data.weather?.[0]?.description ?? '');
-        setLightConditions(data.weather?.[0]?.main ?? '');
-        console.log('Weather API data:', data);
+        // pull current.weather[].description + .main
+        setWeather(data.current?.weather?.[0]?.description ?? '');
+        setLightConditions(data.current?.weather?.[0]?.main ?? '');
+        console.log('OneCall data:', data.current?.weather);
       })
       .catch(err => {
-        console.error('Weather lookup error', err);
+        console.error('Weather lookup failed:', err);
         setWeather('');
         setLightConditions('');
       })
