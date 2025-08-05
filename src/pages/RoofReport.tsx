@@ -142,8 +142,8 @@ const RoofReport = () => {
       .then(res => res.json())
       .then(geo => {
         console.log('Geocode result:', geo);
-        if (!geo || geo.length === 0) {
-          throw new Error('Geocoding failed');
+        if (!Array.isArray(geo) || geo.length === 0) {
+          throw new Error(`Geocoding returned no results for: ${locationAddress}`);
         }
         const { lat, lon } = geo[0];
         // 2) Fetch weather by coordinates
