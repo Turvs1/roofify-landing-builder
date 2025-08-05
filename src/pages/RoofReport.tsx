@@ -30,7 +30,7 @@ const RoofReport = () => {
   const [selectedDescription, setSelectedDescription] = useState('');
   const [selectedJob, setSelectedJob] = useState<Job | null>(null);
 
-  // New: capture the Sheet's Job ID
+  // New: capture the Sheet’s Job ID
   const [jobId, setJobId] = useState('');
 
   // Existing
