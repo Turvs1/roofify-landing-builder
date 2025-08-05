@@ -115,7 +115,13 @@ const RoofReport = () => {
     const matchedJob = jobs.find((j) => j.description === desc) ?? null;
     setSelectedJob(matchedJob);
     if (matchedJob) {
-      const addr = `${matchedJob.street}, ${matchedJob.suburb}, ${matchedJob.state} ${matchedJob.postcode}`;
+      const addrParts = [
+        matchedJob.street,
+        matchedJob.suburb,
+        matchedJob.state,
+        matchedJob.postcode,
+      ].filter(Boolean);
+      const addr = addrParts.join(', ');
       setLocationAddress(addr);
     }
   };
