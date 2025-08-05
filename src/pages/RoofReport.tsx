@@ -279,11 +279,11 @@ const RoofReport = () => {
 
               <div>
                 <Label>Weather at Time of Inspection</Label>
-                <Input value={weather} onChange={(e) => setWeather(e.target.value)} />
+                <Input value={weather} readOnly className="bg-muted" />
               </div>
               <div>
                 <Label>Light Conditions</Label>
-                <Input value={lightConditions} onChange={(e) => setLightConditions(e.target.value)} />
+                <Input value={lightConditions} readOnly className="bg-muted" />
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
