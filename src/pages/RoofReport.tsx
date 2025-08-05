@@ -78,6 +78,7 @@ const RoofReport = () => {
 
   const [isLoading, setIsLoading] = useState(false);
   const [isLoadingJobs, setIsLoadingJobs] = useState(true);
+  const [weatherLoading, setWeatherLoading] = useState(false);
 
   const sheetApiUrl =
     'https://script.google.com/macros/s/AKfycbxAeT0tXnBGwhw7NaoAvgdhUHz412L4ESPi62gtx0SUruZnEdUOn6nUi6APrOWxlrlekg/exec';
@@ -122,6 +123,7 @@ const RoofReport = () => {
   useEffect(() => {
     if (!locationAddress) return;
     const apiKey = 'c5bceca9364900a58deb67ec79d3d0b0';
+    setWeatherLoading(true);
     // 1) Geocode to get precise lat/lon
     fetch(
       `https://api.openweathermap.org/geo/1.0/direct?q=${encodeURIComponent(
@@ -148,7 +150,8 @@ const RoofReport = () => {
         console.error('Weather lookup error', err);
         setWeather('');
         setLightConditions('');
-      });
+      })
+      .finally(() => setWeatherLoading(false));
   }, [locationAddress]);
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -295,12 +298,22 @@ const RoofReport = () => {
               </div>
 
               <div>
-                <Label>Weather at Time of Inspection</Label>
-                <Input value={weather} readOnly className="bg-muted" />
+                <Label>Current Weather</Label>
+                <Input
+                  value={weather}
+                  readOnly
+                  placeholder={weatherLoading ? 'Loading…' : 'N/A'}
+                  className="bg-muted"
+                />
               </div>
               <div>
                 <Label>Light Conditions</Label>
-                <Input value={lightConditions} readOnly className="bg-muted" />
+                <Input
+                  value={lightConditions}
+                  readOnly
+                  placeholder={weatherLoading ? 'Loading…' : 'N/A'}
+                  className="bg-muted"
+                />
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
@@ -703,9 +716,13 @@ const RoofReport = () => {
               <Button
                 type="submit"
                 className="w-full"
-                disabled={isLoading || isLoadingJobs}
+                disabled={isLoading || isLoadingJobs || weatherLoading || !weather}
               >
-                {isLoading ? 'Submitting…' : 'Submit Report'}
+                {weatherLoading
+                  ? 'Fetching weather…'
+                  : isLoading
+                    ? 'Submitting…'
+                    : 'Submit Report'}
               </Button>
             </form>
           </CardContent>
