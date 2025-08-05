@@ -659,6 +659,11 @@ const RoofReport = () => {
               </div>
               {images.map((img, i) => (
                 <div key={i} className="space-y-2">
+                  <img 
+                    src={URL.createObjectURL(img)} 
+                    alt={img.name} 
+                    className="w-32 h-32 object-cover mb-2 rounded border" 
+                  />
                   <Label>Caption for {img.name}</Label>
                   <Input
                     value={captions[i]}
