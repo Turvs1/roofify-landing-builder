@@ -21,6 +21,7 @@ interface Job {
   worksLocationState: string;
   worksLocationPostcode: string;
   buildingType: string;
+  jobId: string;
 }
 
 const RoofReport = () => {
@@ -28,6 +29,9 @@ const RoofReport = () => {
   const [jobs, setJobs] = useState<Job[]>([]);
   const [selectedDescription, setSelectedDescription] = useState('');
   const [selectedJob, setSelectedJob] = useState<Job | null>(null);
+
+  // New: capture the Sheet's Job ID
+  const [jobId, setJobId] = useState('');
 
   // Existing
   const [notes, setNotes] = useState('');
@@ -115,6 +119,8 @@ const RoofReport = () => {
     const matchedJob = jobs.find((j) => j.description === desc) ?? null;
     setSelectedJob(matchedJob);
     if (matchedJob) {
+      // capture the JobID for submission
+      setJobId(matchedJob.jobId);
       const addrParts = [
         matchedJob.worksLocationSuburb,
         matchedJob.worksLocationState,
@@ -200,6 +206,8 @@ const RoofReport = () => {
     }
     setIsLoading(true);
     const formData = new FormData();
+    // include JobID from the sheet
+    formData.append('jobId', jobId);
     // Required fields
     formData.append('job', selectedDescription);
     formData.append('number', selectedJob.number);
