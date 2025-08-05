@@ -17,6 +17,10 @@ interface Job {
   description: string;
   number: string;
   clientName: string;
+  street: string;      // column Q
+  suburb: string;      // column R
+  state: string;       // column S
+  postcode: string;    // column T
 }
 
 const RoofReport = () => {
@@ -25,7 +29,7 @@ const RoofReport = () => {
   const [selectedDescription, setSelectedDescription] = useState('');
   const [selectedJob, setSelectedJob] = useState<Job | null>(null);
 
-  // Existing notes & images
+  // Existing
   const [notes, setNotes] = useState('');
   const [images, setImages] = useState<File[]>([]);
   const [captions, setCaptions] = useState<string[]>([]);
@@ -33,6 +37,8 @@ const RoofReport = () => {
   // New fields
   const [weather, setWeather] = useState('');
   const [lightConditions, setLightConditions] = useState('');
+  // Composed address for weather lookup
+  const [locationAddress, setLocationAddress] = useState('');
   const [isPowerIsolated, setIsPowerIsolated] = useState('');
   const [propertyType, setPropertyType] = useState('');
   const [ageOfProperty, setAgeOfProperty] = useState<number | ''>('');
@@ -84,7 +90,7 @@ const RoofReport = () => {
         const res = await fetch(sheetApiUrl);
         const data = await res.json();
         setJobs(data);
-      } catch (err) {
+      } catch {
         toast({
           title: 'Error',
           description: 'Failed to load jobs',
@@ -97,10 +103,36 @@ const RoofReport = () => {
     loadJobs();
   }, [toast]);
 
+  // Timestamp
+  const now = new Date();
+  const attendanceDate = now.toISOString().split('T')[0];
+  const attendanceTime = now.toTimeString().split(' ')[0];
+  const dateSubmitted = attendanceDate;
+
   const handleJobChange = (desc: string) => {
     setSelectedDescription(desc);
-    setSelectedJob(jobs.find((j) => j.description === desc) ?? null);
+    const matchedJob = jobs.find((j) => j.description === desc) ?? null;
+    setSelectedJob(matchedJob);
+    if (matchedJob) {
+      const addr = `${matchedJob.street}, ${matchedJob.suburb}, ${matchedJob.state} ${matchedJob.postcode}`;
+      setLocationAddress(addr);
+    }
   };
+
+  useEffect(() => {
+    if (!locationAddress) return;
+    fetch(
+      `https://api.openweathermap.org/data/2.5/weather?q=${encodeURIComponent(
+        locationAddress,
+      )}&appid=c5bceca9364900a58deb67ec79d3d0b0`
+    )
+      .then(res => res.json())
+      .then(data => {
+        setWeather(data.weather[0].description || '');
+        setLightConditions(data.weather[0].main || '');
+      })
+      .catch(err => console.error('Weather API error', err));
+  }, [locationAddress]);
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
@@ -113,12 +145,6 @@ const RoofReport = () => {
     setCaptions(c);
   };
 
-  // Compute date/time for the form
-  const now = new Date();
-  const attendanceDate = now.toISOString().split('T')[0];            // YYYY-MM-DD
-  const attendanceTime = now.toTimeString().split(' ')[0];           // HH:MM:SS
-  const dateSubmitted = attendanceDate;
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedJob || !notes.trim()) {
@@ -129,94 +155,70 @@ const RoofReport = () => {
       });
       return;
     }
-
     setIsLoading(true);
-    try {
-      const formData = new FormData();
-      // existing
-      formData.append('job', selectedDescription);
-      formData.append('number', selectedJob.number);
-      formData.append('clientName', selectedJob.clientName);
-      formData.append('notes', notes);
+    const formData = new FormData();
+    // Required fields
+    formData.append('job', selectedDescription);
+    formData.append('number', selectedJob.number);
+    formData.append('clientName', selectedJob.clientName);
+    // New: location address for weather lookup and weather fields
+    formData.append('locationAddress', locationAddress);
+    formData.append('weather', weather);
+    formData.append('lightConditions', lightConditions);
+    formData.append('notes', notes);
+    // Date/time
+    formData.append('attendanceDate', attendanceDate);
+    formData.append('attendanceTime', attendanceTime);
+    formData.append('isPowerIsolated', isPowerIsolated);
+    formData.append('propertyType', propertyType);
+    formData.append('ageOfProperty', ageOfProperty.toString());
+    formData.append('propertyCondition', propertyCondition);
+    formData.append('constructionType', constructionType);
+    formData.append('roofType', roofType);
+    formData.append('roofCondition', roofCondition);
+    formData.append('roofAge', roofAge.toString());
+    formData.append('roofPitch', roofPitch);
+    formData.append('ceilingInspection', ceilingInspection);
+    formData.append('trussSpacing', trussSpacing);
+    formData.append('battensType', battensType);
+    formData.append('membraneType', membraneType);
+    formData.append('complyStandards', complyStandards);
+    formData.append('complyManufacturers', complyManufacturers);
+    formData.append('maintenanceIssues', maintenanceIssues);
+    formData.append('informedInsured', informedInsured);
+    formData.append('roofDamagePercent', roofDamagePercent.toString());
+    formData.append('visualInspectionDamage', visualInspectionDamage);
+    formData.append('damageRelatedEvent', damageRelatedEvent);
+    formData.append('gutterGuard', gutterGuard);
+    formData.append('spreaderDownpipes', spreaderDownpipes);
+    formData.append('flashingsCorrect', flashingsCorrect);
+    formData.append('guttersClean', guttersClean);
+    formData.append('windLift', windLift);
+    formData.append('windLiftCause', windLiftCause);
+    formData.append('materialLifespanDecreased', materialLifespanDecreased);
+    formData.append('fullReplacement', fullReplacement);
+    formData.append('structuralIntegrity', structuralIntegrity);
+    formData.append('internalDamageDesc', internalDamageDesc);
+    formData.append('ceilingWallCondition', ceilingWallCondition);
+    formData.append('internalMaintenanceNotes', internalMaintenanceNotes);
+    formData.append('internalMaintenanceSummary', internalMaintenanceSummary);
+    formData.append('conclusion', conclusion);
+    formData.append('additionalRepairs', additionalRepairs);
+    // Photos
+    images.forEach((f, i) => {
+      formData.append(`image_${i}`, f);
+      formData.append(`caption_${i}`, captions[i] || '');
+    });
+    // Reporter & submission date
+    formData.append('reporterName', reporterName);
+    formData.append('dateSubmitted', dateSubmitted);
 
-      // new date/time fields
-      formData.append('attendanceDate', attendanceDate);
-      formData.append('attendanceTime', attendanceTime);
-
-      // new text & dropdown fields
-      formData.append('weather', weather);
-      formData.append('lightConditions', lightConditions);
-      formData.append('isPowerIsolated', isPowerIsolated);
-      formData.append('propertyType', propertyType);
-      formData.append('ageOfProperty', ageOfProperty.toString());
-      formData.append('propertyCondition', propertyCondition);
-      formData.append('constructionType', constructionType);
-      formData.append('roofType', roofType);
-      formData.append('roofCondition', roofCondition);
-      formData.append('roofAge', roofAge.toString());
-      formData.append('roofPitch', roofPitch);
-      formData.append('ceilingInspection', ceilingInspection);
-      formData.append('trussSpacing', trussSpacing);
-      formData.append('battensType', battensType);
-      formData.append('membraneType', membraneType);
-      formData.append('complyStandards', complyStandards);
-      formData.append('complyManufacturers', complyManufacturers);
-      formData.append('maintenanceIssues', maintenanceIssues);
-      formData.append('informedInsured', informedInsured);
-      formData.append('roofDamagePercent', roofDamagePercent.toString());
-      formData.append('visualInspectionDamage', visualInspectionDamage);
-      formData.append('damageRelatedEvent', damageRelatedEvent);
-      formData.append('gutterGuard', gutterGuard);
-      formData.append('spreaderDownpipes', spreaderDownpipes);
-      formData.append('flashingsCorrect', flashingsCorrect);
-      formData.append('guttersClean', guttersClean);
-      formData.append('windLift', windLift);
-      formData.append('windLiftCause', windLiftCause);
-      formData.append('materialLifespanDecreased', materialLifespanDecreased);
-      formData.append('fullReplacement', fullReplacement);
-      formData.append('structuralIntegrity', structuralIntegrity);
-      formData.append('internalDamageDesc', internalDamageDesc);
-      formData.append('ceilingWallCondition', ceilingWallCondition);
-      formData.append('internalMaintenanceNotes', internalMaintenanceNotes);
-      formData.append('internalMaintenanceSummary', internalMaintenanceSummary);
-      formData.append('conclusion', conclusion);
-      formData.append('additionalRepairs', additionalRepairs);
-
-      // images + captions
-      images.forEach((f, i) => {
-        formData.append(`image_${i}`, f);
-        formData.append(`caption_${i}`, captions[i] || '');
-      });
-
-      // reporter and submission date
-      formData.append('reporterName', reporterName);
-      formData.append('dateSubmitted', dateSubmitted);
-
-      const res = await fetch(webhookUrl, { method: 'POST', body: formData });
-      if (!res.ok) throw new Error('Submit failed');
+    const res = await fetch(webhookUrl, { method: 'POST', body: formData });
+    if (res.ok) {
       toast({ title: 'Success', description: 'Report submitted!' });
-      // reset
-      setSelectedDescription(''); setSelectedJob(null); setNotes('');
-      setImages([]); setCaptions([]);
-      setWeather(''); setLightConditions(''); setIsPowerIsolated('');
-      setPropertyType(''); setAgeOfProperty(''); setPropertyCondition('');
-      setConstructionType(''); setRoofType(''); setRoofCondition('');
-      setRoofAge(''); setRoofPitch(''); setCeilingInspection('');
-      setTrussSpacing(''); setBattensType(''); setMembraneType('');
-      setComplyStandards(''); setComplyManufacturers(''); setMaintenanceIssues('');
-      setInformedInsured(''); setRoofDamagePercent(''); setVisualInspectionDamage('');
-      setDamageRelatedEvent(''); setGutterGuard(''); setSpreaderDownpipes('');
-      setFlashingsCorrect(''); setGuttersClean(''); setWindLift('');
-      setWindLiftCause(''); setMaterialLifespanDecreased(''); setFullReplacement('');
-      setStructuralIntegrity(''); setInternalDamageDesc(''); setCeilingWallCondition('');
-      setInternalMaintenanceNotes(''); setInternalMaintenanceSummary('');
-      setConclusion(''); setAdditionalRepairs(''); setReporterName('');
-    } catch (err) {
-      console.error(err);
-      toast({ title: 'Error', description: 'Failed to submit.', variant: 'destructive' });
-    } finally {
-      setIsLoading(false);
+      // Reset state below...
     }
+    setIsLoading(false);
   };
 
   const uniqueDescriptions = Array.from(new Set(jobs.map((j) => j.description)));
@@ -225,11 +227,7 @@ const RoofReport = () => {
     <div className="min-h-screen bg-background p-4">
       <div className="max-w-3xl mx-auto">
         <Card>
-          <CardHeader>
-            <CardTitle className="text-center text-2xl">
-              Roof Report Submission
-            </CardTitle>
-          </CardHeader>
+          <CardHeader><CardTitle className="text-center text-2xl">Roof Report Submission</CardTitle></CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-6">
               {/* Attendance Date & Time */}
@@ -279,7 +277,6 @@ const RoofReport = () => {
                 </div>
               </div>
 
-              {/* Other fields: weather, light, dropdowns, etc. */}
               <div>
                 <Label>Weather at Time of Inspection</Label>
                 <Input value={weather} onChange={(e) => setWeather(e.target.value)} />
@@ -288,7 +285,6 @@ const RoofReport = () => {
                 <Label>Light Conditions</Label>
                 <Input value={lightConditions} onChange={(e) => setLightConditions(e.target.value)} />
               </div>
-
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <Label>Is Power Isolated?</Label>
@@ -318,7 +314,6 @@ const RoofReport = () => {
                   </Select>
                 </div>
               </div>
-
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <Label>Age of Property</Label>
@@ -343,22 +338,14 @@ const RoofReport = () => {
                   </Select>
                 </div>
               </div>
-
-              {/* ...and so on for each of your fields (constructionType, roofType, etc.) */}
-              {/* For brevity, I’m not duplicating every single field here, but you’d follow exactly the same pattern: */}
-              {/* shortText → <Input />, number → <Input type="number" />, longText → <Textarea />, dropdown → <Select> */}
-
-              {/* EXAMPLE for one more dropdown/longText */}
               <div>
                 <Label>Construction Type</Label>
                 <Input value={constructionType} onChange={(e) => setConstructionType(e.target.value)} />
               </div>
-
               <div>
                 <Label>Roof Type</Label>
                 <Input value={roofType} onChange={(e) => setRoofType(e.target.value)} />
               </div>
-
               <div>
                 <Label>Roof Condition</Label>
                 <Select
@@ -373,7 +360,6 @@ const RoofReport = () => {
                   </SelectContent>
                 </Select>
               </div>
-
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <Label>Roof Age</Label>
@@ -388,8 +374,6 @@ const RoofReport = () => {
                   <Input value={roofPitch} onChange={(e) => setRoofPitch(e.target.value)} />
                 </div>
               </div>
-
-              {/* Additional inspection fields */}
               <div>
                 <Label>Ceiling Inspection</Label>
                 <Textarea
@@ -399,7 +383,6 @@ const RoofReport = () => {
                   placeholder="Describe ceiling inspection findings..."
                 />
               </div>
-
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <Label>Truss Spacing</Label>
@@ -410,12 +393,10 @@ const RoofReport = () => {
                   <Input value={battensType} onChange={(e) => setBattensType(e.target.value)} />
                 </div>
               </div>
-
               <div>
                 <Label>Membrane Type</Label>
                 <Input value={membraneType} onChange={(e) => setMembraneType(e.target.value)} />
               </div>
-
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <Label>Comply with Standards</Label>
@@ -444,7 +425,6 @@ const RoofReport = () => {
                   </Select>
                 </div>
               </div>
-
               <div>
                 <Label>Maintenance Issues</Label>
                 <Textarea
@@ -454,7 +434,6 @@ const RoofReport = () => {
                   placeholder="Describe any maintenance issues found..."
                 />
               </div>
-
               <div>
                 <Label>Informed Insured</Label>
                 <Select
@@ -468,8 +447,199 @@ const RoofReport = () => {
                   </SelectContent>
                 </Select>
               </div>
-
-              {/* Notes (existing) */}
+              <div>
+                <Label>Roof Damage (% of area)</Label>
+                <Input
+                  type="number"
+                  value={roofDamagePercent}
+                  onChange={(e) => setRoofDamagePercent(Number(e.target.value))}
+                  placeholder="Enter percentage"
+                />
+              </div>
+              <div>
+                <Label>Visual Inspection Damage</Label>
+                <Textarea
+                  rows={3}
+                  value={visualInspectionDamage}
+                  onChange={(e) => setVisualInspectionDamage(e.target.value)}
+                  placeholder="Describe any visible damage..."
+                />
+              </div>
+              <div>
+                <Label>Damage Related to Event?</Label>
+                <Select
+                  value={damageRelatedEvent}
+                  onValueChange={setDamageRelatedEvent}
+                >
+                  <SelectTrigger><SelectValue placeholder="Yes/No" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Yes">Yes</SelectItem>
+                    <SelectItem value="No">No</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label>Gutter Guard Present?</Label>
+                <Select
+                  value={gutterGuard}
+                  onValueChange={setGutterGuard}
+                >
+                  <SelectTrigger><SelectValue placeholder="Yes/No" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Yes">Yes</SelectItem>
+                    <SelectItem value="No">No</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label>Spreader Downpipes Present?</Label>
+                <Select
+                  value={spreaderDownpipes}
+                  onValueChange={setSpreaderDownpipes}
+                >
+                  <SelectTrigger><SelectValue placeholder="Yes/No" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Yes">Yes</SelectItem>
+                    <SelectItem value="No">No</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label>Are Flashings Correct?</Label>
+                <Select
+                  value={flashingsCorrect}
+                  onValueChange={setFlashingsCorrect}
+                >
+                  <SelectTrigger><SelectValue placeholder="Yes/No" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Yes">Yes</SelectItem>
+                    <SelectItem value="No">No</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label>Are Gutters Clean?</Label>
+                <Select
+                  value={guttersClean}
+                  onValueChange={setGuttersClean}
+                >
+                  <SelectTrigger><SelectValue placeholder="Yes/No" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Yes">Yes</SelectItem>
+                    <SelectItem value="No">No</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label>Wind Lift Present?</Label>
+                <Select
+                  value={windLift}
+                  onValueChange={setWindLift}
+                >
+                  <SelectTrigger><SelectValue placeholder="Yes/No" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Yes">Yes</SelectItem>
+                    <SelectItem value="No">No</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label>If Wind Lift, What is the Cause?</Label>
+                <Input
+                  value={windLiftCause}
+                  onChange={(e) => setWindLiftCause(e.target.value)}
+                  placeholder="Describe cause if applicable"
+                />
+              </div>
+              <div>
+                <Label>Material Lifespan Decreased?</Label>
+                <Select
+                  value={materialLifespanDecreased}
+                  onValueChange={setMaterialLifespanDecreased}
+                >
+                  <SelectTrigger><SelectValue placeholder="Yes/No" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Yes">Yes</SelectItem>
+                    <SelectItem value="No">No</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label>Full Replacement Required?</Label>
+                <Select
+                  value={fullReplacement}
+                  onValueChange={setFullReplacement}
+                >
+                  <SelectTrigger><SelectValue placeholder="Yes/No" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Yes">Yes</SelectItem>
+                    <SelectItem value="No">No</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label>Structural Integrity</Label>
+                <Textarea
+                  rows={3}
+                  value={structuralIntegrity}
+                  onChange={(e) => setStructuralIntegrity(e.target.value)}
+                  placeholder="Describe structural integrity..."
+                />
+              </div>
+              <div>
+                <Label>Internal Damage Description</Label>
+                <Textarea
+                  rows={3}
+                  value={internalDamageDesc}
+                  onChange={(e) => setInternalDamageDesc(e.target.value)}
+                  placeholder="Describe any internal damage..."
+                />
+              </div>
+              <div>
+                <Label>Ceiling/Wall Condition</Label>
+                <Textarea
+                  rows={3}
+                  value={ceilingWallCondition}
+                  onChange={(e) => setCeilingWallCondition(e.target.value)}
+                  placeholder="Describe ceiling/wall condition..."
+                />
+              </div>
+              <div>
+                <Label>Internal Maintenance Notes</Label>
+                <Textarea
+                  rows={3}
+                  value={internalMaintenanceNotes}
+                  onChange={(e) => setInternalMaintenanceNotes(e.target.value)}
+                  placeholder="Notes about internal maintenance..."
+                />
+              </div>
+              <div>
+                <Label>Internal Maintenance Summary</Label>
+                <Textarea
+                  rows={3}
+                  value={internalMaintenanceSummary}
+                  onChange={(e) => setInternalMaintenanceSummary(e.target.value)}
+                  placeholder="Summary of internal maintenance..."
+                />
+              </div>
+              <div>
+                <Label>Conclusion</Label>
+                <Textarea
+                  rows={3}
+                  value={conclusion}
+                  onChange={(e) => setConclusion(e.target.value)}
+                  placeholder="Conclusion of inspection..."
+                />
+              </div>
+              <div>
+                <Label>Additional Repairs Required</Label>
+                <Textarea
+                  rows={3}
+                  value={additionalRepairs}
+                  onChange={(e) => setAdditionalRepairs(e.target.value)}
+                  placeholder="List any additional repairs required..."
+                />
+              </div>
               <div>
                 <Label>Notes</Label>
                 <Textarea
@@ -478,8 +648,6 @@ const RoofReport = () => {
                   onChange={(e) => setNotes(e.target.value)}
                 />
               </div>
-
-              {/* Image uploader (existing) */}
               <div>
                 <Label>Upload Roof Photos</Label>
                 <Input
@@ -498,8 +666,6 @@ const RoofReport = () => {
                   />
                 </div>
               ))}
-
-              {/* Reporter & Date Submitted */}
               <div>
                 <Label>Your Name</Label>
                 <Input
@@ -512,7 +678,6 @@ const RoofReport = () => {
                 <Label>Date Submitted</Label>
                 <Input value={dateSubmitted} readOnly className="bg-muted" />
               </div>
-
               <Button
                 type="submit"
                 className="w-full"
