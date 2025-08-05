@@ -123,11 +123,13 @@ const RoofReport = () => {
         matchedJob.worksLocationPostcode,
       ].filter(Boolean);
       const addr = addrParts.join(', ');
+      console.log('Built address:', addrParts, addr);
       setLocationAddress(addr);
     }
   };
 
   useEffect(() => {
+    console.log('Triggering weather lookup for:', locationAddress);
     if (!locationAddress) return;
     const apiKey = 'c5bceca9364900a58deb67ec79d3d0b0';
     setWeatherLoading(true);
@@ -139,6 +141,7 @@ const RoofReport = () => {
     )
       .then(res => res.json())
       .then(geo => {
+        console.log('Geocode result:', geo);
         if (!geo || geo.length === 0) {
           throw new Error('Geocoding failed');
         }
@@ -152,6 +155,7 @@ const RoofReport = () => {
       .then(data => {
         setWeather(data.weather?.[0]?.description ?? '');
         setLightConditions(data.weather?.[0]?.main ?? '');
+        console.log('Weather API data:', data);
       })
       .catch(err => {
         console.error('Weather lookup error', err);
