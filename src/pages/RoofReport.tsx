@@ -248,9 +248,11 @@ const RoofReport = () => {
     formData.append('conclusion', conclusion);
     formData.append('additionalRepairs', additionalRepairs);
     // Photos
-    images.forEach((f, i) => {
-      formData.append(`image_${i}`, f);
-      formData.append(`caption_${i}`, captions[i] || '');
+    images.forEach((file, index) => {
+      // use a single field name for all images so the webhook picks them up
+      formData.append('images', file);
+      // append captions as an array
+      formData.append('captions[]', captions[index] || '');
     });
     // Reporter & submission date
     formData.append('reporterName', reporterName);
