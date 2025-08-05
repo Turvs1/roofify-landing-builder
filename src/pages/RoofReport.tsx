@@ -264,6 +264,126 @@ const RoofReport = () => {
     setIsLoading(false);
   };
 
+  const handleAutoFill = () => {
+    if (jobs.length === 0) return;
+    const sample = jobs[0];
+    setSelectedDescription(sample.description);
+    setSelectedJob(sample);
+    setNotes('Test notes for roof report');
+    setWeather('Clear sky');
+    setLightConditions('Daylight');
+    setIsPowerIsolated('No');
+    setPropertyType('House');
+    setAgeOfProperty(10);
+    setPropertyCondition('Good');
+    setConstructionType('Brick & tile');
+    setRoofType('Tile');
+    setRoofCondition('Fair');
+    setRoofAge(5);
+    setRoofPitch('30°');
+    setCeilingInspection('No issues');
+    setTrussSpacing('450mm');
+    setBattensType('Timber');
+    setMembraneType('Standard');
+    setComplyStandards('Yes');
+    setComplyManufacturers('Yes');
+    setMaintenanceIssues('None observed');
+    setInformedInsured('Yes');
+    setRoofDamagePercent(0);
+    setVisualInspectionDamage('None');
+    setDamageRelatedEvent('No');
+    setGutterGuard('No');
+    setSpreaderDownpipes('Yes');
+    setFlashingsCorrect('Yes');
+    setGuttersClean('Yes');
+    setWindLift('No');
+    setWindLiftCause('N/A');
+    setMaterialLifespanDecreased('No');
+    setFullReplacement('No');
+    setStructuralIntegrity('Intact');
+    setInternalDamageDesc('None');
+    setCeilingWallCondition('Good');
+    setInternalMaintenanceNotes('N/A');
+    setInternalMaintenanceSummary('N/A');
+    setConclusion('Inspection complete');
+    setAdditionalRepairs('None required');
+    setReporterName('Test User');
+  };
+    e.preventDefault();
+    if (!selectedJob || !notes.trim()) {
+      toast({
+        title: 'Error',
+        description: 'Select a job & add notes',
+        variant: 'destructive',
+      });
+      return;
+    }
+    setIsLoading(true);
+    const formData = new FormData();
+    // Required fields
+    formData.append('job', selectedDescription);
+    formData.append('number', selectedJob.number);
+    formData.append('clientName', selectedJob.clientName);
+    // New: location address for weather lookup and weather fields
+    formData.append('locationAddress', locationAddress);
+    formData.append('weather', weather);
+    formData.append('lightConditions', lightConditions);
+    formData.append('notes', notes);
+    // Date/time
+    formData.append('attendanceDate', attendanceDate);
+    formData.append('attendanceTime', attendanceTime);
+    formData.append('isPowerIsolated', isPowerIsolated);
+    formData.append('propertyType', propertyType);
+    formData.append('ageOfProperty', ageOfProperty.toString());
+    formData.append('propertyCondition', propertyCondition);
+    formData.append('constructionType', constructionType);
+    formData.append('roofType', roofType);
+    formData.append('roofCondition', roofCondition);
+    formData.append('roofAge', roofAge.toString());
+    formData.append('roofPitch', roofPitch);
+    formData.append('ceilingInspection', ceilingInspection);
+    formData.append('trussSpacing', trussSpacing);
+    formData.append('battensType', battensType);
+    formData.append('membraneType', membraneType);
+    formData.append('complyStandards', complyStandards);
+    formData.append('complyManufacturers', complyManufacturers);
+    formData.append('maintenanceIssues', maintenanceIssues);
+    formData.append('informedInsured', informedInsured);
+    formData.append('roofDamagePercent', roofDamagePercent.toString());
+    formData.append('visualInspectionDamage', visualInspectionDamage);
+    formData.append('damageRelatedEvent', damageRelatedEvent);
+    formData.append('gutterGuard', gutterGuard);
+    formData.append('spreaderDownpipes', spreaderDownpipes);
+    formData.append('flashingsCorrect', flashingsCorrect);
+    formData.append('guttersClean', guttersClean);
+    formData.append('windLift', windLift);
+    formData.append('windLiftCause', windLiftCause);
+    formData.append('materialLifespanDecreased', materialLifespanDecreased);
+    formData.append('fullReplacement', fullReplacement);
+    formData.append('structuralIntegrity', structuralIntegrity);
+    formData.append('internalDamageDesc', internalDamageDesc);
+    formData.append('ceilingWallCondition', ceilingWallCondition);
+    formData.append('internalMaintenanceNotes', internalMaintenanceNotes);
+    formData.append('internalMaintenanceSummary', internalMaintenanceSummary);
+    formData.append('conclusion', conclusion);
+    formData.append('additionalRepairs', additionalRepairs);
+    // Photos
+    images.forEach((f, i) => {
+      formData.append(`image_${i}`, f);
+      formData.append(`caption_${i}`, captions[i] || '');
+    });
+    // Reporter & submission date
+    formData.append('reporterName', reporterName);
+    formData.append('dateSubmitted', dateSubmitted);
+
+    const res = await fetch(webhookUrl, { method: 'POST', body: formData });
+    if (res.ok) {
+      toast({ title: 'Success', description: 'Report submitted!' });
+      // Reset state below...
+    }
+    setIsLoading(false);
+  };
+
   const uniqueDescriptions = Array.from(new Set(jobs.map((j) => j.description)));
 
   return (
@@ -273,6 +393,9 @@ const RoofReport = () => {
           <CardHeader><CardTitle className="text-center text-2xl">Roof Report Submission</CardTitle></CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-6">
+              <Button type="button" onClick={handleAutoFill} className="w-full mb-4">
+                Auto Fill Test Data
+              </Button>
               {/* Attendance Date & Time */}
               <div className="grid grid-cols-2 gap-4">
                 <div>
