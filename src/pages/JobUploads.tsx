@@ -50,7 +50,7 @@ export default function JobUploads() {
   const { toast } = useToast();
   const sheetApiUrl =
     "https://script.google.com/macros/s/AKfycbxAeT0tXnBGwhw7NaoAvgdhUHz412L4ESPi62gtx0SUruZnEdUOn6nUi6APrOWxlrlekg/exec";
-  const webhookUrl = "https://n8n.wayvvault.cc/webhook/image_uploader";
+  const webhookUrl = "https://n8n.wayvvault.cc/webhook/image-uploader";
   const BATCH_SIZE = 20;
 
   const [jobs, setJobs] = useState<Job[]>([]);
