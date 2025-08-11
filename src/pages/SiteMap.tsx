@@ -19,6 +19,14 @@ const SiteMap = () => {
                 Home Page
               </Link>
             </li>
+            <li className="hover:text-arw-blue transition-colors">
+              <Link to="/job-uploads" className="flex items-center">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v16h16V8l-6-4H4z" />
+                </svg>
+                Job Uploads
+              </Link>
+            </li>
           </ul>
         </div>
 

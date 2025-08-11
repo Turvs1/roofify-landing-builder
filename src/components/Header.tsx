@@ -1,6 +1,7 @@
 
 import React, { useEffect, useState, useRef } from 'react';
 import { Button } from './ui/button';
+import { Link } from 'react-router-dom';
 
 const Header = () => {
   const [scrolled, setScrolled] = useState(false);
@@ -65,6 +66,9 @@ const Header = () => {
             <button onClick={() => scrollToSection('what')} className="font-medium tracking-wide transition-colors duration-300 text-arw-navy hover:text-arw-blue text-xs md:text-base">
               What
             </button>
+            <Link to="/job-uploads" className="font-medium tracking-wide transition-colors duration-300 text-arw-navy hover:text-arw-blue text-xs md:text-base">
+              Job Uploads
+            </Link>
             <button onClick={() => scrollToSection('enquiry')} className="button-primary py-1 px-2 md:py-2 md:px-4 text-xs md:text-sm z-10">
               BOOK INSPECTION
             </button>

@@ -8,6 +8,7 @@ import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import SiteMap from "./pages/SiteMap";
 import RoofReport from "./pages/RoofReport";
+import JobUploads from "./pages/JobUploads";
 
 const queryClient = new QueryClient();
 
@@ -21,6 +22,7 @@ const App = () => (
           <Route path="/" element={<Index />} />
           <Route path="/sitemap" element={<SiteMap />} />
           <Route path="/roof-report" element={<RoofReport />} />
+          <Route path="/job-uploads" element={<JobUploads />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
