@@ -51,7 +51,10 @@ export default function JobUploads() {
   const sheetApiUrl =
     "https://script.google.com/macros/s/AKfycbxAeT0tXnBGwhw7NaoAvgdhUHz412L4ESPi62gtx0SUruZnEdUOn6nUi6APrOWxlrlekg/exec";
   const webhookUrl = "https://n8n.wayvvault.cc/webhook/image-uploader";
-  const BATCH_SIZE = 20;
+  const BATCH_SIZE = 10; // smaller batches play nicer with proxies/Cloudflare
+  const MAX_FILES = 100;
+  const MAX_DIM_PX = 3000; // already used by resizeImage
+  const JPG_QUALITY = 0.85; // unify JPEG quality controls
 
   const [jobs, setJobs] = useState<Job[]>([]);
   const [loadingJobs, setLoadingJobs] = useState(true);
@@ -137,7 +140,7 @@ export default function JobUploads() {
         ctx?.drawImage(img, 0, 0, width, height);
         canvas.toBlob((blob) => {
           resolve(new File([blob as Blob], file.name.replace(/\.(heic|heif)$/i, ".jpg"), { type: "image/jpeg" }));
-        }, "image/jpeg", 0.85);
+        }, "image/jpeg", JPG_QUALITY);
       };
       reader.readAsDataURL(file);
     });
@@ -152,7 +155,7 @@ export default function JobUploads() {
       const isHeic = f.type === "image/heic" || f.type === "image/heif" || /\.hei[c|f]$/i.test(f.name);
       if (isHeic) {
         try {
-          const blob = (await heic2any({ blob: f, toType: "image/jpeg", quality: 0.9 })) as Blob;
+          const blob = (await heic2any({ blob: f, toType: "image/jpeg", quality: JPG_QUALITY })) as Blob;
           fileToAdd = new File([blob], f.name.replace(/\.(heic|heif)$/i, ".jpg"), { type: "image/jpeg" });
         } catch {
           // if conversion fails, keep original
@@ -168,7 +171,7 @@ export default function JobUploads() {
       toast({ title: "Skipped non-image files", description: "Only images are accepted.", variant: "destructive" });
     }
 
-    const merged = [...images, ...processed].slice(0, 100);
+    const merged = [...images, ...processed].slice(0, MAX_FILES);
     setImages(merged);
   }
 
@@ -190,6 +193,41 @@ export default function JobUploads() {
   const removeImageAt = (idx: number) => {
     setImages((prev) => prev.filter((_, i) => i !== idx));
   };
+
+  // Robust upload helper with timeout/retries and explicit CORS mode
+  async function postWithRetry(fd: FormData, tries = 3, timeoutMs = 25000) {
+    let lastErr: any = null;
+    for (let attempt = 1; attempt <= tries; attempt++) {
+      const ctrl = new AbortController();
+      const timer = setTimeout(() => ctrl.abort(), timeoutMs);
+      try {
+        const res = await fetch(webhookUrl, {
+          method: "POST",
+          body: fd,
+          mode: "cors",            // important for cross-origin (n8n)
+          credentials: "omit",      // do not send cookies — keeps it a simple CORS case
+          signal: ctrl.signal,
+        });
+        clearTimeout(timer);
+        if (!res.ok) {
+          // Try to read any response text for debugging
+          let text = "";
+          try { text = await res.text(); } catch {}
+          throw new Error(`Upload failed (${res.status}) ${text}`);
+        }
+        return res;
+      } catch (err: any) {
+        clearTimeout(timer);
+        lastErr = err;
+        // Backoff and retry on network/CORS/timeout
+        if (attempt < tries) {
+          await new Promise(r => setTimeout(r, attempt * 1000));
+          continue;
+        }
+      }
+    }
+    throw lastErr || new Error("Upload failed");
+  }
 
   async function handleUpload() {
     if (images.length === 0) {
@@ -228,11 +266,7 @@ export default function JobUploads() {
           fd.append("images", file, file.name);
         }
 
-        const res = await fetch(webhookUrl, { method: "POST", body: fd });
-        if (!res.ok) {
-          const text = await res.text();
-          throw new Error(`Upload failed (${res.status}): ${text}`);
-        }
+        await postWithRetry(fd);
 
         setUploadedCount((prev) => prev + batch.length);
       }
@@ -325,7 +359,7 @@ export default function JobUploads() {
             >
               <p className="font-medium">Drag & drop images here, or click to browse</p>
               <p className="text-sm text-muted-foreground">Up to 100 images. HEIC auto-converted, large files resized.</p>
-              <input id="file-input" type="file" accept="image/*" multiple className="hidden" onChange={onInputFiles} />
+              <input id="file-input" type="file" accept="image/*,image/heic,image/heif" multiple className="hidden" onChange={onInputFiles} />
             </div>
             {/* Previews */}
             {images.length > 0 && (
