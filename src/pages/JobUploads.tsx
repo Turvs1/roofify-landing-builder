@@ -42,9 +42,13 @@ interface Job {
 export default function JobUploads() {
   // SEO
   useEffect(() => {
-    document.title = "Job Uploads | ARW Roofing";
-    setMetaTag("description", "Bulk upload and organize job photos with HEIC conversion and resizing.");
-    setCanonical(window.location.origin + "/job-uploads");
+    if (typeof document !== "undefined") {
+      document.title = "Job Uploads | ARW Roofing";
+      setMetaTag("description", "Bulk upload and organize job photos with HEIC conversion and resizing.");
+    }
+    if (typeof window !== "undefined") {
+      setCanonical(window.location.origin + "/job-uploads");
+    }
   }, []);
 
   const { toast } = useToast();
@@ -55,6 +59,18 @@ export default function JobUploads() {
   const MAX_FILES = 100;
   const MAX_DIM_PX = 3000; // already used by resizeImage
   const JPG_QUALITY = 0.85; // unify JPEG quality controls
+
+  const [autoMatched, setAutoMatched] = useState<string>("");
+
+  function findBestJob(query: string) {
+    const q = query.trim().toLowerCase();
+    if (!q) return null;
+    const exact = jobOptions.find((o) => o.label === query);
+    if (exact) return exact;
+    const matches = jobOptions.filter((o) => o.label.toLowerCase().includes(q));
+    if (matches.length === 1) return matches[0];
+    return null;
+  }
 
   const [jobs, setJobs] = useState<Job[]>([]);
   const [loadingJobs, setLoadingJobs] = useState(true);
@@ -103,15 +119,38 @@ export default function JobUploads() {
   }, [jobs]);
 
   useEffect(() => {
-    const match = jobOptions.find((o) => o.label === addressQuery);
+    const match = findBestJob(addressQuery);
     if (match) {
       setSelectedJob(match.job);
       setJobId(match.job.jobId);
       setDescription(match.job.description);
+      setAutoMatched(match.label === addressQuery ? "" : `Matched: ${match.label}`);
     } else {
       setSelectedJob(null);
+      setAutoMatched("");
     }
   }, [addressQuery, jobOptions]);
+  async function testEndpoint() {
+    try {
+      const fd = new FormData();
+      fd.append("ping", "1");
+      const res = await fetch(webhookUrl, {
+        method: "POST",
+        body: fd,
+        mode: "cors",
+        credentials: "omit",
+      });
+      if (!res.ok) {
+        const text = await res.text().catch(() => "");
+        throw new Error(`(${res.status}) ${text}`);
+      }
+      toast({ title: "Endpoint OK", description: `Webhook responded ${res.status}` });
+    } catch (e: any) {
+      const msg = e?.message || String(e);
+      const hint = msg.includes("Failed to fetch") || msg.includes("TypeError") ? "Likely CORS or network block. Check n8n Respond Immediately + CORS headers." : msg;
+      toast({ title: "Endpoint test failed", description: hint, variant: "destructive" });
+    }
+  }
 
   async function resizeImage(file: File, maxDim = 3000): Promise<File> {
     return new Promise((resolve) => {
@@ -302,6 +341,9 @@ export default function JobUploads() {
                   onChange={(e) => setAddressQuery(e.target.value)}
                   disabled={loadingJobs}
                 />
+                {autoMatched && (
+                  <div className="text-xs text-muted-foreground mt-1" role="status">{autoMatched}</div>
+                )}
                 <datalist id="job-suggestions">
                   {jobOptions.map((o) => (
                     <option key={o.key} value={o.label} />
@@ -394,6 +436,9 @@ export default function JobUploads() {
               </Button>
               <Button type="button" variant="secondary" className="w-full sm:w-auto" onClick={() => setImages([])} disabled={uploading || images.length === 0}>
                 Clear Images
+              </Button>
+              <Button type="button" variant="outline" className="w-full sm:w-auto" onClick={testEndpoint} disabled={uploading}>
+                Test endpoint
               </Button>
             </div>
           </CardContent>
