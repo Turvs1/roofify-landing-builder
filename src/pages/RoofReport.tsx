@@ -1,4 +1,7 @@
 import React, { useState, useEffect } from 'react';
+import Navigation from '../components/Navigation';
+import Footer from '../components/Footer';
+import SEO from '../components/SEO';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import {
@@ -277,8 +280,11 @@ const RoofReport = () => {
   const uniqueDescriptions = Array.from(new Set(jobs.map((j) => j.description)));
 
   return (
-    <div className="min-h-screen bg-background p-4">
-      <div className="max-w-3xl mx-auto">
+    <div className="min-h-screen bg-background">
+      <SEO page="roofReport" />
+      <Navigation />
+              <div className="p-4 mt-24">
+          <div className="max-w-3xl mx-auto">
         <Card>
           <CardHeader><CardTitle className="text-center text-2xl">Roof Report Submission</CardTitle></CardHeader>
           <CardContent>
@@ -760,7 +766,9 @@ const RoofReport = () => {
             </form>
           </CardContent>
         </Card>
+        </div>
       </div>
+      <Footer />
     </div>
   );
 };

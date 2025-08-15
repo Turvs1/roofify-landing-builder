@@ -1,0 +1,24 @@
+User-agent: *
+Allow: /
+
+# Disallow admin and private areas
+Disallow: /admin/
+Disallow: /private/
+Disallow: /api/
+Disallow: /_next/
+Disallow: /static/
+
+# Allow important pages
+Allow: /about
+Allow: /services/
+Allow: /projects/
+Allow: /team
+Allow: /contact
+Allow: /roof-report
+Allow: /sitemap
+
+# Sitemap location
+Sitemap: https://arwc.com.au/sitemap.xml
+
+# Crawl delay (optional - be respectful to servers)
+Crawl-delay: 1

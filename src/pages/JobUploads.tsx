@@ -1,5 +1,8 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import heic2any from "heic2any";
+import Navigation from '../components/Navigation';
+import Footer from '../components/Footer';
+import SEO from '../components/SEO';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -322,8 +325,11 @@ export default function JobUploads() {
   const progressPct = images.length ? Math.round((uploadedCount / images.length) * 100) : 0;
 
   return (
-    <div className="min-h-screen bg-background p-4">
-      <div className="max-w-4xl mx-auto">
+    <div className="min-h-screen bg-background">
+      <SEO page="jobUploads" />
+      <Navigation />
+              <div className="p-4 mt-24">
+          <div className="max-w-4xl mx-auto">
         <Card>
           <CardHeader>
             <CardTitle className="text-center text-2xl">Roof Photos — Bulk Uploader</CardTitle>
@@ -443,7 +449,9 @@ export default function JobUploads() {
             </div>
           </CardContent>
         </Card>
+        </div>
       </div>
+      <Footer />
     </div>
   );
 }

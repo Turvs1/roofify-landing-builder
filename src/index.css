@@ -1,6 +1,26 @@
 
 @import url('https://fonts.cdnfonts.com/css/gotham');
 
+/*
+  DARK MODE DISABLED GLOBALLY
+  
+  All dark mode functionality has been commented out across the entire site.
+  This includes:
+  - Dark mode CSS variables
+  - Dark mode utility classes (dark:)
+  - Dark mode JavaScript logic
+  - Dark mode toggle components
+  
+  To re-enable dark mode:
+  1. Uncomment the dark mode CSS variables in the :root section
+  2. Uncomment the dark mode styles in the .dark section
+  3. Uncomment the dark mode logic in PreWorksForm.tsx
+  4. Uncomment the dark mode classes in Navigation.tsx
+  5. Uncomment the dark mode classes in all page components
+  
+  Last disabled: [Current Date]
+*/
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -9,96 +29,174 @@
   :root {
     --background: 0 0% 100%;
     --foreground: 222.2 84% 4.9%;
-
     --card: 0 0% 100%;
     --card-foreground: 222.2 84% 4.9%;
-
     --popover: 0 0% 100%;
     --popover-foreground: 222.2 84% 4.9%;
-
-    --primary: 222.2 47.4% 11.2%;
+    --primary: 221.2 83.2% 53.3%;
     --primary-foreground: 210 40% 98%;
-
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
-
-    --muted: 210 40% 96.1%;
+    --secondary: 210 40% 96%;
+    --secondary-foreground: 222.2 84% 4.9%;
+    --muted: 210 40% 96%;
     --muted-foreground: 215.4 16.3% 46.9%;
-
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222.2 47.4% 11.2%;
-
+    --accent: 210 40% 96%;
+    --accent-foreground: 222.2 84% 4.9%;
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 210 40% 98%;
-
     --border: 214.3 31.8% 91.4%;
     --input: 214.3 31.8% 91.4%;
-    --ring: 222.2 84% 4.9%;
-
+    --ring: 221.2 83.2% 53.3%;
     --radius: 0.5rem;
-
-    --sidebar-background: 0 0% 98%;
-    --sidebar-foreground: 240 5.3% 26.1%;
-    --sidebar-primary: 240 5.9% 10%;
-    --sidebar-primary-foreground: 0 0% 98%;
-    --sidebar-accent: 240 4.8% 95.9%;
-    --sidebar-accent-foreground: 240 5.9% 10%;
-    --sidebar-border: 220 13% 91%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    --arw-navy: 221 83% 20%;
+    --arw-blue: 221 83% 53%;
   }
 
+  /* Dark mode variables - DISABLED FOR NOW (can be re-enabled later) */
+  /*
   .dark {
     --background: 222.2 84% 4.9%;
     --foreground: 210 40% 98%;
-
     --card: 222.2 84% 4.9%;
     --card-foreground: 210 40% 98%;
-
     --popover: 222.2 84% 4.9%;
     --popover-foreground: 210 40% 98%;
-
-    --primary: 210 40% 98%;
-    --primary-foreground: 222.2 47.4% 11.2%;
-
+    --primary: 217.2 91.2% 59.8%;
+    --primary-foreground: 222.2 84% 4.9%;
     --secondary: 217.2 32.6% 17.5%;
     --secondary-foreground: 210 40% 98%;
-
     --muted: 217.2 32.6% 17.5%;
     --muted-foreground: 215 20.2% 65.1%;
-
     --accent: 217.2 32.6% 17.5%;
     --accent-foreground: 210 40% 98%;
-
     --destructive: 0 62.8% 30.6%;
     --destructive-foreground: 210 40% 98%;
-
     --border: 217.2 32.6% 17.5%;
     --input: 217.2 32.6% 17.5%;
-    --ring: 212.7 26.8% 83.9%;
-    --sidebar-background: 240 5.9% 10%;
-    --sidebar-foreground: 240 4.8% 95.9%;
-    --sidebar-primary: 224.3 76.3% 48%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 240 3.7% 15.9%;
-    --sidebar-accent-foreground: 240 4.8% 95.9%;
-    --sidebar-border: 240 3.7% 15.9%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    --ring: 224.3 76.3% 94.1%;
+    --arw-navy: 217 91% 60%;
+    --arw-blue: 217 91% 80%;
   }
+  */
 }
 
 @layer base {
   * {
     @apply border-border;
   }
-
+  
   body {
-    @apply bg-background text-foreground font-gotham antialiased;
-    overflow-x: hidden;
-    -webkit-overflow-scrolling: touch; /* Improve mobile scrolling */
+    @apply bg-background text-foreground;
+    font-feature-settings: "rlig" 1, "calt" 1;
   }
 
-  html {
-    scroll-behavior: smooth;
+  /* Dark mode specific styles - DISABLED FOR NOW (can be re-enabled later) */
+  /*
+  .dark body {
+    @apply bg-gray-900 text-gray-100;
+  }
+
+  /* Enhanced dark mode for cards */
+  .dark .bg-white {
+    @apply bg-gray-800;
+  }
+
+  .dark .bg-gray-50 {
+    @apply bg-gray-700;
+  }
+
+  .dark .bg-gray-100 {
+    @apply bg-gray-700;
+  }
+
+  .dark .bg-blue-50 {
+    @apply bg-blue-900/20;
+  }
+
+  .dark .bg-red-50 {
+    @apply bg-red-900/20;
+  }
+
+  /* Dark mode text colors */
+  .dark .text-gray-600 {
+    @apply text-gray-300;
+  }
+
+  .dark .text-gray-700 {
+    @apply text-gray-200;
+  }
+
+  .dark .text-gray-800 {
+    @apply text-gray-100;
+  }
+
+  .dark .text-blue-800 {
+    @apply text-blue-200;
+  }
+
+  .dark .text-red-700 {
+    @apply text-red-200;
+  }
+
+  .dark .text-red-800 {
+    @apply text-red-200;
+  }
+
+  /* Dark mode borders */
+  .dark .border-gray-200 {
+    @apply border-gray-600;
+  }
+
+  .dark .border-red-200 {
+    @apply border-red-700;
+  }
+
+  /* Dark mode hover states */
+  .dark .hover\:bg-gray-100:hover {
+    @apply hover:bg-gray-700;
+  }
+
+  .dark .hover\:shadow-md:hover {
+    @apply hover:shadow-gray-900/50;
+  }
+
+  /* Dark mode gradients */
+  .dark .from-arw-navy {
+    @apply from-gray-800;
+  }
+
+  .dark .to-arw-blue {
+    @apply to-gray-600;
+  }
+
+  /* Dark mode button states */
+  .dark .bg-arw-blue {
+    @apply bg-blue-600;
+  }
+
+  .dark .hover\:bg-arw-navy:hover {
+    @apply hover:bg-blue-700;
+  }
+
+  /* Dark mode styles - DISABLED FOR NOW (can be re-enabled later) */
+  /*
+  .dark .text-arw-navy {
+    @apply text-blue-200;
+  }
+
+  .dark .text-arw-blue {
+    @apply text-blue-300;
+  }
+  */
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  
+  body {
+    @apply bg-background text-foreground;
+    font-feature-settings: "rlig" 1, "calt" 1;
   }
 }
 

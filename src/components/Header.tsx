@@ -57,15 +57,24 @@ const Header = () => {
           
           {/* Navigation links - visible on all screen sizes */}
           <div className="flex space-x-4 md:space-x-8 z-10">
-            <button onClick={() => scrollToSection('why')} className="font-medium tracking-wide transition-colors duration-300 text-arw-navy hover:text-arw-blue text-xs md:text-base">
-              Why
-            </button>
-            <button onClick={() => scrollToSection('how')} className="font-medium tracking-wide transition-colors duration-300 text-arw-navy hover:text-arw-blue text-xs md:text-base">
-              How
-            </button>
-            <button onClick={() => scrollToSection('what')} className="font-medium tracking-wide transition-colors duration-300 text-arw-navy hover:text-arw-blue text-xs md:text-base">
-              What
-            </button>
+            <Link to="/about" className="font-medium tracking-wide transition-colors duration-300 text-arw-navy hover:text-arw-blue text-xs md:text-base">
+              About
+            </Link>
+            <Link to="/services" className="font-medium tracking-wide transition-colors duration-300 text-arw-navy hover:text-arw-blue text-xs md:text-base">
+              Services
+            </Link>
+            <Link to="/projects" className="font-medium tracking-wide transition-colors duration-300 text-arw-navy hover:text-arw-blue text-xs md:text-base">
+              Projects
+            </Link>
+            <Link to="/team" className="font-medium tracking-wide transition-colors duration-300 text-arw-navy hover:text-arw-blue text-xs md:text-base">
+              Team
+            </Link>
+            <Link to="/safety-quality" className="font-medium tracking-wide transition-colors duration-300 text-arw-navy hover:text-arw-blue text-xs md:text-base">
+              Safety & Quality
+            </Link>
+            <Link to="/contact" className="font-medium tracking-wide transition-colors duration-300 text-arw-navy hover:text-arw-blue text-xs md:text-base">
+              Contact
+            </Link>
             <Link to="/job-uploads" className="font-medium tracking-wide transition-colors duration-300 text-arw-navy hover:text-arw-blue text-xs md:text-base">
               Job Uploads
             </Link>

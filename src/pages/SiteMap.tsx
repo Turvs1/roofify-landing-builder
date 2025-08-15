@@ -1,11 +1,17 @@
 
 import React from 'react';
 import { Link } from 'react-router-dom';
+import Navigation from '../components/Navigation';
+import Footer from '../components/Footer';
+import SEO from '../components/SEO';
 
 const SiteMap = () => {
   return (
-    <div className="min-h-screen bg-gray-50 py-16">
-      <div className="max-w-7xl mx-auto px-6">
+    <div className="min-h-screen bg-gray-50">
+      <SEO page="sitemap" />
+      <Navigation />
+              <div className="py-16 mt-24">
+          <div className="max-w-7xl mx-auto px-6">
         <h1 className="text-3xl font-bold text-arw-navy mb-8">Site Map</h1>
         
         <div className="glass-card mb-8">
@@ -127,7 +133,9 @@ const SiteMap = () => {
             Return to Home Page
           </Link>
         </div>
+        </div>
       </div>
+      <Footer />
     </div>
   );
 };
