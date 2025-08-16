@@ -1,35 +1,93 @@
 
-import { defineConfig } from "vite";
-import react from "@vitejs/plugin-react-swc";
-import path from "path";
-import { componentTagger } from "lovable-tagger";
+import { defineConfig } from 'vite'
+import react from '@vitejs/plugin-react-swc'
+import { resolve } from 'path'
 
 // https://vitejs.dev/config/
-export default defineConfig(({ mode }) => ({
-  server: {
-    host: "::",
-    port: 8080,
-  },
-  plugins: [
-    react(),
-    mode === 'development' &&
-    componentTagger(),
-  ].filter(Boolean),
+export default defineConfig({
+  plugins: [react()],
   resolve: {
     alias: {
-      "@": path.resolve(__dirname, "./src"),
+      '@': resolve(__dirname, './src'),
     },
   },
   build: {
-    outDir: 'dist',
-    assetsDir: 'assets',
-    // Ensure proper MIME types for chunk files
-    rollupOptions: {
-      output: {
-        manualChunks: undefined,
-        chunkFileNames: 'assets/[name]-[hash].js',
-        entryFileNames: 'assets/[name]-[hash].js',
+    target: 'es2015',
+    minify: 'terser',
+    terserOptions: {
+      compress: {
+        drop_console: true,
+        drop_debugger: true,
       },
     },
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          // Vendor chunk for third-party libraries
+          vendor: ['react', 'react-dom', 'react-router-dom'],
+          // UI components chunk
+          ui: ['@radix-ui/react-dialog', '@radix-ui/react-dropdown-menu', '@radix-ui/react-select'],
+          // Utility libraries
+          utils: ['clsx', 'tailwind-merge', 'class-variance-authority'],
+          // Charts and data visualization
+          charts: ['recharts'],
+          // Form handling
+          forms: ['react-hook-form', '@hookform/resolvers', 'zod'],
+        },
+        // Optimize chunk naming
+        chunkFileNames: (chunkInfo) => {
+          const facadeModuleId = chunkInfo.facadeModuleId ? chunkInfo.facadeModuleId.split('/').pop() : 'chunk';
+          return `js/[name]-[hash].js`;
+        },
+        assetFileNames: (assetInfo) => {
+          const info = assetInfo.name.split('.');
+          const ext = info[info.length - 1];
+          if (/png|jpe?g|svg|gif|tiff|bmp|ico/i.test(ext)) {
+            return `images/[name]-[hash].[ext]`;
+          }
+          if (/css/i.test(ext)) {
+            return `css/[name]-[hash].[ext]`;
+          }
+          return `assets/[name]-[hash].[ext]`;
+        },
+      },
+    },
+    // Optimize chunk size warnings
+    chunkSizeWarningLimit: 1000,
+    // Enable source maps for production debugging
+    sourcemap: false,
   },
-}));
+  // Optimize dependencies
+  optimizeDeps: {
+    include: [
+      'react',
+      'react-dom',
+      'react-router-dom',
+      'lucide-react',
+      '@radix-ui/react-dialog',
+      '@radix-ui/react-dropdown-menu',
+      '@radix-ui/react-select',
+    ],
+  },
+  // Server options for development
+  server: {
+    port: 8080,
+    host: true,
+    // Enable HMR
+    hmr: {
+      overlay: false,
+    },
+  },
+  // CSS optimization
+  css: {
+    devSourcemap: false,
+    postcss: {
+      plugins: [
+        require('autoprefixer'),
+        require('tailwindcss'),
+      ],
+    },
+  },
+  // Asset handling
+  assetsInclude: ['**/*.pdf', '**/*.svg', '**/*.png', '**/*.jpg', '**/*.jpeg', '**/*.webp'],
+})
