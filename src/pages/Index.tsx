@@ -1,19 +1,17 @@
 
-import React, { useEffect, useState, useRef, lazy, Suspense } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import Navigation from '../components/Navigation';
-import CriticalCSS from '../components/CriticalCSS';
+// import CriticalCSS from '../components/CriticalCSS';
 import PerformanceMonitor from '../components/PerformanceMonitor';
 import OptimizedImage from '../components/OptimizedImage';
+import WhySection from '../components/WhySection';
+import HowSection from '../components/HowSection';
+import WhatSection from '../components/WhatSection';
+import EnquiryForm from '../components/EnquiryForm';
+import BookingCalendar from '../components/BookingCalendar';
+import Footer from '../components/Footer';
 import SEO from '../components/SEO';
 import { supabase } from '@/integrations/supabase/client';
-
-// Lazy load non-critical components
-const WhySection = lazy(() => import('../components/WhySection'));
-const HowSection = lazy(() => import('../components/HowSection'));
-const WhatSection = lazy(() => import('../components/WhatSection'));
-const EnquiryForm = lazy(() => import('../components/EnquiryForm'));
-const BookingCalendar = lazy(() => import('../components/BookingCalendar'));
-const Footer = lazy(() => import('../components/Footer'));
 
 const Index = () => {
   const [scrolled, setScrolled] = useState(false);
@@ -86,7 +84,7 @@ const Index = () => {
   return (
     <>
       <SEO page="home" />
-      <CriticalCSS />
+      {/* <CriticalCSS /> */}
       <PerformanceMonitor />
       
       <div className="min-h-screen overflow-hidden">
@@ -94,7 +92,7 @@ const Index = () => {
         
         {/* Hero Section with Background Image Transition */}
         <header ref={headerRef} className="relative w-full h-screen">
-          <div className="hero-parallax mt-24">
+          <div className="hero-parallax mt-24" style={{ position: 'relative', width: '100%', height: '100vh', overflow: 'hidden' }}>
             {/* Background Images with Transition Effect */}
             <div className="absolute inset-0 w-full h-full overflow-hidden">
               <div className="absolute inset-0 bg-black bg-opacity-40 z-10"></div>
@@ -105,7 +103,16 @@ const Index = () => {
                 alt="Roof construction aerial view"
                 className="absolute w-full h-full object-cover transition-opacity duration-300 ease-in-out"
                 priority={true}
-                style={{ opacity: 1 - transitionProgress }}
+                style={{ 
+                  opacity: 1 - transitionProgress,
+                  position: 'absolute',
+                  top: 0,
+                  left: 0,
+                  width: '100%',
+                  height: '100%',
+                  objectFit: 'cover',
+                  objectPosition: 'center'
+                }}
               />
               
               {/* Completed Roof Image (Fades in as user scrolls) */}
@@ -114,19 +121,55 @@ const Index = () => {
                 alt="Completed roof aerial view"
                 className="absolute w-full h-full object-cover transition-opacity duration-300 ease-in-out"
                 priority={false}
-                style={{ opacity: transitionProgress }}
+                style={{ 
+                  opacity: transitionProgress,
+                  position: 'absolute',
+                  top: 0,
+                  left: 0,
+                  width: '100%',
+                  height: '100%',
+                  objectFit: 'cover',
+                  objectPosition: 'center'
+                }}
               />
             </div>
             
-            <div className="parallax-content text-center px-6 relative z-20">
+            <div className="parallax-content text-center px-6 relative z-20" style={{ 
+              position: 'absolute',
+              top: '50%',
+              left: '50%',
+              transform: 'translate(-50%, -50%)',
+              zIndex: 20,
+              textAlign: 'center',
+              width: '100%',
+              maxWidth: '1200px',
+              padding: '0 1rem'
+            }}>
               <div className="bg-black bg-opacity-30 px-6 py-0 rounded-lg backdrop-blur-sm inline-block">
-                <h1 className="section-heading text-white mb-0 animate-fade-in">
+                <h1 className="section-heading text-white mb-0 animate-fade-in" style={{
+                  fontSize: 'clamp(2rem, 5vw, 4rem)',
+                  fontWeight: 700,
+                  lineHeight: 1.2,
+                  margin: 0,
+                  color: 'white',
+                  textShadow: '2px 2px 4px rgba(0, 0, 0, 0.5)'
+                }}>
                   WE BELIEVE EVERY PROPERTY<br />DESERVES A STRONG ROOF
                 </h1>
               </div>
               
               <button onClick={() => scrollToSection('enquiry')} className="button-primary mt-8 animate-fade-in" style={{
-                animationDelay: '400ms'
+                animationDelay: '400ms',
+                background: 'linear-gradient(135deg, #1e3a8a 0%, #2563eb 100%)',
+                color: 'white',
+                border: 'none',
+                padding: '1rem 2rem',
+                borderRadius: '8px',
+                fontWeight: 600,
+                fontSize: '1.1rem',
+                cursor: 'pointer',
+                transition: 'all 0.3s ease',
+                boxShadow: '0 4px 15px rgba(37, 99, 235, 0.3)'
               }}>
                 BOOK IN YOUR INSPECTION
               </button>
@@ -135,30 +178,14 @@ const Index = () => {
         </header>
 
         <main>
-          <Suspense fallback={<div className="py-20 text-center">Loading...</div>}>
-            <WhySection />
-          </Suspense>
-          
-          <Suspense fallback={<div className="py-20 text-center">Loading...</div>}>
-            <HowSection />
-          </Suspense>
-          
-          <Suspense fallback={<div className="py-20 text-center">Loading...</div>}>
-            <WhatSection />
-          </Suspense>
-          
-          <Suspense fallback={<div className="py-20 text-center">Loading...</div>}>
-            <EnquiryForm />
-          </Suspense>
-          
-          <Suspense fallback={<div className="py-20 text-center">Loading...</div>}>
-            <BookingCalendar />
-          </Suspense>
+          <WhySection />
+          <HowSection />
+          <WhatSection />
+          <EnquiryForm />
+          <BookingCalendar />
         </main>
         
-        <Suspense fallback={<div className="py-20 text-center">Loading...</div>}>
-          <Footer />
-        </Suspense>
+        <Footer />
       </div>
     </>
   );

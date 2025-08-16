@@ -13,13 +13,7 @@ export default defineConfig({
   },
   build: {
     target: 'es2015',
-    minify: 'terser',
-    terserOptions: {
-      compress: {
-        drop_console: true,
-        drop_debugger: true,
-      },
-    },
+    minify: 'esbuild',
     rollupOptions: {
       output: {
         manualChunks: {
@@ -33,6 +27,9 @@ export default defineConfig({
           charts: ['recharts'],
           // Form handling
           forms: ['react-hook-form', '@hookform/resolvers', 'zod'],
+          // Large libraries that should be separate
+          html2canvas: ['html2canvas'],
+          jspdf: ['jspdf'],
         },
         // Optimize chunk naming
         chunkFileNames: (chunkInfo) => {
@@ -40,7 +37,7 @@ export default defineConfig({
           return `js/[name]-[hash].js`;
         },
         assetFileNames: (assetInfo) => {
-          const info = assetInfo.name.split('.');
+          const info = assetInfo.name?.split('.') || [];
           const ext = info[info.length - 1];
           if (/png|jpe?g|svg|gif|tiff|bmp|ico/i.test(ext)) {
             return `images/[name]-[hash].[ext]`;
@@ -81,12 +78,6 @@ export default defineConfig({
   // CSS optimization
   css: {
     devSourcemap: false,
-    postcss: {
-      plugins: [
-        require('autoprefixer'),
-        require('tailwindcss'),
-      ],
-    },
   },
   // Asset handling
   assetsInclude: ['**/*.pdf', '**/*.svg', '**/*.png', '**/*.jpg', '**/*.jpeg', '**/*.webp'],

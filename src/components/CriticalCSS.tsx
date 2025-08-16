@@ -102,6 +102,23 @@ const CriticalCSS: React.FC = () => {
             font-size: 1rem;
           }
         }
+        
+        /* Hero background image fixes */
+        .hero-parallax img {
+          position: absolute !important;
+          top: 0 !important;
+          left: 0 !important;
+          width: 100% !important;
+          height: 100% !important;
+          object-fit: cover !important;
+          object-position: center !important;
+        }
+        
+        /* Ensure hero section takes full viewport */
+        .hero-parallax {
+          min-height: 100vh !important;
+          height: 100vh !important;
+        }
       `
     }} />
   );
