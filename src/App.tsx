@@ -5,11 +5,11 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { HelmetProvider } from "react-helmet-async";
+import { lazy, Suspense } from "react";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import SiteMap from "./pages/SiteMap";
 import RoofReport from "./pages/RoofReport";
-import JobUploads from "./pages/JobUploads";
 import AboutUs from "./pages/AboutUs";
 import Services from "./pages/Services";
 import Projects from "./pages/Projects";
@@ -32,7 +32,10 @@ import GoldCoastLocation from "./pages/GoldCoastLocation";
 import SunshineCoastLocation from "./pages/SunshineCoastLocation";
 import TermsOfService from "./pages/TermsOfService";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
-import PreWorksForm from "./pages/PreWorksForm";
+
+// Lazy load heavy components
+const PreWorksForm = lazy(() => import("./pages/PreWorksForm"));
+const JobUploads = lazy(() => import("./pages/JobUploads"));
 
 const queryClient = new QueryClient();
 
@@ -67,10 +70,18 @@ const App = () => (
             <Route path="/contact" element={<Contact />} />
             <Route path="/sitemap" element={<SiteMap />} />
             <Route path="/roof-report" element={<RoofReport />} />
-            <Route path="/job-uploads" element={<JobUploads />} />
+            <Route path="/job-uploads" element={
+              <Suspense fallback={<div className="flex items-center justify-center min-h-screen">Loading...</div>}>
+                <JobUploads />
+              </Suspense>
+            } />
             <Route path="/terms-of-service" element={<TermsOfService />} />
             <Route path="/privacy-policy" element={<PrivacyPolicy />} />
-            <Route path="/pre-works-form" element={<PreWorksForm />} />
+            <Route path="/pre-works-form" element={
+              <Suspense fallback={<div className="flex items-center justify-center min-h-screen">Loading...</div>}>
+                <PreWorksForm />
+              </Suspense>
+            } />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>

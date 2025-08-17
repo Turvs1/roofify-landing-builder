@@ -10,8 +10,9 @@ import { Separator } from '@/components/ui/separator'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { Check, ChevronsUpDown } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import jsPDF from 'jspdf'
-import html2canvas from 'html2canvas'
+// Dynamic imports for heavy libraries
+// import jsPDF from 'jspdf'
+// import html2canvas from 'html2canvas'
 import './PreWorksForm.css'
 
 // Navigation and layout components
@@ -1629,6 +1630,9 @@ const PreWorksForm: React.FC = () => {
       setIsGenerating(true)
       
       try {
+        // Dynamically import jsPDF only when needed
+        const { default: jsPDF } = await import('jspdf')
+        
         // Create new PDF document
         const pdf = new jsPDF('p', 'mm', 'a4')
         const pageWidth = pdf.internal.pageSize.getWidth()

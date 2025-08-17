@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
-import heic2any from "heic2any";
+// Dynamic import for heavy library
+// import heic2any from "heic2any";
 import Navigation from '../components/Navigation';
 import Footer from '../components/Footer';
 import SEO from '../components/SEO';
@@ -197,6 +198,8 @@ export default function JobUploads() {
       const isHeic = f.type === "image/heic" || f.type === "image/heif" || /\.hei[c|f]$/i.test(f.name);
       if (isHeic) {
         try {
+          // Dynamic import of heic2any only when needed
+          const { default: heic2any } = await import("heic2any");
           const blob = (await heic2any({ blob: f, toType: "image/jpeg", quality: JPG_QUALITY })) as Blob;
           fileToAdd = new File([blob], f.name.replace(/\.(heic|heif)$/i, ".jpg"), { type: "image/jpeg" });
         } catch {

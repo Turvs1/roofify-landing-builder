@@ -1,94 +1,64 @@
-import React, { useState, useEffect, useRef, CSSProperties } from 'react';
+import React from 'react';
 
 interface OptimizedImageProps {
   src: string;
+  webpSrc?: string;
   alt: string;
   className?: string;
-  width?: number;
-  height?: number;
-  priority?: boolean;
+  width?: number | string;
+  height?: number | string;
+  loading?: 'lazy' | 'eager';
   sizes?: string;
-  placeholder?: string;
-  style?: CSSProperties;
-  onLoad?: () => void;
-  onError?: () => void;
+  style?: React.CSSProperties;
 }
 
 const OptimizedImage: React.FC<OptimizedImageProps> = ({
   src,
+  webpSrc,
   alt,
-  className = '',
+  className,
   width,
   height,
-  priority = false,
-  sizes = '100vw',
-  placeholder,
-  style = {},
-  onLoad,
-  onError
+  loading = 'lazy',
+  sizes,
+  style,
+  ...props
 }) => {
-  const [isLoaded, setIsLoaded] = useState(false);
-  const [imageSrc, setImageSrc] = useState(placeholder || src);
-  const imgRef = useRef<HTMLImageElement>(null);
-
-  useEffect(() => {
-    // Generate WebP version if supported
-    const generateWebPSrc = (originalSrc: string) => {
-      if (originalSrc.includes('/lovable-uploads/')) {
-        // For lovable-uploads, we'll use the original for now
-        // In production, you'd want to generate WebP versions
-        return originalSrc;
-      }
-      return originalSrc;
-    };
-
-    setImageSrc(generateWebPSrc(src));
-  }, [src]);
-
-  useEffect(() => {
-    if (priority) {
-      // Preload critical images
-      const link = document.createElement('link');
-      link.rel = 'preload';
-      link.as = 'image';
-      link.href = imageSrc;
-      document.head.appendChild(link);
-    }
-  }, [imageSrc, priority]);
-
-  const handleLoad = () => {
-    setIsLoaded(true);
-    onLoad?.();
+  // Generate WebP source if not provided
+  const generateWebPSrc = (originalSrc: string) => {
+    if (webpSrc) return webpSrc;
+    
+    // If it's already a WebP, return as is
+    if (originalSrc.endsWith('.webp')) return originalSrc;
+    
+    // Generate WebP path by replacing extension
+    const basePath = originalSrc.replace(/\.[^/.]+$/, '');
+    return `${basePath}.webp`;
   };
 
-  const handleError = () => {
-    // Fallback to original image if WebP fails
-    if (imageSrc !== src) {
-      setImageSrc(src);
-    }
-    onError?.();
-  };
+  const webpSource = generateWebPSrc(src);
 
   return (
-    <img
-      ref={imgRef}
-      src={imageSrc}
-      alt={alt}
-      className={`${className} ${isLoaded ? 'opacity-100' : 'opacity-0'}`}
-      style={{
-        transition: 'opacity 0.3s ease-in-out',
-        width: width ? `${width}px` : 'auto',
-        height: height ? `${height}px` : 'auto',
-        ...style
-      }}
-      width={width}
-      height={height}
-      sizes={sizes}
-      loading={priority ? 'eager' : 'lazy'}
-      fetchPriority={priority ? 'high' : 'auto'}
-      onLoad={handleLoad}
-      onError={handleError}
-    />
+    <picture>
+      {/* WebP source for modern browsers */}
+      <source
+        srcSet={webpSource}
+        type="image/webp"
+        sizes={sizes}
+      />
+      
+      {/* Fallback for older browsers */}
+      <img
+        src={src}
+        alt={alt}
+        className={className}
+        width={width}
+        height={height}
+        loading={loading}
+        style={style}
+        {...props}
+      />
+    </picture>
   );
 };
 

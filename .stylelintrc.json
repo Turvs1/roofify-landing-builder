@@ -1,0 +1,141 @@
+{
+  "extends": [
+    "stylelint-config-standard"
+  ],
+  "plugins": [],
+  "rules": {
+    "at-rule-no-unknown": [
+      true,
+      {
+        "ignoreAtRules": [
+          "tailwind",
+          "apply",
+          "variants",
+          "responsive",
+          "screen",
+          "layer",
+          "import",
+          "media",
+          "supports",
+          "keyframes",
+          "font-face",
+          "charset",
+          "namespace",
+          "page",
+          "counter-style",
+          "font-feature-values",
+          "swash",
+          "ornaments",
+          "annotation",
+          "stylistic",
+          "styleset",
+          "character-variant",
+          "font-palette-values"
+        ]
+      }
+    ],
+    "property-no-unknown": [
+      true,
+      {
+        "ignoreProperties": [
+          "content-visibility",
+          "contain-intrinsic-size",
+          "backdrop-filter",
+          "backdrop-blur",
+          "scroll-behavior",
+          "overscroll-behavior",
+          "touch-action",
+          "user-select",
+          "will-change",
+          "contain",
+          "isolation",
+          "mix-blend-mode",
+          "filter",
+          "transform",
+          "transform-origin",
+          "perspective",
+          "perspective-origin",
+          "backface-visibility",
+          "transform-style"
+        ]
+      }
+    ],
+    "selector-pseudo-class-no-unknown": [
+      true,
+      {
+        "ignorePseudoClasses": [
+          "global",
+          "local",
+          "export",
+          "import",
+          "chunk",
+          "layer"
+        ]
+      }
+    ],
+    "selector-pseudo-element-no-unknown": [
+      true,
+      {
+        "ignorePseudoElements": [
+          "v-deep",
+          "v-global",
+          "v-slotted",
+          "v-bind"
+        ]
+      }
+    ],
+    "function-no-unknown": [
+      true,
+      {
+        "ignoreFunctions": [
+          "hsl",
+          "hsla",
+          "rgb",
+          "rgba",
+          "var",
+          "calc",
+          "min",
+          "max",
+          "clamp",
+          "env",
+          "url",
+          "linear-gradient",
+          "radial-gradient",
+          "conic-gradient",
+          "repeating-linear-gradient",
+          "repeating-radial-gradient",
+          "repeating-conic-gradient"
+        ]
+      }
+    ],
+    "no-descending-specificity": null,
+    "selector-class-pattern": null,
+    "property-no-vendor-prefix": null,
+    "value-no-vendor-prefix": null,
+    "declaration-block-no-duplicate-properties": [
+      true,
+      {
+        "ignore": ["consecutive-duplicates"]
+      }
+    ],
+    "rule-empty-line-before": null,
+    "comment-empty-line-before": null,
+    "declaration-empty-line-before": null,
+    "media-feature-range-notation": null,
+    "keyframes-name-pattern": null,
+    "color-function-alias-notation": null,
+    "color-function-notation": null,
+    "alpha-value-notation": null,
+    "declaration-block-no-redundant-longhand-properties": null,
+    "shorthand-property-no-redundant-values": null
+  },
+  "ignoreFiles": [
+    "**/*.js",
+    "**/*.jsx", 
+    "**/*.ts",
+    "**/*.tsx",
+    "dist/**/*",
+    "node_modules/**/*",
+    "build/**/*"
+  ]
+}
