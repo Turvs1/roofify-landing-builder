@@ -5,7 +5,6 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { HelmetProvider } from "react-helmet-async";
-import { lazy, Suspense } from "react";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import SiteMap from "./pages/SiteMap";
@@ -32,10 +31,8 @@ import GoldCoastLocation from "./pages/GoldCoastLocation";
 import SunshineCoastLocation from "./pages/SunshineCoastLocation";
 import TermsOfService from "./pages/TermsOfService";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
-
-// Lazy load heavy components
-const PreWorksForm = lazy(() => import("./pages/PreWorksForm"));
-const JobUploads = lazy(() => import("./pages/JobUploads"));
+import PreWorksForm from "./pages/PreWorksForm";
+import JobUploads from "./pages/JobUploads";
 
 const queryClient = new QueryClient();
 
@@ -56,9 +53,9 @@ const App = () => (
             <Route path="/services/new-construction" element={<NewConstruction />} />
             <Route path="/services/renovations" element={<Renovations />} />
             <Route path="/services/extensions" element={<Extensions />} />
-                               <Route path="/services/insurance" element={<Insurance />} />
-                   <Route path="/services/insulation-services" element={<InsulationServices />} />
-                   <Route path="/services/gutter-systems" element={<GutterSystems />} />
+            <Route path="/services/insurance" element={<Insurance />} />
+            <Route path="/services/insulation-services" element={<InsulationServices />} />
+            <Route path="/services/gutter-systems" element={<GutterSystems />} />
             <Route path="/locations" element={<Locations />} />
             <Route path="/locations/brisbane" element={<BrisbaneLocation />} />
             <Route path="/locations/gold-coast" element={<GoldCoastLocation />} />
@@ -70,18 +67,10 @@ const App = () => (
             <Route path="/contact" element={<Contact />} />
             <Route path="/sitemap" element={<SiteMap />} />
             <Route path="/roof-report" element={<RoofReport />} />
-            <Route path="/job-uploads" element={
-              <Suspense fallback={<div className="flex items-center justify-center min-h-screen">Loading...</div>}>
-                <JobUploads />
-              </Suspense>
-            } />
+            <Route path="/job-uploads" element={<JobUploads />} />
             <Route path="/terms-of-service" element={<TermsOfService />} />
             <Route path="/privacy-policy" element={<PrivacyPolicy />} />
-            <Route path="/pre-works-form" element={
-              <Suspense fallback={<div className="flex items-center justify-center min-h-screen">Loading...</div>}>
-                <PreWorksForm />
-              </Suspense>
-            } />
+            <Route path="/pre-works-form" element={<PreWorksForm />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>

@@ -20,8 +20,7 @@ import Navigation from '../components/Navigation'
 import Footer from '../components/Footer'
 import SEO from '../components/SEO'
 
-// Import custom styles
-import './PreWorksForm.css'
+
 
 // ---------- Config (easy to tweak without redeploy) ----------
 const CONFIG = {
