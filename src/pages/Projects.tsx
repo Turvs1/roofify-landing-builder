@@ -8,6 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import OptimizedImage from '@/components/OptimizedImage';
 import { projects, getProjectsByCategory } from '../data/projects';
 
 const Projects = () => {
@@ -139,7 +140,7 @@ const Projects = () => {
           {filteredProjects.map((project) => (
             <Card key={project.id} className="border-0 shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-2">
               <div className="relative overflow-hidden rounded-t-lg">
-                <img 
+                <OptimizedImage 
                   src={project.image} 
                   alt={project.title}
                   className="w-full h-64 object-cover transition-transform duration-300 hover:scale-110"

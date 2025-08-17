@@ -5,6 +5,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { HelmetProvider } from "react-helmet-async";
+import { lazy, Suspense } from "react";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import SiteMap from "./pages/SiteMap";
@@ -31,8 +32,28 @@ import GoldCoastLocation from "./pages/GoldCoastLocation";
 import SunshineCoastLocation from "./pages/SunshineCoastLocation";
 import TermsOfService from "./pages/TermsOfService";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
-import PreWorksForm from "./pages/PreWorksForm";
-import JobUploads from "./pages/JobUploads";
+import WebPTest from "./pages/WebPTest";
+
+// Lazy load heavy components with proper error handling
+const PreWorksForm = lazy(() => 
+  import("./pages/PreWorksForm").catch(() => ({
+    default: () => <div className="flex items-center justify-center min-h-screen">Error loading form. Please refresh the page.</div>
+  }))
+);
+
+const JobUploads = lazy(() => 
+  import("./pages/JobUploads").catch(() => ({
+    default: () => <div className="flex items-center justify-center min-h-screen">Error loading uploads. Please refresh the page.</div>
+  }))
+);
+
+// Loading component with better UX
+const LoadingSpinner = () => (
+  <div className="flex flex-col items-center justify-center min-h-screen">
+    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-arw-navy"></div>
+    <p className="mt-4 text-arw-navy">Loading...</p>
+  </div>
+);
 
 const queryClient = new QueryClient();
 
@@ -67,10 +88,19 @@ const App = () => (
             <Route path="/contact" element={<Contact />} />
             <Route path="/sitemap" element={<SiteMap />} />
             <Route path="/roof-report" element={<RoofReport />} />
-            <Route path="/job-uploads" element={<JobUploads />} />
+            <Route path="/job-uploads" element={
+              <Suspense fallback={<LoadingSpinner />}>
+                <JobUploads />
+              </Suspense>
+            } />
             <Route path="/terms-of-service" element={<TermsOfService />} />
             <Route path="/privacy-policy" element={<PrivacyPolicy />} />
-            <Route path="/pre-works-form" element={<PreWorksForm />} />
+            <Route path="/pre-works-form" element={
+              <Suspense fallback={<LoadingSpinner />}>
+                <PreWorksForm />
+              </Suspense>
+            } />
+            <Route path="/webp-test" element={<WebPTest />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>

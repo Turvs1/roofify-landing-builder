@@ -31,7 +31,7 @@ export default defineConfig({
             return 'react-core';
           }
           
-          // Radix UI components - split by category
+          // Radix UI components - split by category for better tree shaking
           if (id.includes('@radix-ui/react-dialog') || id.includes('@radix-ui/react-dropdown-menu') || id.includes('@radix-ui/react-select')) {
             return 'radix-ui-forms';
           }
@@ -53,6 +53,9 @@ export default defineConfig({
           if (id.includes('@radix-ui/react-slider') || id.includes('@radix-ui/react-separator') || id.includes('@radix-ui/react-aspect-ratio')) {
             return 'radix-ui-controls';
           }
+          if (id.includes('@radix-ui/react-scroll-area') || id.includes('@radix-ui/react-hover-card')) {
+            return 'radix-ui-interactive';
+          }
           
           // Utility libraries
           if (id.includes('clsx') || id.includes('tailwind-merge') || id.includes('class-variance-authority')) {
@@ -69,8 +72,8 @@ export default defineConfig({
             return 'jspdf';
           }
           
-          // Supabase
-          if (id.includes('@supabase')) {
+          // Supabase - split into smaller chunks
+          if (id.includes('@supabase/supabase-js')) {
             return 'supabase';
           }
           
@@ -110,8 +113,22 @@ export default defineConfig({
             return 'input-otp';
           }
           
-          // Default vendor chunk for other dependencies
+          // Split remaining node_modules into smaller chunks
           if (id.includes('node_modules')) {
+            // Group by package type
+            if (id.includes('@types/') || id.includes('typescript')) {
+              return 'types';
+            }
+            if (id.includes('postcss') || id.includes('autoprefixer') || id.includes('tailwindcss')) {
+              return 'css-tools';
+            }
+            if (id.includes('eslint') || id.includes('stylelint')) {
+              return 'linting';
+            }
+            if (id.includes('vite') || id.includes('rollup')) {
+              return 'build-tools';
+            }
+            // Default vendor chunk for other dependencies
             return 'vendor';
           }
         },

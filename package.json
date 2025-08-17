@@ -14,6 +14,7 @@
     "preview": "vite preview",
     "generate-sitemap": "node scripts/generate-sitemap.mjs",
     "performance-audit": "node scripts/performance-audit.js",
+    "performance-audit-full": "node scripts/performance-audit.mjs",
     "bundle-size": "npm run build && npx vite-bundle-analyzer dist/stats.html",
     "convert-images": "node scripts/convert-images-to-webp.mjs"
   },
