@@ -113,9 +113,9 @@ export default defineConfig({
             return 'input-otp';
           }
           
-          // Split remaining node_modules into smaller chunks
+          // Split remaining node_modules into much smaller chunks
           if (id.includes('node_modules')) {
-            // Group by package type
+            // Group by package type - more granular splitting
             if (id.includes('@types/') || id.includes('typescript')) {
               return 'types';
             }
@@ -128,6 +128,62 @@ export default defineConfig({
             if (id.includes('vite') || id.includes('rollup')) {
               return 'build-tools';
             }
+            
+            // Split by package name for better granularity
+            if (id.includes('node_modules/react-helmet')) {
+              return 'react-helmet';
+            }
+            if (id.includes('node_modules/react-resizable')) {
+              return 'react-resizable';
+            }
+            if (id.includes('node_modules/embla-carousel')) {
+              return 'embla-carousel';
+            }
+            if (id.includes('node_modules/date-fns')) {
+              return 'date-fns';
+            }
+            if (id.includes('node_modules/zod')) {
+              return 'zod';
+            }
+            if (id.includes('node_modules/lucide-react')) {
+              return 'lucide-react';
+            }
+            if (id.includes('node_modules/sonner')) {
+              return 'sonner';
+            }
+            if (id.includes('node_modules/next-themes')) {
+              return 'next-themes';
+            }
+            if (id.includes('node_modules/vaul')) {
+              return 'vaul';
+            }
+            if (id.includes('node_modules/cmdk')) {
+              return 'cmdk';
+            }
+            if (id.includes('node_modules/input-otp')) {
+              return 'input-otp';
+            }
+            
+            // Group remaining packages by size category
+            if (id.includes('node_modules/')) {
+              // Extract package name from path
+              const packageMatch = id.match(/node_modules\/([^/]+)/);
+              if (packageMatch) {
+                const packageName = packageMatch[1];
+                // Group small packages together
+                if (packageName.startsWith('@')) {
+                  return 'at-packages';
+                }
+                if (packageName.length <= 5) {
+                  return 'short-packages';
+                }
+                if (packageName.length <= 10) {
+                  return 'medium-packages';
+                }
+                return 'long-packages';
+              }
+            }
+            
             // Default vendor chunk for other dependencies
             return 'vendor';
           }

@@ -2,6 +2,7 @@ import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import OptimizedImage from '@/components/OptimizedImage';
+import CoreWebVitalsMonitor from '@/components/CoreWebVitalsMonitor';
 import Navigation from '../components/Navigation';
 import Footer from '../components/Footer';
 
@@ -106,6 +107,11 @@ const WebPTest: React.FC = () => {
               </div>
             </div>
           </div>
+        </div>
+        
+        {/* Core Web Vitals Monitor */}
+        <div className="mt-16">
+          <CoreWebVitalsMonitor />
         </div>
       </div>
       <Footer />

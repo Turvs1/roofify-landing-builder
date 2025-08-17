@@ -6,6 +6,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { HelmetProvider } from "react-helmet-async";
 import { lazy, Suspense } from "react";
+import ServiceWorkerRegistration from "./components/ServiceWorkerRegistration";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import SiteMap from "./pages/SiteMap";
@@ -58,56 +59,58 @@ const LoadingSpinner = () => (
 const queryClient = new QueryClient();
 
 const App = () => (
-  <HelmetProvider>
-    <QueryClientProvider client={queryClient}>
-      <TooltipProvider>
-        <Toaster />
-        <Sonner />
-        <BrowserRouter>
-          <Routes>
-            <Route path="/" element={<Index />} />
-            <Route path="/about" element={<AboutUs />} />
-            <Route path="/services" element={<Services />} />
-            <Route path="/services/roof-installation" element={<RoofInstallation />} />
-            <Route path="/services/roof-repairs" element={<RoofRepairs />} />
-            <Route path="/services/roof-maintenance" element={<RoofMaintenance />} />
-            <Route path="/services/new-construction" element={<NewConstruction />} />
-            <Route path="/services/renovations" element={<Renovations />} />
-            <Route path="/services/extensions" element={<Extensions />} />
-            <Route path="/services/insurance" element={<Insurance />} />
-            <Route path="/services/insulation-services" element={<InsulationServices />} />
-            <Route path="/services/gutter-systems" element={<GutterSystems />} />
-            <Route path="/locations" element={<Locations />} />
-            <Route path="/locations/brisbane" element={<BrisbaneLocation />} />
-            <Route path="/locations/gold-coast" element={<GoldCoastLocation />} />
-            <Route path="/locations/sunshine-coast" element={<SunshineCoastLocation />} />
-            <Route path="/projects" element={<Projects />} />
-            <Route path="/projects/:projectSlug" element={<ProjectDetails />} />
-            <Route path="/team" element={<Team />} />
-            <Route path="/safety-quality" element={<SafetyQuality />} />
-            <Route path="/contact" element={<Contact />} />
-            <Route path="/sitemap" element={<SiteMap />} />
-            <Route path="/roof-report" element={<RoofReport />} />
-            <Route path="/job-uploads" element={
-              <Suspense fallback={<LoadingSpinner />}>
-                <JobUploads />
-              </Suspense>
-            } />
-            <Route path="/terms-of-service" element={<TermsOfService />} />
-            <Route path="/privacy-policy" element={<PrivacyPolicy />} />
-            <Route path="/pre-works-form" element={
-              <Suspense fallback={<LoadingSpinner />}>
-                <PreWorksForm />
-              </Suspense>
-            } />
-            <Route path="/webp-test" element={<WebPTest />} />
-            {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </BrowserRouter>
-      </TooltipProvider>
-    </QueryClientProvider>
-  </HelmetProvider>
+  <ServiceWorkerRegistration>
+    <HelmetProvider>
+      <QueryClientProvider client={queryClient}>
+        <TooltipProvider>
+          <Toaster />
+          <Sonner />
+          <BrowserRouter>
+            <Routes>
+              <Route path="/" element={<Index />} />
+              <Route path="/about" element={<AboutUs />} />
+              <Route path="/services" element={<Services />} />
+              <Route path="/services/roof-installation" element={<RoofInstallation />} />
+              <Route path="/services/roof-repairs" element={<RoofRepairs />} />
+              <Route path="/services/roof-maintenance" element={<RoofMaintenance />} />
+              <Route path="/services/new-construction" element={<NewConstruction />} />
+              <Route path="/services/renovations" element={<Renovations />} />
+              <Route path="/services/extensions" element={<Extensions />} />
+              <Route path="/services/insurance" element={<Insurance />} />
+              <Route path="/services/insulation-services" element={<InsulationServices />} />
+              <Route path="/services/gutter-systems" element={<GutterSystems />} />
+              <Route path="/locations" element={<Locations />} />
+              <Route path="/locations/brisbane" element={<BrisbaneLocation />} />
+              <Route path="/locations/gold-coast" element={<GoldCoastLocation />} />
+              <Route path="/locations/sunshine-coast" element={<SunshineCoastLocation />} />
+              <Route path="/projects" element={<Projects />} />
+              <Route path="/projects/:projectSlug" element={<ProjectDetails />} />
+              <Route path="/team" element={<Team />} />
+              <Route path="/safety-quality" element={<SafetyQuality />} />
+              <Route path="/contact" element={<Contact />} />
+              <Route path="/sitemap" element={<SiteMap />} />
+              <Route path="/roof-report" element={<RoofReport />} />
+              <Route path="/job-uploads" element={
+                <Suspense fallback={<LoadingSpinner />}>
+                  <JobUploads />
+                </Suspense>
+              } />
+              <Route path="/terms-of-service" element={<TermsOfService />} />
+              <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+              <Route path="/pre-works-form" element={
+                <Suspense fallback={<LoadingSpinner />}>
+                  <PreWorksForm />
+                </Suspense>
+              } />
+              <Route path="/webp-test" element={<WebPTest />} />
+              {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </BrowserRouter>
+        </TooltipProvider>
+      </QueryClientProvider>
+    </HelmetProvider>
+  </ServiceWorkerRegistration>
 );
 
 export default App;
