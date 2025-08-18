@@ -2699,11 +2699,25 @@ const PreWorksForm: React.FC = () => {
                   <div className="grid md:grid-cols-2 gap-4">
                     <div>
                       <Label>Plan (PDF/JPG/PNG/DOCX)</Label>
-                      <Input type="file" accept=".pdf,.jpg,.jpeg,.png,.doc,.docx" />
+                      <Input 
+                        type="file" 
+                        accept=".pdf,.jpg,.jpeg,.png,.doc,.docx"
+                        onChange={(e) => handleInputChange('finalPlan', e.target.files)}
+                      />
+                      {formData.finalPlan && formData.finalPlan.length > 0 && (
+                        <p className="text-sm text-green-600 mt-1">✓ {formData.finalPlan[0].name} selected</p>
+                      )}
                     </div>
                     <div>
                       <Label>Takeoff (PDF/JPG/PNG/DOCX)</Label>
-                      <Input type="file" accept=".pdf,.jpg,.jpeg,.png,.doc,.docx" />
+                      <Input 
+                        type="file" 
+                        accept=".pdf,.jpg,.jpeg,.png,.doc,.docx"
+                        onChange={(e) => handleInputChange('finalTakeoff', e.target.files)}
+                      />
+                      {formData.finalTakeoff && formData.finalTakeoff.length > 0 && (
+                        <p className="text-sm text-green-600 mt-1">✓ {formData.finalTakeoff[0].name} selected</p>
+                      )}
                     </div>
                   </div>
                   <div>
