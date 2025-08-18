@@ -1674,6 +1674,15 @@ const PreWorksForm: React.FC = () => {
         fd.append('powerIsolationImage', formData.powerIsolationImage[0])
       }
 
+      // Append final plan and takeoff files if they exist
+      if (formData.finalPlan && formData.finalPlan.length > 0) {
+        fd.append('finalPlan', formData.finalPlan[0])
+      }
+      
+      if (formData.finalTakeoff && formData.finalTakeoff.length > 0) {
+        fd.append('finalTakeoff', formData.finalTakeoff[0])
+      }
+
       // Log the data being sent to n8n for debugging
       console.log('🚀 Sending data to n8n webhook:', {
         url: CONFIG.webhookUrl,
