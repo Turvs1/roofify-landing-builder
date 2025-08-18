@@ -2255,7 +2255,7 @@ const PreWorksForm: React.FC = () => {
                       onChange={(e) => handleInputChange('customerNotes', e.target.value)} 
                     />
                   </div>
-                  <div className="grid md:grid-cols-4 gap-4">
+                  <div className="grid md:grid-cols-1 gap-4">
                     <div>
                       <Label>Power Supply Status</Label>
                       <Select value={formData.isPowerIsolated || ''} onValueChange={(value) => handleInputChange('isPowerIsolated', value)}>
@@ -2265,39 +2265,6 @@ const PreWorksForm: React.FC = () => {
                         </SelectContent>
                       </Select>
                       <p className="text-sm text-gray-600 mt-1">Has the power been safely isolated for roof work?</p>
-                    </div>
-                    <div>
-                      <Label>Property Type</Label>
-                      <Select value={formData.propertyType || ''} onValueChange={(value) => handleInputChange('propertyType', value)}>
-                        <SelectTrigger><SelectValue placeholder="Select…" /></SelectTrigger>
-                        <SelectContent>
-                          {CONFIG.propertyTypes.map(o => <SelectItem key={o} value={o}>{o}</SelectItem>)}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div>
-                      <Label>Age of Property</Label>
-                      <Select value={formData.ageOfProperty || ''} onValueChange={(value) => handleInputChange('ageOfProperty', value)}>
-                        <SelectTrigger><SelectValue placeholder="Select age range…" /></SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="1-5">1-5 years</SelectItem>
-                          <SelectItem value="5-10">5-10 years</SelectItem>
-                          <SelectItem value="10-20">10-20 years</SelectItem>
-                          <SelectItem value="20-30">20-30 years</SelectItem>
-                          <SelectItem value="30-40">30-40 years</SelectItem>
-                          <SelectItem value="40-50">40-50 years</SelectItem>
-                          <SelectItem value="50+">50+ years</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div>
-                      <Label>Condition</Label>
-                      <Select value={formData.propertyCondition || ''} onValueChange={(value) => handleInputChange('propertyCondition', value)}>
-                        <SelectTrigger><SelectValue placeholder="Select…" /></SelectTrigger>
-                        <SelectContent>
-                          {CONFIG.conditionOptions.map(o => <SelectItem key={o} value={o}>{o}</SelectItem>)}
-                        </SelectContent>
-                      </Select>
                     </div>
                   </div>
                   
@@ -2336,13 +2303,7 @@ const PreWorksForm: React.FC = () => {
                       </div>
                     </div>
                   )}
-                  <div>
-                    <Label>Construction Type</Label>
-                    <Input 
-                      value={formData.constructionType || ''} 
-                      onChange={(e) => handleInputChange('constructionType', e.target.value)} 
-                    />
-                  </div>
+
                 </section>
 
                 <Separator />
