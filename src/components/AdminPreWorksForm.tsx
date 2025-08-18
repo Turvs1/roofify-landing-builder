@@ -2249,49 +2249,7 @@ const AdminPreWorksForm: React.FC = () => {
                     </div>
                   </div>
                   
-                  {/* Mud Map Display */}
-                  {jobId && (
-                    <div className="col-span-full">
-                      <Label>Mud Map (BuildXact)</Label>
-                      <div className="mt-2">
-                        {isLoadingMudMap ? (
-                          <div className="flex items-center justify-center p-8 bg-gray-50 rounded-lg border-2 border-dashed border-gray-300">
-                            <div className="flex items-center space-x-2">
-                              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
-                              <span className="text-gray-600">Loading mud map...</span>
-                            </div>
-                          </div>
-                        ) : mudMapImage ? (
-                          <div className="relative">
-                            <img 
-                              src={mudMapImage} 
-                              alt="Mud Map" 
-                              className="w-full max-w-2xl h-auto rounded-lg border border-gray-300 shadow-sm"
-                              onError={(e) => {
-                                console.error('Failed to load mud map image')
-                                e.currentTarget.style.display = 'none'
-                              }}
-                            />
-                            <div className="mt-2 text-sm text-gray-600">
-                              Mud map loaded from BuildXact for Job ID: {jobId}
-                            </div>
-                          </div>
-                        ) : (
-                          <div className="flex items-center justify-center p-8 bg-gray-50 rounded-lg border-2 border-dashed border-gray-300">
-                            <div className="text-center">
-                              <div className="text-gray-400 mb-2">
-                                <svg className="mx-auto h-12 w-12" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                                </svg>
-                              </div>
-                              <p className="text-gray-600">No mud map available</p>
-                              <p className="text-sm text-gray-500 mt-1">Mud map will load automatically when job is selected</p>
-                            </div>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  )}
+
                   
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                     <div>
@@ -2443,6 +2401,55 @@ const AdminPreWorksForm: React.FC = () => {
                     </div>
                   )}
                 </section>
+
+                <Separator />
+
+                {/* Mud Map Display - Positioned above Assets for measure up reference */}
+                {jobId && (
+                  <section className="space-y-4">
+                    <div>
+                      <Label className="text-base font-medium">Mud Map (BuildXact)</Label>
+                      <p className="text-sm text-gray-600 mb-3">Reference this mud map for accurate measure up</p>
+                      <div className="mt-2">
+                        {isLoadingMudMap ? (
+                          <div className="flex items-center justify-center p-8 bg-gray-50 rounded-lg border-2 border-dashed border-gray-300">
+                            <div className="flex items-center space-x-2">
+                              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
+                              <span className="text-gray-600">Loading mud map...</span>
+                            </div>
+                          </div>
+                        ) : mudMapImage ? (
+                          <div className="relative">
+                            <img 
+                              src={mudMapImage} 
+                              alt="Mud Map" 
+                              className="w-full max-w-3xl h-auto rounded-lg border border-gray-300 shadow-sm"
+                              onError={(e) => {
+                                console.error('Failed to load mud map image')
+                                e.currentTarget.style.display = 'none'
+                              }}
+                            />
+                            <div className="mt-2 text-sm text-gray-600">
+                              Mud map loaded from BuildXact for Job ID: {jobId}
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="flex items-center justify-center p-8 bg-gray-50 rounded-lg border-2 border-dashed border-gray-300">
+                            <div className="text-center">
+                              <div className="text-gray-400 mb-2">
+                                <svg className="mx-auto h-12 w-12" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                </svg>
+                              </div>
+                              <p className="text-gray-600">No mud map available</p>
+                              <p className="text-sm text-gray-500 mt-1">Mud map will load automatically when job is selected</p>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </section>
+                )}
 
                 <Separator />
 
