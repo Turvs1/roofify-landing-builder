@@ -13,7 +13,7 @@ import { cn } from '@/lib/utils'
 // Dynamic imports for heavy libraries
 // import jsPDF from 'jspdf'
 // import html2canvas from 'html2canvas'
-import './PreWorksForm.css'
+// CSS import removed for admin dashboard
 
 // Navigation and layout components removed for admin dashboard
 
@@ -1231,7 +1231,7 @@ const InteractiveDataVisualization: React.FC<{
   )
 }
 
-const PreWorksForm: React.FC = () => {
+const AdminPreWorksForm: React.FC = () => {
   const navigate = useNavigate()
 
   // Form state
@@ -2774,4 +2774,4 @@ const PreWorksForm: React.FC = () => {
   )
 }
 
-export default PreWorksForm
+export default AdminPreWorksForm
