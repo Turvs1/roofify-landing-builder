@@ -99,12 +99,7 @@ const App = () => (
             <Route path="/privacy-policy" element={<PrivacyPolicy />} />
             <Route path="/pre-works-form" element={
               <Suspense fallback={<LoadingSpinner />}>
-                <div className="flex items-center justify-center min-h-screen">
-                  <div className="text-center">
-                    <h1 className="text-2xl font-bold mb-4">PreWorks Form</h1>
-                    <p className="text-gray-600">Form temporarily disabled for debugging</p>
-                  </div>
-                </div>
+                <PreWorksForm />
               </Suspense>
             } />
             <Route path="/webp-test" element={<WebPTest />} />
