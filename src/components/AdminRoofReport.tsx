@@ -95,112 +95,673 @@ const AdminRoofReport = () => {
         const res = await fetch(sheetApiUrl);
         const data = await res.json();
         setJobs(data);
-        setIsLoadingJobs(false);
-      } catch (error) {
-        console.error('Error loading jobs:', error);
+      } catch {
+        toast({
+          title: 'Error',
+          description: 'Failed to load jobs',
+          variant: 'destructive',
+        });
+      } finally {
         setIsLoadingJobs(false);
       }
     }
     loadJobs();
-  }, []);
+  }, [toast]);
 
-  // Rest of your existing RoofReport component logic here...
-  // I'll add a simplified version for now
+  // Timestamp
+  const now = new Date();
+  const attendanceDate = now.toISOString().split('T')[0];
+  const attendanceTime = now.toTimeString().split(' ')[0];
+  const dateSubmitted = attendanceDate;
+
+  const handleJobChange = (desc: string) => {
+    setSelectedDescription(desc);
+    const matchedJob = jobs.find((j) => j.description === desc) ?? null;
+    setSelectedJob(matchedJob);
+    if (matchedJob) {
+      // capture the JobID for submission
+      setJobId(matchedJob.jobId);
+      const addrParts = [
+        matchedJob.worksLocationSuburb,
+        matchedJob.worksLocationState,
+        matchedJob.worksLocationPostcode,
+      ].filter(Boolean);
+      const addr = addrParts.join(', ');
+      console.log('Built address:', addrParts, addr);
+      setLocationAddress(addr);
+    }
+  };
+
+  useEffect(() => {
+    if (!locationAddress) return;
+    const apiKey = 'c5bceca9364900a58deb67ec79d3d0b0';
+    setWeatherLoading(true);
+
+    // split out suburb & state for the q= parameter
+    const [suburb, state] = locationAddress.split(',').map(s => s.trim());
+
+    // 1) direct geocoding
+    const geoUrl = `https://api.openweathermap.org/geo/1.0/direct`
+      + `?q=${encodeURIComponent(suburb)},${encodeURIComponent(state)},AU`
+      + `&limit=1&appid=${apiKey}`;
+
+    fetch(geoUrl)
+      .then(res => {
+        if (!res.ok) throw new Error(`Geo ${res.status}`);
+        return res.json();
+      })
+      .then(geo => {
+        if (!Array.isArray(geo) || geo.length === 0) {
+          throw new Error(`No geocode for ${suburb}, ${state}`);
+        }
+        const { lat, lon } = geo[0];
+
+        // 2) one-call 3.0 for current weather
+        const oneCallUrl = `https://api.openweathermap.org/data/3.0/onecall`
+          + `?lat=${lat}&lon=${lon}`
+          + `&exclude=minutely,alerts`
+          + `&units=metric`
+          + `&appid=${apiKey}`;
+
+        return fetch(oneCallUrl);
+      })
+      .then(res => {
+        if (!res.ok) throw new Error(`OneCall ${res.status}`);
+        return res.json();
+      })
+      .then(data => {
+        // pull current.weather[].description + .main
+        setWeather(data.current?.weather?.[0]?.description ?? '');
+        setLightConditions(data.current?.weather?.[0]?.main ?? '');
+        console.log('OneCall data:', data.current?.weather);
+      })
+      .catch(err => {
+        console.error('Weather lookup failed:', err);
+        setWeather('');
+        setLightConditions('');
+      })
+      .finally(() => setWeatherLoading(false));
+  }, [locationAddress]);
+
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []);
+    setImages(files);
+    setCaptions(files.map(() => ''));
+  };
+  const handleCaptionChange = (i: number, val: string) => {
+    const c = [...captions];
+    c[i] = val;
+    setCaptions(c);
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedJob || !notes.trim()) {
+      toast({
+        title: 'Error',
+        description: 'Select a job & add notes',
+        variant: 'destructive',
+      });
+      return;
+    }
+    setIsLoading(true);
+    const formData = new FormData();
+    // include JobID from the sheet
+    formData.append('jobId', jobId);
+    // Required fields
+    formData.append('job', selectedDescription);
+    formData.append('number', selectedJob.number);
+    formData.append('clientName', selectedJob.clientName);
+    // New: location address for weather lookup and weather fields
+    formData.append('locationAddress', locationAddress);
+    formData.append('weather', weather);
+    formData.append('lightConditions', lightConditions);
+    formData.append('notes', notes);
+    // Date/time
+    formData.append('attendanceDate', attendanceDate);
+    formData.append('attendanceTime', attendanceTime);
+    formData.append('isPowerIsolated', isPowerIsolated);
+    formData.append('propertyType', propertyType);
+    formData.append('ageOfProperty', ageOfProperty.toString());
+    formData.append('propertyCondition', propertyCondition);
+    formData.append('constructionType', constructionType);
+    formData.append('roofType', roofType);
+    formData.append('roofCondition', roofCondition);
+    formData.append('roofAge', roofAge.toString());
+    formData.append('roofPitch', roofPitch);
+    formData.append('ceilingInspection', ceilingInspection);
+    formData.append('trussSpacing', trussSpacing);
+    formData.append('battensType', battensType);
+    formData.append('membraneType', membraneType);
+    formData.append('complyStandards', complyStandards);
+    formData.append('complyManufacturers', complyManufacturers);
+    formData.append('maintenanceIssues', maintenanceIssues);
+    formData.append('informedInsured', informedInsured);
+    formData.append('roofDamagePercent', roofDamagePercent.toString());
+    formData.append('visualInspectionDamage', visualInspectionDamage);
+    formData.append('damageRelatedEvent', damageRelatedEvent);
+    formData.append('gutterGuard', gutterGuard);
+    formData.append('spreaderDownpipes', spreaderDownpipes);
+    formData.append('flashingsCorrect', flashingsCorrect);
+    formData.append('guttersClean', guttersClean);
+    formData.append('windLift', windLift);
+    formData.append('windLiftCause', windLiftCause);
+    formData.append('materialLifespanDecreased', materialLifespanDecreased);
+    formData.append('fullReplacement', fullReplacement);
+    formData.append('structuralIntegrity', structuralIntegrity);
+    formData.append('internalDamageDesc', internalDamageDesc);
+    formData.append('ceilingWallCondition', ceilingWallCondition);
+    formData.append('internalMaintenanceNotes', internalMaintenanceNotes);
+    formData.append('internalMaintenanceSummary', internalMaintenanceSummary);
+    formData.append('conclusion', conclusion);
+    formData.append('additionalRepairs', additionalRepairs);
+    // Photos
+    images.forEach((file, index) => {
+      // use a single field name for all images so the webhook picks them up
+      formData.append('images', file);
+      // append captions as an array
+      formData.append('captions[]', captions[index] || '');
+    });
+    // Reporter & submission date
+    formData.append('reporterName', reporterName);
+    formData.append('dateSubmitted', dateSubmitted);
+
+    const res = await fetch(webhookUrl, { method: 'POST', body: formData });
+    if (res.ok) {
+      toast({ title: 'Success', description: 'Report submitted!' });
+      // Reset state below...
+    }
+    setIsLoading(false);
+  };
+
+  const uniqueDescriptions = Array.from(new Set(jobs.map((j) => j.description)));
 
   return (
-    <div className="p-6">
-      <div className="max-w-4xl mx-auto space-y-6">
-        <div className="text-center mb-8">
-          <h2 className="text-2xl font-bold text-slate-900">Roof Report Generator</h2>
-          <p className="text-slate-600">Generate comprehensive roof inspection reports</p>
-        </div>
-
-        {/* Job Selection */}
+    <div className="p-4">
+      <div className="max-w-3xl mx-auto">
         <Card>
-          <CardHeader>
-            <CardTitle>Select Job</CardTitle>
-          </CardHeader>
+          <CardHeader><CardTitle className="text-center text-2xl">Roof Report Submission</CardTitle></CardHeader>
           <CardContent>
-            {isLoadingJobs ? (
-              <p>Loading jobs...</p>
-            ) : (
-              <Select onValueChange={setSelectedDescription}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select a job description" />
-                </SelectTrigger>
-                <SelectContent>
-                  {jobs.map((job, index) => (
-                    <SelectItem key={index} value={job.description}>
-                      {job.description}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            )}
-          </CardContent>
-        </Card>
+            <form onSubmit={handleSubmit} className="space-y-6">
+              {/* Attendance Date & Time */}
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label>Attendance Date</Label>
+                  <Input value={attendanceDate} readOnly className="bg-muted" />
+                </div>
+                <div>
+                  <Label>Attendance Time</Label>
+                  <Input value={attendanceTime} readOnly className="bg-muted" />
+                </div>
+              </div>
 
-        {/* Form Fields */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Report Details</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {/* Job selector */}
               <div>
-                <Label htmlFor="weather">Weather Conditions</Label>
+                <Label>Job Description</Label>
+                <Select
+                  value={selectedDescription}
+                  onValueChange={handleJobChange}
+                  disabled={isLoadingJobs}
+                >
+                  <SelectTrigger>
+                    <SelectValue
+                      placeholder={isLoadingJobs ? 'Loading jobs...' : 'Select a description...'}
+                    />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {uniqueDescriptions.map((desc, i) => (
+                      <SelectItem key={i} value={desc}>
+                        {desc}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Job Number & Client */}
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label>Job Number</Label>
+                  <Input value={selectedJob?.number || ''} readOnly className="bg-muted" />
+                </div>
+                <div>
+                  <Label>Client Name</Label>
+                  <Input value={selectedJob?.clientName || ''} readOnly className="bg-muted" />
+                </div>
+              </div>
+
+              <div>
+                <Label>Current Weather</Label>
                 <Input
-                  id="weather"
                   value={weather}
-                  onChange={(e) => setWeather(e.target.value)}
-                  placeholder="e.g., Sunny, Cloudy, Rainy"
+                  readOnly
+                  placeholder={weatherLoading ? 'Loading…' : 'N/A'}
+                  className="bg-muted"
                 />
               </div>
               <div>
-                <Label htmlFor="lightConditions">Light Conditions</Label>
+                <Label>Light Conditions</Label>
                 <Input
-                  id="lightConditions"
                   value={lightConditions}
-                  onChange={(e) => setLightConditions(e.target.value)}
-                  placeholder="e.g., Good, Poor, Artificial"
+                  readOnly
+                  placeholder={weatherLoading ? 'Loading…' : 'N/A'}
+                  className="bg-muted"
                 />
               </div>
-            </div>
-
-            <div>
-              <Label htmlFor="notes">Additional Notes</Label>
-              <Textarea
-                id="notes"
-                value={notes}
-                onChange={(e) => setNotes(e.target.value)}
-                placeholder="Enter any additional notes or observations..."
-                rows={4}
-              />
-            </div>
-
-            <div>
-              <Label htmlFor="reporterName">Reporter Name</Label>
-              <Input
-                id="reporterName"
-                value={reporterName}
-                onChange={(e) => setReporterName(e.target.value)}
-                placeholder="Enter your name"
-              />
-            </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label>Is Power Isolated?</Label>
+                  <Select
+                    value={isPowerIsolated}
+                    onValueChange={setIsPowerIsolated}
+                  >
+                    <SelectTrigger><SelectValue placeholder="Yes/No" /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Yes">Yes</SelectItem>
+                      <SelectItem value="No">No</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label>Property Type</Label>
+                  <Select
+                    value={propertyType}
+                    onValueChange={setPropertyType}
+                  >
+                    <SelectTrigger><SelectValue placeholder="Select..." /></SelectTrigger>
+                    <SelectContent>
+                      {['House','Unit','Townhouse','Other'].map((o) => (
+                        <SelectItem key={o} value={o}>{o}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label>Age of Property</Label>
+                  <Input
+                    type="number"
+                    value={ageOfProperty}
+                    onChange={(e) => setAgeOfProperty(Number(e.target.value))}
+                  />
+                </div>
+                <div>
+                  <Label>General Property Condition</Label>
+                  <Select
+                    value={propertyCondition}
+                    onValueChange={setPropertyCondition}
+                  >
+                    <SelectTrigger><SelectValue placeholder="Select..." /></SelectTrigger>
+                    <SelectContent>
+                      {['Good','Fair','Poor'].map((o) => (
+                        <SelectItem key={o} value={o}>{o}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              <div>
+                <Label>Construction Type</Label>
+                <Input value={constructionType} onChange={(e) => setConstructionType(e.target.value)} />
+              </div>
+              <div>
+                <Label>Roof Type</Label>
+                <Input value={roofType} onChange={(e) => setRoofType(e.target.value)} />
+              </div>
+              <div>
+                <Label>Roof Condition</Label>
+                <Select
+                  value={roofCondition}
+                  onValueChange={setRoofCondition}
+                >
+                  <SelectTrigger><SelectValue placeholder="Select..." /></SelectTrigger>
+                  <SelectContent>
+                    {['Good','Fair','Poor'].map((o) => (
+                      <SelectItem key={o} value={o}>{o}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label>Roof Age</Label>
+                  <Input
+                    type="number"
+                    value={roofAge}
+                    onChange={(e) => setRoofAge(Number(e.target.value))}
+                  />
+                </div>
+                <div>
+                  <Label>Roof Pitch</Label>
+                  <Input value={roofPitch} onChange={(e) => setRoofPitch(e.target.value)} />
+                </div>
+              </div>
+              <div>
+                <Label>Ceiling Inspection</Label>
+                <Textarea
+                  rows={3}
+                  value={ceilingInspection}
+                  onChange={(e) => setCeilingInspection(e.target.value)}
+                  placeholder="Describe ceiling inspection findings..."
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label>Truss Spacing</Label>
+                  <Input value={trussSpacing} onChange={(e) => setTrussSpacing(e.target.value)} />
+                </div>
+                <div>
+                  <Label>Battens Type</Label>
+                  <Input value={battensType} onChange={(e) => setBattensType(e.target.value)} />
+                </div>
+              </div>
+              <div>
+                <Label>Membrane Type</Label>
+                <Input value={membraneType} onChange={(e) => setMembraneType(e.target.value)} />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label>Comply with Standards</Label>
+                  <Select
+                    value={complyStandards}
+                    onValueChange={setComplyStandards}
+                  >
+                    <SelectTrigger><SelectValue placeholder="Yes/No" /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Yes">Yes</SelectItem>
+                      <SelectItem value="No">No</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label>Comply with Manufacturers</Label>
+                  <Select
+                    value={complyManufacturers}
+                    onValueChange={setComplyManufacturers}
+                  >
+                    <SelectTrigger><SelectValue placeholder="Yes/No" /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Yes">Yes</SelectItem>
+                      <SelectItem value="No">No</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              <div>
+                <Label>Maintenance Issues</Label>
+                <Textarea
+                  rows={3}
+                  value={maintenanceIssues}
+                  onChange={(e) => setMaintenanceIssues(e.target.value)}
+                  placeholder="Describe any maintenance issues found..."
+                />
+              </div>
+              <div>
+                <Label>Informed Insured</Label>
+                <Select
+                  value={informedInsured}
+                  onValueChange={setInformedInsured}
+                >
+                  <SelectTrigger><SelectValue placeholder="Yes/No" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Yes">Yes</SelectItem>
+                    <SelectItem value="No">No</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label>Roof Damage (% of area)</Label>
+                <Input
+                  type="number"
+                  value={roofDamagePercent}
+                  onChange={(e) => setRoofDamagePercent(Number(e.target.value))}
+                  placeholder="Enter percentage"
+                />
+              </div>
+              <div>
+                <Label>Visual Inspection Damage</Label>
+                <Textarea
+                  rows={3}
+                  value={visualInspectionDamage}
+                  onChange={(e) => setVisualInspectionDamage(e.target.value)}
+                  placeholder="Describe any visible damage..."
+                />
+              </div>
+              <div>
+                <Label>Damage Related to Event?</Label>
+                <Select
+                  value={damageRelatedEvent}
+                  onValueChange={setDamageRelatedEvent}
+                >
+                  <SelectTrigger><SelectValue placeholder="Yes/No" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Yes">Yes</SelectItem>
+                    <SelectItem value="No">No</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label>Gutter Guard Present?</Label>
+                <Select
+                  value={gutterGuard}
+                  onValueChange={setGutterGuard}
+                >
+                  <SelectTrigger><SelectValue placeholder="Yes/No" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Yes">Yes</SelectItem>
+                    <SelectItem value="No">No</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label>Spreader Downpipes Present?</Label>
+                <Select
+                  value={spreaderDownpipes}
+                  onValueChange={setSpreaderDownpipes}
+                >
+                  <SelectTrigger><SelectValue placeholder="Yes/No" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Yes">Yes</SelectItem>
+                    <SelectItem value="No">No</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label>Are Flashings Correct?</Label>
+                <Select
+                  value={flashingsCorrect}
+                  onValueChange={setFlashingsCorrect}
+                >
+                  <SelectTrigger><SelectValue placeholder="Yes/No" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Yes">Yes</SelectItem>
+                    <SelectItem value="No">No</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label>Are Gutters Clean?</Label>
+                <Select
+                  value={guttersClean}
+                  onValueChange={setGuttersClean}
+                >
+                  <SelectTrigger><SelectValue placeholder="Yes/No" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Yes">Yes</SelectItem>
+                    <SelectItem value="No">No</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label>Wind Lift Present?</Label>
+                <Select
+                  value={windLift}
+                  onValueChange={setWindLift}
+                >
+                  <SelectTrigger><SelectValue placeholder="Yes/No" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Yes">Yes</SelectItem>
+                    <SelectItem value="No">No</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label>If Wind Lift, What is the Cause?</Label>
+                <Input
+                  value={windLiftCause}
+                  onChange={(e) => setWindLiftCause(e.target.value)}
+                  placeholder="Describe cause if applicable"
+                />
+              </div>
+              <div>
+                <Label>Material Lifespan Decreased?</Label>
+                <Select
+                  value={materialLifespanDecreased}
+                  onValueChange={setMaterialLifespanDecreased}
+                >
+                  <SelectTrigger><SelectValue placeholder="Yes/No" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Yes">Yes</SelectItem>
+                    <SelectItem value="No">No</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label>Full Replacement Required?</Label>
+                <Select
+                  value={fullReplacement}
+                  onValueChange={setFullReplacement}
+                >
+                  <SelectTrigger><SelectValue placeholder="Yes/No" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Yes">Yes</SelectItem>
+                    <SelectItem value="No">No</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label>Structural Integrity</Label>
+                <Textarea
+                  rows={3}
+                  value={structuralIntegrity}
+                  onChange={(e) => setStructuralIntegrity(e.target.value)}
+                  placeholder="Describe structural integrity..."
+                />
+              </div>
+              <div>
+                <Label>Internal Damage Description</Label>
+                <Textarea
+                  rows={3}
+                  value={internalDamageDesc}
+                  onChange={(e) => setInternalDamageDesc(e.target.value)}
+                  placeholder="Describe any internal damage..."
+                />
+              </div>
+              <div>
+                <Label>Ceiling/Wall Condition</Label>
+                <Textarea
+                  rows={3}
+                  value={ceilingWallCondition}
+                  onChange={(e) => setCeilingWallCondition(e.target.value)}
+                  placeholder="Describe ceiling/wall condition..."
+                />
+              </div>
+              <div>
+                <Label>Internal Maintenance Notes</Label>
+                <Textarea
+                  rows={3}
+                  value={internalMaintenanceNotes}
+                  onChange={(e) => setInternalMaintenanceNotes(e.target.value)}
+                  placeholder="Notes about internal maintenance..."
+                />
+              </div>
+              <div>
+                <Label>Internal Maintenance Summary</Label>
+                <Textarea
+                  rows={3}
+                  value={internalMaintenanceSummary}
+                  onChange={(e) => setInternalMaintenanceSummary(e.target.value)}
+                  placeholder="Summary of internal maintenance..."
+                />
+              </div>
+              <div>
+                <Label>Conclusion</Label>
+                <Textarea
+                  rows={3}
+                  value={conclusion}
+                  onChange={(e) => setConclusion(e.target.value)}
+                  placeholder="Conclusion of inspection..."
+                />
+              </div>
+              <div>
+                <Label>Additional Repairs Required</Label>
+                <Textarea
+                  rows={3}
+                  value={additionalRepairs}
+                  onChange={(e) => setAdditionalRepairs(e.target.value)}
+                  placeholder="List any additional repairs required..."
+                />
+              </div>
+              <div>
+                <Label>Notes</Label>
+                <Textarea
+                  rows={6}
+                  value={notes}
+                  onChange={(e) => setNotes(e.target.value)}
+                />
+              </div>
+              <div>
+                <Label>Upload Roof Photos</Label>
+                <Input
+                  type="file"
+                  multiple
+                  accept="image/*"
+                  onChange={handleImageChange}
+                />
+              </div>
+              {images.map((img, i) => (
+                <div key={i} className="space-y-2">
+                  <img 
+                    src={URL.createObjectURL(img)} 
+                    alt={img.name} 
+                    className="w-32 h-32 object-cover mb-2 rounded border" 
+                  />
+                  <Label>Caption for {img.name}</Label>
+                  <Input
+                    value={captions[i]}
+                    onChange={(e) => handleCaptionChange(i, e.target.value)}
+                  />
+                </div>
+              ))}
+              <div>
+                <Label>Your Name</Label>
+                <Input
+                  value={reporterName}
+                  onChange={(e) => setReporterName(e.target.value)}
+                  placeholder="Enter your name"
+                />
+              </div>
+              <div>
+                <Label>Date Submitted</Label>
+                <Input value={dateSubmitted} readOnly className="bg-muted" />
+              </div>
+              <Button
+                type="submit"
+                className="w-full"
+                disabled={isLoading || isLoadingJobs || weatherLoading || !weather}
+              >
+                {weatherLoading
+                  ? 'Fetching weather…'
+                  : isLoading
+                    ? 'Submitting…'
+                    : 'Submit Report'}
+              </Button>
+            </form>
           </CardContent>
         </Card>
-
-        {/* Submit Button */}
-        <div className="text-center">
-          <Button 
-            className="bg-blue-600 hover:bg-blue-700 px-8 py-3"
-            disabled={isLoading}
-          >
-            {isLoading ? 'Generating Report...' : 'Generate Roof Report'}
-          </Button>
         </div>
       </div>
-    </div>
   );
 };
 
