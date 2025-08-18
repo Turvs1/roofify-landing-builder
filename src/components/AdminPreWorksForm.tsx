@@ -2407,42 +2407,74 @@ const AdminPreWorksForm: React.FC = () => {
                 {/* Mud Map Display - Positioned above Assets for measure up reference */}
                 {jobId && (
                   <section className="space-y-4">
-                    <div>
-                      <Label className="text-base font-medium">Mud Map (BuildXact)</Label>
-                      <p className="text-sm text-gray-600 mb-3">Reference this mud map for accurate measure up</p>
-                      <div className="mt-2">
+                    <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-xl p-6">
+                      <div className="flex items-center justify-between mb-4">
+                        <div>
+                          <h3 className="text-lg font-semibold text-blue-900 flex items-center gap-2">
+                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-1.447-.894L15 4m0 13V4m0 0L9 7" />
+                            </svg>
+                            Mud Map (BuildXact)
+                          </h3>
+                          <p className="text-sm text-blue-700">Reference this mud map for accurate measure up and asset planning</p>
+                        </div>
+                        <div className="text-right">
+                          <div className="text-xs text-blue-600 bg-blue-100 px-2 py-1 rounded-full">
+                            Job ID: {jobId}
+                          </div>
+                        </div>
+                      </div>
+                      
+                      <div className="w-full">
                         {isLoadingMudMap ? (
-                          <div className="flex items-center justify-center p-8 bg-gray-50 rounded-lg border-2 border-dashed border-gray-300">
-                            <div className="flex items-center space-x-2">
-                              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
-                              <span className="text-gray-600">Loading mud map...</span>
+                          <div className="flex items-center justify-center p-12 bg-white rounded-lg border-2 border-dashed border-blue-300">
+                            <div className="flex items-center space-x-3">
+                              <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
+                              <span className="text-blue-700 font-medium">Loading mud map from BuildXact...</span>
                             </div>
                           </div>
                         ) : mudMapImage ? (
-                          <div className="relative">
-                            <img 
-                              src={mudMapImage} 
-                              alt="Mud Map" 
-                              className="w-full max-w-3xl h-auto rounded-lg border border-gray-300 shadow-sm"
-                              onError={(e) => {
-                                console.error('Failed to load mud map image')
-                                e.currentTarget.style.display = 'none'
-                              }}
-                            />
-                            <div className="mt-2 text-sm text-gray-600">
-                              Mud map loaded from BuildXact for Job ID: {jobId}
+                          <div className="relative w-full">
+                            <div className="bg-white rounded-lg border border-blue-200 p-4 shadow-sm">
+                              <img 
+                                src={mudMapImage} 
+                                alt="Mud Map" 
+                                className="w-full h-auto rounded-lg shadow-md"
+                                style={{ maxHeight: '70vh' }}
+                                onError={(e) => {
+                                  console.error('Failed to load mud map image')
+                                  e.currentTarget.style.display = 'none'
+                                }}
+                              />
+                            </div>
+                            <div className="mt-3 flex items-center justify-between text-sm">
+                              <span className="text-blue-600 flex items-center gap-2">
+                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                                </svg>
+                                Mud map loaded successfully from BuildXact
+                              </span>
+                              <button 
+                                onClick={() => window.open(mudMapImage, '_blank')}
+                                className="text-blue-600 hover:text-blue-800 underline text-xs flex items-center gap-1"
+                              >
+                                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                                </svg>
+                                Open Full Size
+                              </button>
                             </div>
                           </div>
                         ) : (
-                          <div className="flex items-center justify-center p-8 bg-gray-50 rounded-lg border-2 border-dashed border-gray-300">
+                          <div className="flex items-center justify-center p-12 bg-white rounded-lg border-2 border-dashed border-blue-300">
                             <div className="text-center">
-                              <div className="text-gray-400 mb-2">
-                                <svg className="mx-auto h-12 w-12" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <div className="text-blue-400 mb-3">
+                                <svg className="mx-auto h-16 w-16" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                                 </svg>
                               </div>
-                              <p className="text-gray-600">No mud map available</p>
-                              <p className="text-sm text-gray-500 mt-1">Mud map will load automatically when job is selected</p>
+                              <p className="text-blue-700 font-medium mb-2">No mud map available</p>
+                              <p className="text-sm text-blue-600">Mud map will load automatically when job is selected</p>
                             </div>
                           </div>
                         )}
