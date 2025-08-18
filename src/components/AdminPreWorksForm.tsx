@@ -1052,7 +1052,13 @@ const InteractiveDataVisualization: React.FC<{
     name: area.name,
     type: area.type || 'Unknown',
     pitch: area.pitchDeg || 0,
-    area: calculateRoofArea(area.pitchDeg || 0),
+    // Use actual measurements if available, otherwise fall back to calculated estimate
+    area: area.area || (area.length && area.width ? 
+      (area.length * area.width) / Math.cos((area.pitchDeg || 0) * Math.PI / 180) : 
+      calculateRoofArea(area.pitchDeg || 0)
+    ),
+    length: area.length || null,
+    width: area.width || null,
     materials: {
       profile: area.profile || 'Not specified',
       color: area.colour || 'Not specified',
@@ -1120,20 +1126,47 @@ const InteractiveDataVisualization: React.FC<{
                   <span className="text-sm text-gray-500">{area.area.toFixed(1)}m²</span>
                 </div>
                 
-                {/* Simple roof diagram */}
-                <div className="relative h-24 bg-gradient-to-br from-blue-100 to-blue-200 rounded-lg mb-3 overflow-hidden">
+                {/* Enhanced roof diagram with real measurements */}
+                <div className="relative bg-gradient-to-br from-blue-100 to-blue-200 rounded-lg mb-3 overflow-hidden">
                   <div 
-                    className="absolute inset-0 bg-gradient-to-br from-gray-300 to-gray-400"
+                    className="relative bg-gradient-to-br from-gray-300 to-gray-400"
                     style={{
-                      clipPath: `polygon(0 100%, 100% 100%, 100% ${100 - (area.pitch / 2)}%, 0 ${100 - (area.pitch / 2)}%)`
+                      height: area.length && area.width ? `${Math.min(120, Math.max(80, (area.length / area.width) * 60))}px` : '80px',
+                      width: '100%',
+                      clipPath: area.pitch > 0 ? `polygon(0 100%, 100% 100%, 100% ${100 - (area.pitch / 2)}%, 0 ${100 - (area.pitch / 2)}%)` : 'none'
                     }}
-                  />
-                  <div className="absolute top-2 left-2 text-xs text-gray-700">
+                  >
+                    {area.length && area.width && (
+                      <div className="absolute inset-0 flex items-center justify-center">
+                        <div className="text-center">
+                          <div className="text-xs font-medium text-gray-800">
+                            {area.length}m × {area.width}m
+                          </div>
+                          <div className="text-xs text-gray-600">
+                            {area.area?.toFixed(1)}m²
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                  <div className="absolute top-2 left-2 text-xs text-gray-700 bg-white/80 px-1 rounded">
                     {area.pitch}° pitch
                   </div>
                 </div>
                 
                 <div className="text-xs text-gray-600 space-y-1">
+                  {area.length && area.width && (
+                    <div className="bg-blue-50 p-2 rounded border border-blue-200 mb-2">
+                      <div className="font-medium text-blue-800 mb-1">Measurements</div>
+                      <div className="grid grid-cols-2 gap-2 text-xs">
+                        <div><strong>Length:</strong> {area.length}m</div>
+                        <div><strong>Width:</strong> {area.width}m</div>
+                        <div className="col-span-2 text-center">
+                          <strong className="text-blue-900">Total: {area.area?.toFixed(1)}m²</strong>
+                        </div>
+                      </div>
+                    </div>
+                  )}
                   <div><strong>Type:</strong> {area.type}</div>
                   <div><strong>Profile:</strong> {area.materials.profile}</div>
                   <div><strong>Color:</strong> {area.materials.color}</div>
