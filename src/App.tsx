@@ -35,6 +35,7 @@ import TermsOfService from "./pages/TermsOfService";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
 import WebPTest from "./pages/WebPTest";
 import PreWorksFormTest from "./pages/PreWorksFormTest";
+import AdminDashboard from "./pages/AdminDashboard";
 
 // Lazy load heavy components with proper error handling
 const PreWorksForm = lazy(() => 
@@ -104,6 +105,8 @@ const App = () => (
             } />
             <Route path="/webp-test" element={<WebPTest />} />
             <Route path="/pre-works-test" element={<PreWorksFormTest />} />
+            {/* HIDDEN ADMIN ROUTE - Internal staff only */}
+            <Route path="/admin" element={<AdminDashboard />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
