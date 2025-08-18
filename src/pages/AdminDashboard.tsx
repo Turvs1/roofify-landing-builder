@@ -359,7 +359,7 @@ const AdminDashboard = () => {
                   </div>
                 </div>
                 <button
-                  onClick={() => document.querySelector('[data-value="job-uploads"]')?.click()}
+                  onClick={() => (document.querySelector('[data-value="job-uploads"]') as HTMLElement)?.click()}
                   className="text-green-600 hover:text-green-700 text-sm font-medium"
                 >
                   Change Tool
@@ -397,7 +397,7 @@ const AdminDashboard = () => {
                   </div>
                 </div>
                 <button
-                  onClick={() => document.querySelector('[data-value="pre-works"]')?.click()}
+                  onClick={() => (document.querySelector('[data-value="pre-works"]') as HTMLElement)?.click()}
                   className="text-purple-600 hover:text-purple-700 text-sm font-medium"
                 >
                   Change Tool
