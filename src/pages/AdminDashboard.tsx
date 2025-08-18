@@ -17,9 +17,9 @@ import {
   CheckCircle,
   AlertCircle
 } from 'lucide-react';
-import RoofReport from './RoofReport';
-import JobUploads from './JobUploads';
-import PreWorksForm from './PreWorksForm';
+import AdminRoofReport from '../components/AdminRoofReport';
+import AdminJobUploads from '../components/AdminJobUploads';
+import AdminPreWorksForm from '../components/AdminPreWorksForm';
 
 const AdminDashboard = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -340,7 +340,7 @@ const AdminDashboard = () => {
                 </CardDescription>
               </CardHeader>
               <CardContent className="p-0">
-                <RoofReport />
+                <AdminRoofReport />
               </CardContent>
             </Card>
           </TabsContent>
@@ -378,7 +378,7 @@ const AdminDashboard = () => {
                 </CardDescription>
               </CardHeader>
               <CardContent className="p-0">
-                <JobUploads />
+                <AdminJobUploads />
               </CardContent>
             </Card>
           </TabsContent>
@@ -416,7 +416,7 @@ const AdminDashboard = () => {
                 </CardDescription>
               </CardHeader>
               <CardContent className="p-0">
-                <PreWorksForm />
+                <AdminPreWorksForm />
               </CardContent>
             </Card>
           </TabsContent>
