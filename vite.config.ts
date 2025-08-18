@@ -236,8 +236,8 @@ export default defineConfig(({ mode }) => ({
   server: {
     host: "::",
     port: 8080,
-    // Disable HMR to fix React loading issues
-    hmr: false,
+    // Enable HMR for proper React development
+    hmr: true,
     // Keep file watching for script injection
     watch: {
       usePolling: false
