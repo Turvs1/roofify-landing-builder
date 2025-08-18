@@ -1,159 +1,420 @@
-import React, { useState } from 'react';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Label } from '@/components/ui/label';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
-import { Upload, File, X } from 'lucide-react';
+import React, { useEffect, useMemo, useRef, useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { useToast } from "@/hooks/use-toast";
+
+interface Job {
+  description: string;
+  number: string;
+  clientName: string;
+  worksLocationSuburb: string;
+  worksLocationState: string;
+  worksLocationPostcode: string;
+  buildingType: string;
+  jobId: string;
+}
 
 const AdminJobUploads = () => {
-  const [files, setFiles] = useState<File[]>([]);
-  const [jobNumber, setJobNumber] = useState('');
-  const [clientName, setClientName] = useState('');
-  const [description, setDescription] = useState('');
-  const [isUploading, setIsUploading] = useState(false);
+  const { toast } = useToast();
+  const sheetApiUrl =
+    "https://script.google.com/macros/s/AKfycbxAeT0tXnBGwhw7NaoAvgdhUHz412L4ESPi62gtx0SUruZnEdUOn6nUi6APrOWxlrlekg/exec";
+  const webhookUrl = "https://n8n.wayvvault.cc/webhook/image-uploader";
+  const BATCH_SIZE = 10; // smaller batches play nicer with proxies/Cloudflare
+  const MAX_FILES = 100;
+  const MAX_DIM_PX = 3000; // already used by resizeImage
+  const JPG_QUALITY = 0.85; // unify JPEG quality controls
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files) {
-      const newFiles = Array.from(e.target.files);
-      setFiles(prev => [...prev, ...newFiles]);
+  const [autoMatched, setAutoMatched] = useState<string>("");
+
+  function findBestJob(query: string) {
+    const q = query.trim().toLowerCase();
+    if (!q) return null;
+    const exact = jobOptions.find((o) => o.label === query);
+    if (exact) return exact;
+    const matches = jobOptions.filter((o) => o.label.toLowerCase().includes(q));
+    if (matches.length === 1) return matches[0];
+    return null;
+  }
+
+  const [jobs, setJobs] = useState<Job[]>([]);
+  const [loadingJobs, setLoadingJobs] = useState(true);
+
+  const [addressQuery, setAddressQuery] = useState("");
+  const [selectedJob, setSelectedJob] = useState<Job | null>(null);
+  const [jobId, setJobId] = useState("");
+  const [description, setDescription] = useState("");
+
+  const [folderName, setFolderName] = useState("");
+  const [category, setCategory] = useState("");
+  const [notes, setNotes] = useState("");
+
+  const [images, setImages] = useState<File[]>([]);
+  const [uploading, setUploading] = useState(false);
+  const [uploadedCount, setUploadedCount] = useState(0);
+
+  const dropRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    async function loadJobs() {
+      try {
+        const res = await fetch(sheetApiUrl);
+        if (!res.ok) throw new Error("Failed to load jobs");
+        const data: Job[] = await res.json();
+        setJobs(data);
+      } catch (err: any) {
+        toast({ title: "Error", description: err.message ?? "Failed to load jobs", variant: "destructive" });
+      } finally {
+        setLoadingJobs(false);
+      }
+    }
+    loadJobs();
+  }, [toast]);
+
+  const jobOptions = useMemo(() => {
+    return jobs.map((j) => {
+      const addr = [j.worksLocationSuburb, j.worksLocationState, j.worksLocationPostcode].filter(Boolean).join(", ");
+      return {
+        key: `${j.jobId}|${j.number}`,
+        label: `${j.description} — ${addr} (Job ${j.number})`,
+        addr,
+        job: j,
+      };
+    });
+  }, [jobs]);
+
+  useEffect(() => {
+    const match = findBestJob(addressQuery);
+    if (match) {
+      setSelectedJob(match.job);
+      setJobId(match.job.jobId);
+      setDescription(match.job.description);
+      setAutoMatched(match.label === addressQuery ? "" : `Matched: ${match.label}`);
+    } else {
+      setSelectedJob(null);
+      setAutoMatched("");
+    }
+  }, [addressQuery, jobOptions]);
+
+  async function testEndpoint() {
+    try {
+      const fd = new FormData();
+      fd.append("ping", "1");
+      const res = await fetch(webhookUrl, {
+        method: "POST",
+        body: fd,
+        mode: "cors",
+        credentials: "omit",
+      });
+      if (!res.ok) {
+        const text = await res.text().catch(() => "");
+        throw new Error(`(${res.status}) ${text}`);
+      }
+      toast({ title: "Endpoint OK", description: `Webhook responded ${res.status}` });
+    } catch (e: any) {
+      const msg = e?.message || String(e);
+      const hint = msg.includes("Failed to fetch") || msg.includes("TypeError") ? "Likely CORS or network block. Check n8n Respond Immediately + CORS headers." : msg;
+      toast({ title: "Endpoint test failed", description: hint, variant: "destructive" });
+    }
+  }
+
+  async function resizeImage(file: File, maxDim = 3000): Promise<File> {
+    return new Promise((resolve) => {
+      const img = document.createElement("img");
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        img.src = e.target?.result as string;
+      };
+      img.onload = () => {
+        const canvas = document.createElement("canvas");
+        let { width, height } = img as HTMLImageElement & { width: number; height: number };
+        if (width > height) {
+          if (width > maxDim) {
+            height *= maxDim / width;
+            width = maxDim;
+          }
+        } else {
+          if (height > maxDim) {
+            width *= maxDim / height;
+            height = maxDim;
+          }
+        }
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext("2d");
+        ctx?.drawImage(img, 0, 0, width, height);
+        canvas.toBlob((blob) => {
+          resolve(new File([blob as Blob], file.name.replace(/\.(heic|heif)$/i, ".jpg"), { type: "image/jpeg" }));
+        }, "image/jpeg", JPG_QUALITY);
+      };
+      reader.readAsDataURL(file);
+    });
+  }
+
+  async function addFiles(files: FileList | File[]) {
+    const arr = Array.from(files);
+    const processed: File[] = [];
+
+    for (const f of arr) {
+      let fileToAdd = f;
+      const isHeic = f.type === "image/heic" || f.type === "image/heif" || /\.hei[c|f]$/i.test(f.name);
+      if (isHeic) {
+        try {
+          // Dynamic import of heic2any only when needed
+          const { default: heic2any } = await import("heic2any");
+          const blob = (await heic2any({ blob: f, toType: "image/jpeg", quality: JPG_QUALITY })) as Blob;
+          fileToAdd = new File([blob], f.name.replace(/\.(heic|heif)$/i, ".jpg"), { type: "image/jpeg" });
+        } catch {
+          // if conversion fails, keep original
+        }
+      }
+      if (fileToAdd.type.startsWith("image/")) {
+        fileToAdd = await resizeImage(fileToAdd);
+        processed.push(fileToAdd);
+      }
+    }
+
+    if (processed.length !== arr.length) {
+      toast({ title: "Skipped non-image files", description: "Only images are accepted.", variant: "destructive" });
+    }
+
+    const merged = [...images, ...processed].slice(0, MAX_FILES);
+    setImages(merged);
+  }
+
+  const onInputFiles = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files) await addFiles(e.target.files);
+  };
+
+  const onDrop = async (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    if (e.dataTransfer.files && e.dataTransfer.files.length) {
+      await addFiles(e.dataTransfer.files);
     }
   };
 
-  const removeFile = (index: number) => {
-    setFiles(prev => prev.filter((_, i) => i !== index));
+  const onDragOver = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsUploading(true);
-    
-    // Simulate upload
-    setTimeout(() => {
-      setIsUploading(false);
-      // Reset form
-      setFiles([]);
-      setJobNumber('');
-      setClientName('');
-      setDescription('');
-    }, 2000);
+  const removeImageAt = (idx: number) => {
+    setImages((prev) => prev.filter((_, i) => i !== idx));
   };
+
+  // Robust upload helper with timeout/retries and explicit CORS mode
+  async function postWithRetry(fd: FormData, tries = 3, timeoutMs = 25000) {
+    let lastErr: any = null;
+    for (let attempt = 1; attempt <= tries; attempt++) {
+      const ctrl = new AbortController();
+      const timer = setTimeout(() => ctrl.abort(), timeoutMs);
+      try {
+        const res = await fetch(webhookUrl, {
+          method: "POST",
+          body: fd,
+          mode: "cors",            // important for cross-origin (n8n)
+          credentials: "omit",      // do not send cookies — keeps it a simple CORS case
+          signal: ctrl.signal,
+        });
+        clearTimeout(timer);
+        if (!res.ok) {
+          // Try to read any response text for debugging
+          let text = "";
+          try { text = await res.text(); } catch {}
+          throw new Error(`Upload failed (${res.status}) ${text}`);
+        }
+        return res;
+      } catch (err: any) {
+        clearTimeout(timer);
+        lastErr = err;
+        // Backoff and retry on network/CORS/timeout
+        if (attempt < tries) {
+          await new Promise(r => setTimeout(r, attempt * 1000));
+          continue;
+        }
+      }
+    }
+    throw lastErr || new Error("Upload failed");
+  }
+
+  async function handleUpload() {
+    if (images.length === 0) {
+      toast({ title: "No images", description: "Add some images to upload.", variant: "destructive" });
+      return;
+    }
+    if (!addressQuery.trim()) {
+      toast({ title: "Address required", description: "Type an address or pick from suggestions.", variant: "destructive" });
+      return;
+    }
+
+    setUploading(true);
+    setUploadedCount(0);
+
+    const attendanceDate = new Date().toISOString().split("T")[0];
+    const attendanceTime = new Date().toTimeString().split(" ")[0];
+
+    try {
+      for (let start = 0; start < images.length; start += BATCH_SIZE) {
+        const batch = images.slice(start, start + BATCH_SIZE);
+        const fd = new FormData();
+
+        fd.append("jobId", jobId || "");
+        fd.append("job", description || "");
+        fd.append("number", selectedJob?.number || "");
+        fd.append("clientName", selectedJob?.clientName || "");
+        fd.append("locationAddress", addressQuery);
+        fd.append("folderName", folderName);
+        fd.append("category", category);
+        if (notes.trim()) fd.append("notes", notes.trim());
+        fd.append("attendanceDate", attendanceDate);
+        fd.append("attendanceTime", attendanceTime);
+        fd.append("dateSubmitted", attendanceDate);
+
+        for (const file of batch) {
+          fd.append("images", file, file.name);
+        }
+
+        await postWithRetry(fd);
+
+        setUploadedCount((prev) => prev + batch.length);
+      }
+
+      toast({ title: "Upload complete", description: `${images.length} image(s) uploaded successfully.` });
+      setImages([]);
+    } catch (err: any) {
+      toast({ title: "Error", description: err.message ?? "Upload failed", variant: "destructive" });
+    } finally {
+      setUploading(false);
+    }
+  }
+
+  const progressPct = images.length ? Math.round((uploadedCount / images.length) * 100) : 0;
 
   return (
-    <div className="p-6">
-      <div className="max-w-4xl mx-auto space-y-6">
-        <div className="text-center mb-8">
-          <h2 className="text-2xl font-bold text-slate-900">Job Uploads Manager</h2>
-          <p className="text-slate-600">Upload and manage job-related files and documentation</p>
-        </div>
-
-        <form onSubmit={handleSubmit} className="space-y-6">
-          {/* Job Information */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Job Information</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="jobNumber">Job Number</Label>
-                  <Input
-                    id="jobNumber"
-                    value={jobNumber}
-                    onChange={(e) => setJobNumber(e.target.value)}
-                    placeholder="Enter job number"
-                    required
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="clientName">Client Name</Label>
-                  <Input
-                    id="clientName"
-                    value={clientName}
-                    onChange={(e) => setClientName(e.target.value)}
-                    placeholder="Enter client name"
-                    required
-                  />
-                </div>
-              </div>
-              
+    <div className="p-4">
+      <div className="max-w-4xl mx-auto">
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-center text-2xl">Roof Photos — Bulk Uploader</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            {/* Address */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <Label htmlFor="description">Description</Label>
-                <Textarea
-                  id="description"
-                  value={description}
-                  onChange={(e) => setDescription(e.target.value)}
-                  placeholder="Brief description of the uploads..."
-                  rows={3}
-                />
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* File Upload */}
-          <Card>
-            <CardHeader>
-              <CardTitle>File Uploads</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="border-2 border-dashed border-slate-300 rounded-lg p-6 text-center hover:border-slate-400 transition-colors">
-                <Upload className="mx-auto h-12 w-12 text-slate-400 mb-4" />
-                <Label htmlFor="file-upload" className="cursor-pointer">
-                  <span className="text-slate-600 font-medium">Click to upload files</span>
-                  <span className="text-slate-500 text-sm block mt-1">or drag and drop</span>
-                </Label>
+                <Label htmlFor="address">Address (type to auto-complete)</Label>
                 <Input
-                  id="file-upload"
-                  type="file"
-                  multiple
-                  onChange={handleFileChange}
-                  className="hidden"
-                  accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.webp"
+                  id="address"
+                  list="job-suggestions"
+                  placeholder={loadingJobs ? "Loading jobs…" : "Start typing address or description"}
+                  value={addressQuery}
+                  onChange={(e) => setAddressQuery(e.target.value)}
+                  disabled={loadingJobs}
                 />
+                {autoMatched && (
+                  <div className="text-xs text-muted-foreground mt-1" role="status">{autoMatched}</div>
+                )}
+                <datalist id="job-suggestions">
+                  {jobOptions.map((o) => (
+                    <option key={o.key} value={o.label} />
+                  ))}
+                </datalist>
               </div>
-
-              {/* File List */}
-              {files.length > 0 && (
-                <div className="space-y-2">
-                  <h4 className="font-medium text-slate-900">Selected Files:</h4>
-                  {files.map((file, index) => (
-                    <div key={index} className="flex items-center justify-between p-3 bg-slate-50 rounded-lg">
-                      <div className="flex items-center space-x-3">
-                        <File className="h-5 w-5 text-slate-500" />
-                        <span className="text-sm text-slate-700">{file.name}</span>
-                        <span className="text-xs text-slate-500">
-                          ({(file.size / 1024 / 1024).toFixed(2)} MB)
-                        </span>
-                      </div>
-                      <Button
+              <div>
+                <Label>Job ID</Label>
+                <Input value={jobId} onChange={(e) => setJobId(e.target.value)} placeholder="e.g. 123e456…" />
+              </div>
+            </div>
+            {/* Desc & Job No */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <Label>Description</Label>
+                <Input value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Job description" />
+              </div>
+              <div>
+                <Label>Job Number</Label>
+                <Input value={selectedJob?.number || ""} readOnly className="bg-muted" />
+              </div>
+            </div>
+            {/* Folder & Category */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <Label>Folder Name</Label>
+                <Input value={folderName} onChange={(e) => setFolderName(e.target.value)} placeholder="e.g. Make Safe 2025-08-11" />
+              </div>
+              <div>
+                <Label>Category</Label>
+                <Input list="category-options" value={category} onChange={(e) => setCategory(e.target.value)} placeholder="e.g. Before / After / Scope" />
+                <datalist id="category-options">
+                  <option value="Make Safe" />
+                  <option value="Scope" />
+                  <option value="Before" />
+                  <option value="After" />
+                  <option value="Invoices" />
+                  <option value="Certificates" />
+                  <option value="Other" />
+                </datalist>
+              </div>
+            </div>
+            {/* Notes */}
+            <div>
+              <Label>Notes (optional)</Label>
+              <Textarea rows={3} value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Context for these photos" />
+            </div>
+            {/* Dropzone */}
+            <div
+              ref={dropRef}
+              onDrop={onDrop}
+              onDragOver={onDragOver}
+              className="border-2 border-dashed rounded-2xl p-8 text-center cursor-pointer hover:bg-muted/30 transition"
+              onClick={() => document.getElementById("file-input")?.click()}
+            >
+              <p className="font-medium">Drag & drop images here, or click to browse</p>
+              <p className="text-sm text-muted-foreground">Up to 100 images. HEIC auto-converted, large files resized.</p>
+              <input id="file-input" type="file" accept="image/*,image/heic,image/heif" multiple className="hidden" onChange={onInputFiles} />
+            </div>
+            {/* Previews */}
+            {images.length > 0 && (
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <p className="text-sm text-muted-foreground">{images.length} image(s) ready</p>
+                  {uploading && (
+                    <p className="text-sm">Uploading {uploadedCount}/{images.length} — {progressPct}%</p>
+                  )}
+                </div>
+                <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3">
+                  {images.map((img, i) => (
+                    <div key={i} className="relative group">
+                      <img src={URL.createObjectURL(img)} alt={img.name} className="w-full h-32 object-cover rounded-xl border" />
+                      <button
                         type="button"
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => removeFile(index)}
-                        className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                        className="absolute top-1 right-1 bg-background/80 backdrop-blur px-2 py-1 rounded-md text-xs opacity-0 group-hover:opacity-100 transition"
+                        onClick={(e) => { e.stopPropagation(); removeImageAt(i); }}
                       >
-                        <X className="h-4 w-4" />
-                      </Button>
+                        Remove
+                      </button>
+                      <div className="mt-1 text-[10px] truncate" title={img.name}>{img.name}</div>
                     </div>
                   ))}
                 </div>
-              )}
-            </CardContent>
-          </Card>
-
-          {/* Submit Button */}
-          <div className="text-center">
-            <Button 
-              type="submit"
-              className="bg-green-600 hover:bg-green-700 px-8 py-3"
-              disabled={isUploading || files.length === 0}
-            >
-              {isUploading ? 'Uploading...' : 'Upload Files'}
-            </Button>
-          </div>
-        </form>
+              </div>
+            )}
+            {/* Actions */}
+            <div className="flex flex-col sm:flex-row gap-3">
+              <Button type="button" className="w-full sm:w-auto" onClick={handleUpload} disabled={uploading || images.length === 0 || !addressQuery.trim()}>
+                {uploading ? `Uploading… (${progressPct}%)` : "Upload Photos"}
+              </Button>
+              <Button type="button" variant="secondary" className="w-full sm:w-auto" onClick={() => setImages([])} disabled={uploading || images.length === 0}>
+                Clear Images
+              </Button>
+              <Button type="button" variant="outline" className="w-full sm:w-auto" onClick={testEndpoint} disabled={uploading}>
+                Test endpoint
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+        </div>
       </div>
-    </div>
   );
 };
 
