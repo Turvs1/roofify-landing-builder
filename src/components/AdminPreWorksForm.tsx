@@ -1428,10 +1428,16 @@ const AdminPreWorksForm: React.FC = () => {
       
       if (response.ok) {
         const data = await response.json()
-        if (data.imageUrl) {
-          setMudMapImage(data.imageUrl)
+        console.log('Mud map webhook response:', data)
+        
+        // Handle the actual n8n response format
+        if (data.data && data.data.url) {
+          setMudMapImage(data.data.url)
+        } else if (data.url) {
+          // Fallback for direct URL response
+          setMudMapImage(data.url)
         } else {
-          console.log('No image URL in response:', data)
+          console.log('No image URL found in response:', data)
         }
       } else {
         console.error('Failed to fetch mud map:', response.status)
