@@ -95,10 +95,11 @@ interface RoofArea {
   name: string
   type?: string
   profile?: string
-  pitchDeg?: number | null
-  colour?: string
   gauge?: string
   membrane?: string
+  pitchDeg?: number | null
+  colour?: string
+  images: ImageFile[]
 }
 
 interface BattenRow {
@@ -107,6 +108,7 @@ interface BattenRow {
   material?: 'Steel' | 'Timber'
   size?: string
   condition?: string
+  images: ImageFile[]
 }
 
 interface FramingRow {
@@ -115,6 +117,7 @@ interface FramingRow {
   size?: string
   span?: string
   condition?: string
+  images: ImageFile[]
 }
 
 interface Asset {
@@ -1254,13 +1257,13 @@ const PreWorksForm: React.FC = () => {
         {
           assetName: 'Main House',
           roofAreas: [
-            { name: 'Area A', type: '', profile: '', pitchDeg: null, colour: '', gauge: '', membrane: '' },
+            { name: 'Area A', type: '', profile: '', pitchDeg: null, colour: '', gauge: '', membrane: '', images: [] },
           ],
           battens: [
-            { kind: 'Batten', spacingMm: '600 centres', material: 'Timber', size: '', condition: 'Good' }
+            { kind: 'Batten', spacingMm: '600 centres', material: 'Timber', size: '', condition: 'Good', images: [] }
           ],
           framing: [
-            { material: 'Timber', spacing: '', size: '', span: '', condition: 'Good' }
+            { material: 'Timber', spacing: '', size: '', span: '', condition: 'Good', images: [] }
           ],
         },
       ],
@@ -1470,12 +1473,12 @@ const PreWorksForm: React.FC = () => {
       ...prev,
       assets: [...prev.assets, {
         assetName: `Shed ${prev.assets.length + 1}`,
-        roofAreas: [{ name: `Area ${String.fromCharCode(65 + prev.assets.length)}`, type: '', profile: '', pitchDeg: null, colour: '', gauge: '', membrane: '' }],
+        roofAreas: [{ name: `Area ${String.fromCharCode(65 + prev.assets.length)}`, type: '', profile: '', pitchDeg: null, colour: '', gauge: '', membrane: '', images: [] }],
         battens: [
-          { kind: 'Batten', spacingMm: '600 centres', material: 'Timber', size: '', condition: 'Good' }
+          { kind: 'Batten', spacingMm: '600 centres', material: 'Timber', size: '', condition: 'Good', images: [] }
         ],
         framing: [
-          { material: 'Timber', spacing: '', size: '', span: '', condition: 'Good' }
+          { material: 'Timber', spacing: '', size: '', span: '', condition: 'Good', images: [] }
         ],
       }]
     }))
@@ -1498,7 +1501,7 @@ const PreWorksForm: React.FC = () => {
           ...asset,
           roofAreas: [...asset.roofAreas, { 
             name: `Area ${String.fromCharCode(65 + asset.roofAreas.length)}`, 
-            type: '', profile: '', pitchDeg: null, colour: '', gauge: '', membrane: '' 
+            type: '', profile: '', pitchDeg: null, colour: '', gauge: '', membrane: '', images: [] 
           }]
         } : asset
       )
@@ -1523,7 +1526,7 @@ const PreWorksForm: React.FC = () => {
       assets: prev.assets.map((asset, index) => 
         index === assetIndex ? {
           ...asset,
-          battens: [...asset.battens, { kind: 'Batten', spacingMm: '600 centres', material: 'Timber', size: '', condition: 'Good' }]
+          battens: [...asset.battens, { kind: 'Batten', spacingMm: '600 centres', material: 'Timber', size: '', condition: 'Good', images: [] }]
         } : asset
       )
     }))
@@ -1547,7 +1550,7 @@ const PreWorksForm: React.FC = () => {
       assets: prev.assets.map((asset, index) => 
         index === assetIndex ? {
           ...asset,
-          framing: [...asset.framing, { material: 'Timber', spacing: '', size: '', span: '', condition: 'Good' }]
+          framing: [...asset.framing, { material: 'Timber', spacing: '', size: '', span: '', condition: 'Good', images: [] }]
         } : asset
       )
     }))
@@ -1681,6 +1684,44 @@ const PreWorksForm: React.FC = () => {
       
       if (formData.finalTakeoff && formData.finalTakeoff.length > 0) {
         fd.append('finalTakeoff', formData.finalTakeoff[0])
+      }
+
+      // Append all asset images
+      if (formData.assets && formData.assets.length > 0) {
+        formData.assets.forEach((asset, assetIndex) => {
+          // Asset roof area images
+          if (asset.roofAreas) {
+            asset.roofAreas.forEach((area, areaIndex) => {
+              if (area.images && area.images.length > 0) {
+                area.images.forEach((image, imageIndex) => {
+                  fd.append(`asset_${assetIndex}_area_${areaIndex}_image_${imageIndex}`, image.file)
+                })
+              }
+            })
+          }
+          
+          // Asset batten/purlin images
+          if (asset.battens) {
+            asset.battens.forEach((batten, battenIndex) => {
+              if (batten.images && batten.images.length > 0) {
+                batten.images.forEach((image, imageIndex) => {
+                  fd.append(`asset_${assetIndex}_batten_${battenIndex}_image_${imageIndex}`, image.file)
+                })
+              }
+            })
+          }
+          
+          // Asset framing images
+          if (asset.framing) {
+            asset.framing.forEach((frame, frameIndex) => {
+              if (frame.images && frame.images.length > 0) {
+                frame.images.forEach((image, imageIndex) => {
+                  fd.append(`asset_${assetIndex}_framing_${frameIndex}_image_${imageIndex}`, image.file)
+                })
+              }
+            })
+          }
+        })
       }
 
       // Log the data being sent to n8n for debugging
@@ -2426,8 +2467,22 @@ const PreWorksForm: React.FC = () => {
                                   multiple 
                                   accept="image/*" 
                                   onImagesChange={(files) => {
-                                    // Handle image upload for this specific area
-                                    console.log(`Images for ${asset.assetName} - Roof Area ${areaIndex}:`, files)
+                                    // Store images for this specific roof area
+                                    const imageFiles: ImageFile[] = files.map((file, index) => ({
+                                      id: `${assetIndex}-${areaIndex}-${index}`,
+                                      file,
+                                      preview: URL.createObjectURL(file),
+                                      progress: 100,
+                                      status: 'success'
+                                    }))
+                                    const updatedAssets = [...formData.assets]
+                                    updatedAssets[assetIndex] = {
+                                      ...updatedAssets[assetIndex],
+                                      roofAreas: updatedAssets[assetIndex].roofAreas.map((ra, idx) => 
+                                        idx === areaIndex ? { ...ra, images: imageFiles } : ra
+                                      )
+                                    }
+                                    setFormData(prev => ({ ...prev, assets: updatedAssets }))
                                   }}
                                 />
                               </div>
@@ -2509,8 +2564,22 @@ const PreWorksForm: React.FC = () => {
                                   multiple 
                                   accept="image/*" 
                                   onImagesChange={(files) => {
-                                    // Handle image upload for this specific row
-                                    console.log(`Images for ${asset.assetName} - Batten Row ${rowIndex}:`, files)
+                                    // Store images for this specific batten row
+                                    const imageFiles: ImageFile[] = files.map((file, index) => ({
+                                      id: `${assetIndex}-batten-${rowIndex}-${index}`,
+                                      file,
+                                      preview: URL.createObjectURL(file),
+                                      progress: 100,
+                                      status: 'success'
+                                    }))
+                                    const updatedAssets = [...formData.assets]
+                                    updatedAssets[assetIndex] = {
+                                      ...updatedAssets[assetIndex],
+                                      battens: updatedAssets[assetIndex].battens.map((b, idx) => 
+                                        idx === rowIndex ? { ...b, images: imageFiles } : b
+                                      )
+                                    }
+                                    setFormData(prev => ({ ...prev, assets: updatedAssets }))
                                   }}
                                 />
                               </div>
@@ -2585,8 +2654,22 @@ const PreWorksForm: React.FC = () => {
                                   multiple 
                                   accept="image/*" 
                                   onImagesChange={(files) => {
-                                    // Handle image upload for this specific row
-                                    console.log(`Images for ${asset.assetName} - Framing Row ${rowIndex}:`, files)
+                                    // Store images for this specific framing row
+                                    const imageFiles: ImageFile[] = files.map((file, index) => ({
+                                      id: `${assetIndex}-framing-${rowIndex}-${index}`,
+                                      file,
+                                      preview: URL.createObjectURL(file),
+                                      progress: 100,
+                                      status: 'success'
+                                    }))
+                                    const updatedAssets = [...formData.assets]
+                                    updatedAssets[assetIndex] = {
+                                      ...updatedAssets[assetIndex],
+                                      framing: updatedAssets[assetIndex].framing.map((f, idx) => 
+                                        idx === rowIndex ? { ...f, images: imageFiles } : f
+                                      )
+                                    }
+                                    setFormData(prev => ({ ...prev, assets: updatedAssets }))
                                   }}
                                 />
                               </div>
