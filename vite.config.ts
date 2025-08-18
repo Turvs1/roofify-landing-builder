@@ -236,10 +236,12 @@ export default defineConfig(({ mode }) => ({
   server: {
     host: "::",
     port: 8080,
-    // Enable HMR
-    hmr: {
-      overlay: false,
-    },
+    // Disable HMR to fix React loading issues
+    hmr: false,
+    // Keep file watching for script injection
+    watch: {
+      usePolling: false
+    }
   },
   // CSS optimization
   css: {
