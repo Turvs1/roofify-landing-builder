@@ -8,7 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Separator } from '@/components/ui/separator'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
-import { Check, ChevronsUpDown } from 'lucide-react'
+import { Check, ChevronsUpDown, CheckCircle, AlertCircle, Loader2 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 // Dynamic imports for heavy libraries
 // import jsPDF from 'jspdf'
@@ -26,7 +26,7 @@ import SEO from '../components/SEO'
 const CONFIG = {
   sheetApiUrl:
     'https://script.google.com/macros/s/AKfycbxAeT0tXnBGwhw7NaoAvgdhUHz412L4ESPi62gtx0SUruZnEdUOn6nUi6APrOWxlrlekg/exec',
-  webhookUrl: 'https://n8n.wayvvault.cc/webhook/form-builder',
+  webhookUrl: 'https://n8n.wayvvault.cc/webhook/Pre-works',
   siteAccessOptions: [
     'Clear driveway',
     'Street parking only',
@@ -1362,6 +1362,12 @@ const PreWorksForm: React.FC = () => {
   const [isLoadingJobs, setIsLoadingJobs] = useState(true)
   const [selectedJob, setSelectedJob] = useState<Job | null>(null)
   const [jobId, setJobId] = useState('')
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [notification, setNotification] = useState<{
+    type: 'success' | 'error' | 'info';
+    message: string;
+    show: boolean;
+  } | null>(null)
 
   // Timestamps
   const now = useMemo(() => new Date(), [])
@@ -1563,58 +1569,186 @@ const PreWorksForm: React.FC = () => {
     e.preventDefault()
     if (!selectedJob) return
 
-    const fd = new FormData()
-    // meta/job
-    fd.append('form', 'pre_works_v1')
-    fd.append('jobId', jobId)
-    fd.append('jobDescription', formData.selectedDescription)
-    fd.append('jobNumber', selectedJob.number)
-    fd.append('clientName', selectedJob.clientName)
-    fd.append('reporterName', formData.reporterName || '')
-
-    // timestamps
-    fd.append('attendanceDate', attendanceDate)
-    fd.append('attendanceTime', attendanceTime)
-    fd.append('dateSubmitted', dateSubmitted)
-
-    // site basics
-    fd.append('locationOfStructure', formData.locationOfStructure || '')
-    fd.append('locationOther', formData.locationOther || '')
-    fd.append('siteAccess', formData.siteAccess || '')
-    fd.append('customerNotes', formData.customerNotes || '')
-
-    // property
-    fd.append('isPowerIsolated', formData.isPowerIsolated || '')
-    if (formData.powerIsolationImage && formData.powerIsolationImage.length > 0) {
-      fd.append('powerIsolationImage', formData.powerIsolationImage[0])
-    }
-    fd.append('propertyType', formData.propertyType || '')
-    fd.append('ageOfProperty', formData.ageOfProperty || '')
-    fd.append('propertyCondition', formData.propertyCondition || '')
-    fd.append('constructionType', formData.constructionType || '')
-
-    // services (simple CSV)
-    fd.append('roofServices', (formData.roofServices || []).join(','))
-
-    // assets (serialize JSON for structured sections; images appended separately by naming convention)
-    fd.append('assetsJson', JSON.stringify(formData.assets, (_k, v) => (v === null ? '' : v)))
-
-    // notes
-    fd.append('notes', formData.notes)
+    // Show loading state
+    setIsSubmitting(true)
 
     try {
-      const res = await fetch(CONFIG.webhookUrl, { method: 'POST', body: fd })
-      if (!res.ok) {
-        let msg = `Submit failed (${res.status})`
-        try { const j = await res.json(); if (j?.message) msg = j.message } catch {}
-        throw new Error(msg)
+      // Prepare structured data for n8n automation
+      const formPayload = {
+        // Metadata
+        formType: 'pre_works_assessment',
+        version: '1.0',
+        submittedAt: new Date().toISOString(),
+        source: 'ARW Roofing Website',
+        
+        // Job Information
+        job: {
+          id: jobId,
+          number: selectedJob.number,
+          description: formData.selectedDescription,
+          clientName: selectedJob.clientName,
+          reporterName: formData.reporterName || '',
+          status: 'pending_review'
+        },
+
+        // Timestamps
+        timestamps: {
+          attendanceDate,
+          attendanceTime,
+          dateSubmitted,
+          submittedAt: new Date().toISOString()
+        },
+
+        // Site Assessment
+        site: {
+          locationOfStructure: formData.locationOfStructure || '',
+          locationOther: formData.locationOther || '',
+          siteAccess: formData.siteAccess || '',
+          customerNotes: formData.customerNotes || '',
+          accessRestrictions: formData.siteAccess ? formData.siteAccess.split(',').map(s => s.trim()) : []
+        },
+
+        // Property Details
+        property: {
+          type: formData.propertyType || '',
+          age: formData.ageOfProperty || '',
+          condition: formData.propertyCondition || '',
+          constructionType: formData.constructionType || '',
+          powerIsolation: {
+            isIsolated: formData.isPowerIsolated || '',
+            imageUploaded: formData.powerIsolationImage && formData.powerIsolationImage.length > 0
+          }
+        },
+
+        // Roof Services Required
+        services: {
+          requested: formData.roofServices || [],
+          totalServices: (formData.roofServices || []).length
+        },
+
+        // Asset Assessment
+        assets: formData.assets || [],
+
+        // Additional Notes
+        notes: formData.notes || '',
+
+        // Form Validation
+        validation: {
+          isComplete: true,
+          missingFields: [],
+          hasImages: formData.powerIsolationImage && formData.powerIsolationImage.length > 0
+        }
       }
-      const data = await res.json().catch(() => ({}))
-      // Navigate to success (optional ref number)
-      const ref = data?.ref ? `?ref=${encodeURIComponent(data.ref)}` : ''
-      navigate(`/forms/pre-works/success${ref}`)
+
+      // Create FormData for file uploads
+      const fd = new FormData()
+      
+      // Append the structured JSON data
+      fd.append('formData', JSON.stringify(formPayload))
+      
+      // Append individual fields for backward compatibility
+      fd.append('form', 'pre_works_v1')
+      fd.append('jobId', jobId)
+      fd.append('jobDescription', formData.selectedDescription)
+      fd.append('jobNumber', selectedJob.number)
+      fd.append('clientName', selectedJob.clientName)
+      fd.append('reporterName', formData.reporterName || '')
+      fd.append('attendanceDate', attendanceDate)
+      fd.append('attendanceTime', attendanceTime)
+      fd.append('dateSubmitted', dateSubmitted)
+      fd.append('locationOfStructure', formData.locationOfStructure || '')
+      fd.append('locationOther', formData.locationOther || '')
+      fd.append('siteAccess', formData.siteAccess || '')
+      fd.append('customerNotes', formData.customerNotes || '')
+      fd.append('isPowerIsolated', formData.isPowerIsolated || '')
+      fd.append('propertyType', formData.propertyType || '')
+      fd.append('ageOfProperty', formData.ageOfProperty || '')
+      fd.append('propertyCondition', formData.propertyCondition || '')
+      fd.append('constructionType', formData.constructionType || '')
+      fd.append('roofServices', (formData.roofServices || []).join(','))
+      fd.append('assetsJson', JSON.stringify(formData.assets, (_k, v) => (v === null ? '' : v)))
+      fd.append('notes', formData.notes)
+
+      // Append images if they exist
+      if (formData.powerIsolationImage && formData.powerIsolationImage.length > 0) {
+        fd.append('powerIsolationImage', formData.powerIsolationImage[0])
+      }
+
+      // Log the data being sent to n8n for debugging
+      console.log('🚀 Sending data to n8n webhook:', {
+        url: CONFIG.webhookUrl,
+        formPayload,
+        formDataEntries: Array.from(fd.entries())
+      })
+      
+      // Send to n8n webhook
+      const res = await fetch(CONFIG.webhookUrl, { 
+        method: 'POST', 
+        body: fd,
+        headers: {
+          'Accept': 'application/json'
+        }
+      })
+
+      if (!res.ok) {
+        let errorMessage = `Webhook submission failed (${res.status})`
+        try { 
+          const errorData = await res.json()
+          if (errorData?.message) errorMessage = errorData.message
+          if (errorData?.error) errorMessage = errorData.error
+        } catch {}
+        throw new Error(errorMessage)
+      }
+
+      // Parse response from n8n
+      const responseData = await res.json().catch(() => ({}))
+      
+      console.log('n8n webhook response:', responseData)
+      
+      // Handle successful submission
+      const ref = responseData?.ref || responseData?.jobId || responseData?.id || jobId
+      const successMessage = responseData?.message || 'Pre-works assessment submitted successfully!'
+      
+      // Show success notification
+      setNotification({
+        type: 'success',
+        message: successMessage,
+        show: true
+      })
+      
+      // Auto-hide notification after 3 seconds
+      setTimeout(() => {
+        setNotification(null)
+        // Navigate to success page
+        navigate(`/forms/pre-works/success?ref=${encodeURIComponent(ref)}`)
+      }, 3000)
+
     } catch (err: any) {
-      alert(err.message)
+      console.error('Form submission error:', err)
+      
+      // Enhanced error handling
+      let errorMessage = 'An error occurred while submitting the form. Please try again.'
+      
+      if (err.message.includes('fetch')) {
+        errorMessage = 'Network error. Please check your connection and try again.'
+      } else if (err.message.includes('webhook')) {
+        errorMessage = 'Server error. Please contact support if the problem persists.'
+      } else if (err.message) {
+        errorMessage = err.message
+      }
+      
+      setNotification({
+        type: 'error',
+        message: `Submission Failed: ${errorMessage}`,
+        show: true
+      })
+      
+      // Auto-hide error notification after 5 seconds
+      setTimeout(() => {
+        setNotification(null)
+      }, 5000)
+    } finally {
+      setIsSubmitting(false)
     }
   }
 
@@ -1888,6 +2022,23 @@ const PreWorksForm: React.FC = () => {
     <div className="min-h-screen bg-background overflow-x-hidden">
       <SEO page="preWorks" />
       <Navigation />
+      
+      {/* Notification Banner */}
+      {notification && (
+        <div className={cn(
+          "fixed top-20 left-1/2 transform -translate-x-1/2 z-50 p-4 rounded-lg shadow-lg max-w-md",
+          notification.type === 'success' && "bg-green-100 border border-green-300 text-green-800",
+          notification.type === 'error' && "bg-red-100 border border-red-300 text-red-800",
+          notification.type === 'info' && "bg-blue-100 border border-blue-300 text-blue-800"
+        )}>
+          <div className="flex items-center gap-2">
+            {notification.type === 'success' && <CheckCircle className="h-5 w-5 text-green-600" />}
+            {notification.type === 'error' && <AlertCircle className="h-5 w-5 text-red-600" />}
+            {notification.type === 'info' && <Loader2 className="h-5 w-5 text-blue-600" />}
+            <span className="font-medium">{notification.message}</span>
+          </div>
+        </div>
+      )}
       
       <div className="p-2 sm:p-4 mt-24">
         <div className="max-w-4xl mx-auto w-full">
@@ -2533,8 +2684,19 @@ const PreWorksForm: React.FC = () => {
                 <Separator />
 
                 <div className="flex items-center gap-3">
-                  <Button type="submit" disabled={isLoadingJobs} className="w-full md:w-auto">
-                    Submit Form
+                  <Button 
+                    type="submit" 
+                    disabled={isLoadingJobs || isSubmitting} 
+                    className="w-full md:w-auto bg-arw-navy hover:bg-arw-blue"
+                  >
+                    {isSubmitting ? (
+                      <>
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                        Submitting to n8n...
+                      </>
+                    ) : (
+                      'Submit Form'
+                    )}
                   </Button>
                   <PDFExportButton formData={formData} />
                 </div>
