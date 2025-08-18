@@ -96,6 +96,9 @@ interface RoofArea {
   membrane?: string
   pitchDeg?: number | null
   colour?: string
+  length?: number | null
+  width?: number | null
+  area?: number | null
   images: ImageFile[]
 }
 
@@ -2587,6 +2590,140 @@ const AdminPreWorksForm: React.FC = () => {
                                   </Select>
                                 </div>
                               </div>
+
+                              {/* Measurement Fields - Full width below other inputs */}
+                              <div className="col-span-full">
+                                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 p-4 bg-gray-50 rounded-lg border border-gray-200">
+                                  <div>
+                                    <Label>Length (m)</Label>
+                                    <Input 
+                                      type="number" 
+                                      inputMode="decimal"
+                                      step="0.01"
+                                      min="0"
+                                      value={area.length || ''} 
+                                      onChange={(e) => handleRoofAreaChange(assetIndex, areaIndex, 'length', toNumberOrNull(e.target.value))} 
+                                      placeholder="0.00"
+                                    />
+                                  </div>
+                                  <div>
+                                    <Label>Width (m)</Label>
+                                    <Input 
+                                      type="number" 
+                                      inputMode="decimal"
+                                      step="0.01"
+                                      min="0"
+                                      value={area.width || ''} 
+                                      onChange={(e) => handleRoofAreaChange(assetIndex, areaIndex, 'width', toNumberOrNull(e.target.value))} 
+                                      placeholder="0.00"
+                                    />
+                                  </div>
+                                  <div>
+                                    <Label>Calculated Area (m²)</Label>
+                                    <div className="flex items-center space-x-2">
+                                      <Input 
+                                        type="number" 
+                                        inputMode="decimal"
+                                        step="0.01"
+                                        min="0"
+                                        value={area.area || ''} 
+                                        onChange={(e) => handleRoofAreaChange(assetIndex, areaIndex, 'area', toNumberOrNull(e.target.value))} 
+                                        placeholder="0.00"
+                                        className="flex-1"
+                                      />
+                                      <Button 
+                                        type="button" 
+                                        variant="outline" 
+                                        size="sm"
+                                        onClick={() => {
+                                          if (area.length && area.width) {
+                                            const calculatedArea = (area.length * area.width) / Math.cos((area.pitchDeg || 0) * Math.PI / 180)
+                                            handleRoofAreaChange(assetIndex, areaIndex, 'area', Math.round(calculatedArea * 100) / 100)
+                                          }
+                                        }}
+                                        disabled={!area.length || !area.width}
+                                        className="whitespace-nowrap"
+                                      >
+                                        Calculate
+                                      </Button>
+                                    </div>
+                                  </div>
+                                </div>
+                              </div>
+
+                              {/* Visual Representation - Full width below measurements */}
+                              {(area.length || area.width || area.area) && (
+                                <div className="col-span-full">
+                                  <div className="p-4 bg-blue-50 rounded-lg border border-blue-200">
+                                    <h4 className="font-medium text-blue-900 mb-3 flex items-center gap-2">
+                                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-1.447-.894L15 4m0 13V4m0 0L9 7" />
+                                      </svg>
+                                      {area.name} - Visual Representation
+                                    </h4>
+                                    
+                                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                                      {/* Area Diagram */}
+                                      <div className="space-y-3">
+                                        <h5 className="font-medium text-blue-800">Area Diagram</h5>
+                                        <div className="relative bg-white rounded-lg border border-blue-300 p-4">
+                                          <div 
+                                            className="relative mx-auto border-2 border-blue-500 bg-blue-100"
+                                            style={{
+                                              width: '200px',
+                                              height: '120px',
+                                              transform: area.pitchDeg ? `skewY(${area.pitchDeg}deg)` : 'none',
+                                              transformOrigin: 'bottom center'
+                                            }}
+                                          >
+                                            {area.length && area.width && (
+                                              <>
+                                                <div className="absolute inset-0 flex items-center justify-center text-xs font-medium text-blue-900">
+                                                  {area.length}m × {area.width}m
+                                                </div>
+                                                <div className="absolute -bottom-6 left-1/2 transform -translate-x-1/2 text-xs text-blue-700">
+                                                  {area.pitchDeg ? `${area.pitchDeg}° pitch` : 'Flat roof'}
+                                                </div>
+                                              </>
+                                            )}
+                                          </div>
+                                        </div>
+                                      </div>
+
+                                      {/* Measurements Summary */}
+                                      <div className="space-y-3">
+                                        <h5 className="font-medium text-blue-800">Measurements</h5>
+                                        <div className="bg-white rounded-lg border border-blue-300 p-4 space-y-2">
+                                          {area.length && (
+                                            <div className="flex justify-between">
+                                              <span className="text-sm text-gray-600">Length:</span>
+                                              <span className="font-medium text-blue-900">{area.length}m</span>
+                                            </div>
+                                          )}
+                                          {area.width && (
+                                            <div className="flex justify-between">
+                                              <span className="text-sm text-gray-600">Width:</span>
+                                              <span className="font-medium text-blue-900">{area.width}m</span>
+                                            </div>
+                                          )}
+                                          {area.area && (
+                                            <div className="flex justify-between border-t pt-2">
+                                              <span className="text-sm font-medium text-gray-700">Total Area:</span>
+                                              <span className="font-bold text-blue-900 text-lg">{area.area}m²</span>
+                                            </div>
+                                          )}
+                                          {area.pitchDeg && (
+                                            <div className="flex justify-between">
+                                              <span className="text-sm text-gray-600">Pitch:</span>
+                                              <span className="font-medium text-blue-900">{area.pitchDeg}°</span>
+                                            </div>
+                                          )}
+                                        </div>
+                                      </div>
+                                    </div>
+                                  </div>
+                                </div>
+                              )}
 
                               {/* Area Images - Full width below inputs */}
                               <div>
