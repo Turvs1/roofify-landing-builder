@@ -55,15 +55,27 @@
     <link rel="dns-prefetch" href="//fonts.gstatic.com" />
     <link rel="dns-prefetch" href="//fonts.cdnfonts.com" />
     
-    <!-- Service Worker -->
-    <link rel="manifest" href="/site.webmanifest" />
+    <!-- Service Worker - Commented out due to missing manifest -->
+    <!-- <link rel="manifest" href="/site.webmanifest" /> -->
     
   </head>
 
   <body>
-    <div id="root"></div>
+    <div id="root">
+      <!-- Fallback content to test if HTML is working -->
+      <div style="background-color: green; color: white; padding: 50px; font-size: 24px; text-align: center;">
+        HTML TEST: If you see this green box, HTML is working but React isn't loading.
+      </div>
+    </div>
     <noscript>You need to enable JavaScript to run this app.</noscript>
-    <!-- IMPORTANT: DO NOT REMOVE THIS SCRIPT TAG OR THIS VERY COMMENT! -->
-    <script src="https://cdn.gpteng.co/gptengineer.js" type="module" crossorigin="anonymous"></script>
+    
+    <!-- Test script to see if JavaScript is working -->
+    <script>
+      console.log("🧪 HTML script tag is working");
+      document.body.style.backgroundColor = 'yellow';
+    </script>
+    
+    <!-- Manual script tag for React app -->
+    <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

@@ -87,6 +87,8 @@ const Index = () => {
       {/* <CriticalCSS /> */}
       <PerformanceMonitor />
       
+
+      
       <div className="min-h-screen overflow-hidden">
         <Navigation />
         
@@ -102,7 +104,7 @@ const Index = () => {
                 src="/lovable-uploads/4507aff9-e454-4cb3-90f1-f6ff248c35ec.png"
                 alt="Roof construction aerial view"
                 className="absolute w-full h-full object-cover transition-opacity duration-300 ease-in-out"
-                priority={true}
+                loading="eager"
                 style={{ 
                   opacity: 1 - transitionProgress,
                   position: 'absolute',
@@ -120,7 +122,7 @@ const Index = () => {
                 src="/lovable-uploads/d89d330e-42bb-4ce6-9501-7dc621d40ab6.png"
                 alt="Completed roof aerial view"
                 className="absolute w-full h-full object-cover transition-opacity duration-300 ease-in-out"
-                priority={false}
+                loading="lazy"
                 style={{ 
                   opacity: transitionProgress,
                   position: 'absolute',
