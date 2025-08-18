@@ -2,10 +2,16 @@ import React, { useEffect } from 'react';
 
 const PerformanceMonitor: React.FC = () => {
   useEffect(() => {
+    let lcpObserver: PerformanceObserver | undefined;
+    let fidObserver: PerformanceObserver | undefined;
+    let clsObserver: PerformanceObserver | undefined;
+    let longTaskObserver: PerformanceObserver | undefined;
+    let resourceObserver: PerformanceObserver | undefined;
+
     // Monitor Core Web Vitals
     if ('PerformanceObserver' in window) {
       // LCP (Largest Contentful Paint)
-      const lcpObserver = new PerformanceObserver((list) => {
+      lcpObserver = new PerformanceObserver((list) => {
         const entries = list.getEntries();
         const lastEntry = entries[entries.length - 1];
         console.log('LCP:', lastEntry.startTime);
@@ -21,14 +27,15 @@ const PerformanceMonitor: React.FC = () => {
       lcpObserver.observe({ entryTypes: ['largest-contentful-paint'] });
 
       // FID (First Input Delay)
-      const fidObserver = new PerformanceObserver((list) => {
+      fidObserver = new PerformanceObserver((list) => {
         const entries = list.getEntries();
         entries.forEach((entry) => {
-          console.log('FID:', entry.processingStart - entry.startTime);
+          const eventEntry = entry as PerformanceEventTiming;
+          console.log('FID:', eventEntry.processingStart - eventEntry.startTime);
           
           if (window.gtag) {
             window.gtag('event', 'FID', {
-              value: Math.round(entry.processingStart - entry.startTime),
+              value: Math.round(eventEntry.processingStart - eventEntry.startTime),
               event_category: 'Web Vitals',
             });
           }
@@ -37,12 +44,13 @@ const PerformanceMonitor: React.FC = () => {
       fidObserver.observe({ entryTypes: ['first-input'] });
 
       // CLS (Cumulative Layout Shift)
-      const clsObserver = new PerformanceObserver((list) => {
+      clsObserver = new PerformanceObserver((list) => {
         let clsValue = 0;
         const entries = list.getEntries();
-        entries.forEach((entry: any) => {
-          if (!entry.hadRecentInput) {
-            clsValue += entry.value;
+        entries.forEach((entry) => {
+          const layoutEntry = entry as LayoutShiftEntry;
+          if (!layoutEntry.hadRecentInput) {
+            clsValue += layoutEntry.value;
           }
         });
         console.log('CLS:', clsValue);
@@ -59,7 +67,7 @@ const PerformanceMonitor: React.FC = () => {
 
     // Monitor long tasks
     if ('PerformanceObserver' in window) {
-      const longTaskObserver = new PerformanceObserver((list) => {
+      longTaskObserver = new PerformanceObserver((list) => {
         const entries = list.getEntries();
         entries.forEach((entry) => {
           if (entry.duration > 50) {
@@ -71,7 +79,7 @@ const PerformanceMonitor: React.FC = () => {
     }
 
     // Monitor resource loading
-    const resourceObserver = new PerformanceObserver((list) => {
+    resourceObserver = new PerformanceObserver((list) => {
       const entries = list.getEntries();
       entries.forEach((entry: any) => {
         if (entry.initiatorType === 'img' && entry.duration > 1000) {

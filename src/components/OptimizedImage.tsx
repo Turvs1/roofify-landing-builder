@@ -8,6 +8,7 @@ interface OptimizedImageProps {
   width?: number | string;
   height?: number | string;
   loading?: 'lazy' | 'eager';
+  priority?: boolean;
   sizes?: string;
   style?: React.CSSProperties;
 }
@@ -20,6 +21,7 @@ const OptimizedImage: React.FC<OptimizedImageProps> = ({
   width,
   height,
   loading = 'lazy',
+  priority = false,
   sizes,
   style,
   ...props

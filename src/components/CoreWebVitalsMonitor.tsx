@@ -50,7 +50,7 @@ const CoreWebVitalsMonitor: React.FC = () => {
       try {
         const fidObserver = new PerformanceObserver((list) => {
           const entries = list.getEntries();
-          const firstEntry = entries[0] as PerformanceEntry;
+          const firstEntry = entries[0] as PerformanceEventTiming;
           if (firstEntry) {
             setMetrics(prev => ({ ...prev, fid: firstEntry.processingStart - firstEntry.startTime }));
           }
@@ -65,8 +65,9 @@ const CoreWebVitalsMonitor: React.FC = () => {
         let clsValue = 0;
         const clsObserver = new PerformanceObserver((list) => {
           for (const entry of list.getEntries()) {
-            if (!entry.hadRecentInput) {
-              clsValue += (entry as any).value;
+            const layoutEntry = entry as LayoutShiftEntry;
+            if (!layoutEntry.hadRecentInput) {
+              clsValue += layoutEntry.value;
             }
           }
           setMetrics(prev => ({ ...prev, cls: clsValue }));
