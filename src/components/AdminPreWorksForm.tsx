@@ -146,6 +146,7 @@ interface FormValues {
   finalTakeoff?: FileList
   powerIsolationImage?: FileList
   mudmapUrl?: string
+  siteMapUrl?: string
 }
 
 // ---------- Time helpers locked to Australia/Brisbane ----------
@@ -1165,7 +1166,8 @@ const InteractiveDataVisualization: React.FC<{
 const PDFExportButton: React.FC<{
   formData: FormValues
   className?: string
-}> = ({ formData, className = "" }) => {
+  jobId: string
+}> = ({ formData, className = "", jobId }) => {
   const [isGenerating, setIsGenerating] = useState(false)
 
   const generatePDF = async () => {
@@ -1181,12 +1183,29 @@ const PDFExportButton: React.FC<{
     }
   }
 
+
+
   const generateTextOnlyPDF = async () => {
     // Dynamically import jsPDF only when needed
     const { default: jsPDF } = await import('jspdf')
     
     // Create new PDF document
     const pdf = new jsPDF('p', 'mm', 'a4')
+    
+    // Set PDF properties and metadata
+    pdf.setProperties({
+      title: 'Pre Works Form',
+      subject: 'Pre-Works Assessment Report',
+      author: 'ARW Roofing',
+      creator: 'ARW Roofing Pre-Works Assessment Form',
+      keywords: 'roofing, assessment, pre-works, construction'
+    })
+    
+    // Set the document title using the correct jsPDF method
+    pdf.setProperties({
+      title: 'Pre Works Form'
+    })
+    
     const pageWidth = pdf.internal.pageSize.getWidth()
     const pageHeight = pdf.internal.pageSize.getHeight()
     let yPosition = 20
@@ -1625,6 +1644,55 @@ const PDFExportButton: React.FC<{
           }
         }
         
+        // Add site map image if available
+        console.log('🗺️ Checking for site map URL in generatePDFWithImages:', formData.siteMapUrl)
+        if (formData.siteMapUrl) {
+          // Check if we need a new page for the site map - ensure full image fits
+          if (yPosition > pageHeight - 150) { // Increased from 80 to 150 to ensure full image fits
+            addNewPage()
+            yPosition = 20
+          }
+          
+          pdf.setFontSize(16)
+          pdf.setFont('helvetica', 'bold')
+          pdf.text('Site Map', 20, yPosition)
+          yPosition += 8
+          
+          pdf.setFontSize(12)
+          pdf.setFont('helvetica', 'normal')
+          pdf.text('Reference image showing site layout and property boundaries:', 20, yPosition)
+          yPosition += 8
+          
+          try {
+            // Convert site map URL to base64 and add to PDF
+            const siteMapResponse = await fetch(formData.siteMapUrl)
+            const siteMapBlob = await siteMapResponse.blob()
+            const siteMapFile = new File([siteMapBlob], 'sitemap.jpg', { type: 'image/jpeg' })
+            
+            // Add site map image to PDF (centered, max width 160mm)
+            const siteMapWidth = 160
+            const siteMapHeight = 120
+            const siteMapX = (pageWidth - siteMapWidth) / 2
+            
+            await addImageToPDF(siteMapFile, siteMapX, yPosition, siteMapWidth, siteMapHeight)
+            yPosition += siteMapHeight + 10
+            
+            pdf.setFontSize(8)
+            pdf.setTextColor(128, 128, 128)
+            pdf.text('Site map image loaded from webhook', pageWidth / 2, yPosition, { align: 'center' })
+            pdf.setTextColor(0, 0, 0)
+            yPosition += 8
+            
+          } catch (error) {
+            console.error('Error adding site map to PDF:', error)
+            pdf.setFontSize(12)
+            pdf.setTextColor(128, 128, 128)
+            pdf.text('Site map image could not be loaded', 20, yPosition)
+            pdf.setTextColor(0, 0, 0)
+            yPosition += 8
+          }
+        }
+        
     // Add assets information with images
     for (let assetIndex = 0; assetIndex < formData.assets.length; assetIndex++) {
       const asset = formData.assets[assetIndex]
@@ -1813,7 +1881,13 @@ const PDFExportButton: React.FC<{
                   yPosition = 20
                   const adjustedYPos = 20 + marginTop + (0 * (maxImageHeight + 15))
                   const adjustedXPos = marginLeft + (0 * (maxImageWidth + imageSpacing))
-                  await addImageToPDF(area.images[imgIndex].file, adjustedXPos, adjustedYPos, maxImageWidth, maxImageHeight)
+                  const imageFile = area.images[imgIndex]?.file || area.images[imgIndex]
+                  // Ensure we have a File object, not ImageFile
+                  if (imageFile && 'file' in imageFile) {
+                    await addImageToPDF(imageFile.file, adjustedXPos, adjustedYPos, maxImageWidth, maxImageHeight)
+                  } else if (imageFile instanceof File) {
+                    await addImageToPDF(imageFile, adjustedXPos, adjustedYPos, maxImageWidth, maxImageHeight)
+                  }
                   continue
                 }
               }
@@ -1822,8 +1896,14 @@ const PDFExportButton: React.FC<{
               
               // No border - clean look
               
-              // Add image
-              await addImageToPDF(area.images[imgIndex].file, xPos, yPos, maxImageWidth, maxImageHeight)
+                                // Add image
+                  const imageFile = area.images[imgIndex]?.file || area.images[imgIndex]
+                  // Ensure we have a File object, not ImageFile
+                  if (imageFile && 'file' in imageFile) {
+                    await addImageToPDF(imageFile.file, xPos, yPos, maxImageWidth, maxImageHeight)
+                  } else if (imageFile instanceof File) {
+                    await addImageToPDF(imageFile, xPos, yPos, maxImageWidth, maxImageHeight)
+                  }
               
               // Update yPosition for next section (after all images per page or end of images)
               if ((imgIndex + 1) % imagesPerPage === 0 || imgIndex === area.images.length - 1) {
@@ -1923,7 +2003,13 @@ const PDFExportButton: React.FC<{
               
               // No border - clean look
               
-              await addImageToPDF(batten.images[imgIndex].file, xPos, yPos, maxImageWidth, maxImageHeight)
+              const imageFile = batten.images[imgIndex]?.file || batten.images[imgIndex]
+              // Ensure we have a File object, not ImageFile
+              if (imageFile && 'file' in imageFile) {
+                await addImageToPDF(imageFile.file, xPos, yPos, maxImageWidth, maxImageHeight)
+              } else if (imageFile instanceof File) {
+                await addImageToPDF(imageFile, xPos, yPos, maxImageWidth, maxImageHeight)
+              }
               
               // Update yPosition for next section (after all 6 images or end of images)
               if ((imgIndex + 1) % 6 === 0 || imgIndex === batten.images.length - 1) {
@@ -1996,12 +2082,13 @@ const PDFExportButton: React.FC<{
             
             // Add images for this frame in a 2-column grid layout
             const validFrameImages = frame.images?.filter(img => {
-              return img && 
-                     img.file && 
-                     img.file instanceof File && 
-                     img.file.size > 0 && 
-                     img.file.name && 
-                     img.file.name.trim() !== ''
+              // Handle both ImageFile objects and direct File objects
+              const file = img && typeof img === 'object' && 'file' in img ? img.file : img
+              return file && 
+                     file instanceof File && 
+                     file.size > 0 && 
+                     file.name && 
+                     file.name.trim() !== ''
             }) || []
             
             console.log(`Framing Row ${frameIndex + 1}: Found ${frame.images?.length || 0} images, ${validFrameImages.length} are valid`)
@@ -2059,7 +2146,13 @@ const PDFExportButton: React.FC<{
                   // Image caption removed - cleaner appearance
                   
                   // Add image to PDF with dynamic sizing
-                  await addImageToPDF(image.file, xPos, yPos, maxImageWidth, maxImageHeight)
+                  const imageFile = image?.file || image
+                  // Ensure we have a File object, not ImageFile
+                  if (imageFile && 'file' in imageFile) {
+                    await addImageToPDF(imageFile.file, xPos, yPos, maxImageWidth, maxImageHeight)
+                  } else if (imageFile instanceof File) {
+                    await addImageToPDF(imageFile, xPos, yPos, maxImageWidth, maxImageHeight)
+                  }
                   
                   // Image filename removed - cleaner appearance
                   
@@ -2498,13 +2591,28 @@ const PDFExportButton: React.FC<{
     console.log('✅ PDF saved successfully')
   }
 
-  const generatePDFWithImages = async () => {
+  const generatePDFWithImages = async (): Promise<Blob> => {
     try {
       // Dynamically import jsPDF only when needed
       const { default: jsPDF } = await import('jspdf')
       
       // Create new PDF document
       const pdf = new jsPDF('p', 'mm', 'a4')
+      
+      // Set PDF properties and metadata
+      pdf.setProperties({
+        title: 'Pre Works Form',
+        subject: 'Pre-Works Assessment Report',
+        author: 'ARW Roofing',
+        creator: 'ARW Roofing Pre-Works Assessment Form',
+        keywords: 'roofing, assessment, pre-works, construction'
+      })
+      
+      // Set the document title using the correct jsPDF method
+      pdf.setProperties({
+        title: 'Pre Works Form'
+      })
+      
       const pageWidth = pdf.internal.pageSize.getWidth()
       const pageHeight = pdf.internal.pageSize.getHeight()
       let yPosition = 20
@@ -2906,6 +3014,55 @@ const PDFExportButton: React.FC<{
         }
       }
       
+      // Add site map image if available
+      console.log('🗺️ Checking for site map URL:', formData.siteMapUrl)
+      if (formData.siteMapUrl) {
+        // Check if we need a new page for the site map - ensure full image fits
+        if (yPosition > pageHeight - 150) { // Increased from 80 to 150 to ensure full image fits
+          addNewPage()
+          yPosition = 20
+        }
+        
+        pdf.setFontSize(16)
+        pdf.setFont('helvetica', 'bold')
+        pdf.text('Site Map', 20, yPosition)
+        yPosition += 8
+        
+        pdf.setFontSize(12)
+        pdf.setFont('helvetica', 'normal')
+        pdf.text('Reference image showing site layout and property boundaries:', 20, yPosition)
+        yPosition += 8
+        
+        try {
+          // Convert site map URL to base64 and add to PDF
+          const siteMapResponse = await fetch(formData.siteMapUrl)
+          const siteMapBlob = await siteMapResponse.blob()
+          const siteMapFile = new File([siteMapBlob], 'sitemap.jpg', { type: 'image/jpeg' })
+          
+          // Add site map image to PDF (centered, max width 160mm)
+          const siteMapWidth = 160
+          const siteMapHeight = 120
+          const siteMapX = (pageWidth - siteMapWidth) / 2
+          
+          await addImageToPDF(siteMapFile, siteMapX, yPosition, siteMapWidth, siteMapHeight)
+          yPosition += siteMapHeight + 10
+          
+          pdf.setFontSize(8)
+          pdf.setTextColor(128, 128, 128)
+          pdf.text('Site map image loaded from webhook', pageWidth / 2, yPosition, { align: 'center' })
+          pdf.setTextColor(0, 0, 0)
+          yPosition += 8
+          
+        } catch (error) {
+          console.error('Error adding site map to PDF:', error)
+          pdf.setFontSize(12)
+          pdf.setTextColor(128, 128, 128)
+          pdf.text('Site map image could not be loaded', 20, yPosition)
+          pdf.setTextColor(0, 0, 0)
+          yPosition += 8
+        }
+      }
+      
       // Add assets information with images
       for (let assetIndex = 0; assetIndex < formData.assets.length; assetIndex++) {
         const asset = formData.assets[assetIndex]
@@ -2948,10 +3105,23 @@ const PDFExportButton: React.FC<{
         
         // Roof Areas with images
         if (asset.roofAreas && asset.roofAreas.length > 0) {
+          // Ensure we have enough space for the roof areas section
+          if (yPosition > pageHeight - 80) {
+            addNewPage()
+            yPosition = 20
+          }
+          
+          console.log(`Roof areas section started at Y position: ${yPosition}, Page: ${currentPage}`)
+          
           for (let areaIndex = 0; areaIndex < asset.roofAreas.length; areaIndex++) {
             const area = asset.roofAreas[areaIndex]
             
-            addPageIfNeeded()
+            // Ensure we have enough space for the roof area row (header + details + images)
+            const requiredSpace = 100 // Approximate space needed for roof area row
+            if (yPosition > pageHeight - requiredSpace) {
+              addNewPage()
+              yPosition = 20
+            }
             
             // Styled section header with gradient background
             const headerGradientColors = [
@@ -2978,6 +3148,8 @@ const PDFExportButton: React.FC<{
             pdf.setTextColor(255, 255, 255) // White text on gradient background
             pdf.text(`Roof Area ${areaIndex + 1}: ${area.name}`, 25, yPosition + 5)
             yPosition += 20
+            
+            console.log(`Roof Area ${areaIndex + 1} at Y position: ${yPosition}, Page: ${currentPage}`)
             
             // Reset text color for content
             pdf.setTextColor(0, 0, 0)
@@ -3044,12 +3216,13 @@ const PDFExportButton: React.FC<{
             // Add images for this area in a 2-column grid layout
             // Only show image section if there are valid images with actual file objects
             const validImages = area.images?.filter(img => {
-              return img && 
-                     img.file && 
-                     img.file instanceof File && 
-                     img.file.size > 0 && 
-                     img.file.name && 
-                     img.file.name.trim() !== ''
+              // Handle both ImageFile objects and direct File objects
+              const file = img && typeof img === 'object' && 'file' in img ? img.file : img
+              return file && 
+                     file instanceof File && 
+                     file.size > 0 && 
+                     file.name && 
+                     file.name.trim() !== ''
             }) || []
             
             console.log(`Area ${area.name}: Found ${area.images?.length || 0} images, ${validImages.length} are valid`)
@@ -3057,20 +3230,29 @@ const PDFExportButton: React.FC<{
             if (validImages.length > 0) {
               yPosition += 5
               
-              // Add styled section header for images
+              // Create folder-like header with asset name and section type
+              const folderName = `Pre-Works Assessment Report - ${asset.assetName} - Roof Areas`
+              
+              // Add styled section header for images with folder-like appearance
               pdf.setFillColor(0, 183, 255) // Bright blue/cyan background
-              pdf.rect(25, yPosition - 3, pageWidth - 50, 10, 'F')
+              pdf.rect(25, yPosition - 3, pageWidth - 50, 12, 'F')
               
               // Add subtle border
               pdf.setDrawColor(0, 150, 200)
               pdf.setLineWidth(0.5)
-              pdf.rect(25, yPosition - 3, pageWidth - 50, 10, 'S')
+              pdf.rect(25, yPosition - 3, pageWidth - 50, 12, 'S')
+              
+              // Add folder icon representation (small rectangle)
+              pdf.setFillColor(255, 255, 255)
+              pdf.rect(30, yPosition, 8, 6, 'F')
+              pdf.setDrawColor(0, 150, 200)
+              pdf.rect(30, yPosition, 8, 6, 'S')
               
               pdf.setFont('helvetica', 'bold')
               pdf.setFontSize(12)
               pdf.setTextColor(255, 255, 255) // White text on blue background
-              pdf.text(`Images for ${area.name}:`, 30, yPosition + 3)
-              yPosition += 15
+              pdf.text(folderName, 45, yPosition + 5)
+              yPosition += 20
               
               // Calculate dynamic grid layout with minimal padding for maximum image size
               const totalImages = validImages.length
@@ -3121,7 +3303,13 @@ const PDFExportButton: React.FC<{
                   // Image caption removed - cleaner appearance
                   
                   // Add image to PDF with dynamic sizing
-                  await addImageToPDF(image.file, xPos, yPos, maxImageWidth, maxImageHeight)
+                  const imageFile = image?.file || image
+                  // Ensure we have a File object, not ImageFile
+                  if (imageFile && 'file' in imageFile) {
+                    await addImageToPDF(imageFile.file, xPos, yPos, maxImageWidth, maxImageHeight)
+                  } else if (imageFile instanceof File) {
+                    await addImageToPDF(imageFile, xPos, yPos, maxImageWidth, maxImageHeight)
+                  }
                   
                   // Image filename removed - cleaner appearance
                   
@@ -3156,7 +3344,11 @@ const PDFExportButton: React.FC<{
         
         // Support Width (Battens/Purlins) with images
         if (asset.battens && asset.battens.length > 0) {
-          addPageIfNeeded()
+          // Ensure we have enough space for the batten section header
+          if (yPosition > pageHeight - 60) {
+            addNewPage()
+            yPosition = 20
+          }
           
           // Styled section header with gradient background
           const battenHeaderGradientColors = [
@@ -3183,14 +3375,23 @@ const PDFExportButton: React.FC<{
           pdf.text('Support Width (Battens/Purlins):', 25, yPosition + 5)
           yPosition += 20
           
+          console.log(`Batten section started at Y position: ${yPosition}, Page: ${currentPage}`)
+          
           for (let battenIndex = 0; battenIndex < asset.battens.length; battenIndex++) {
             const batten = asset.battens[battenIndex]
             
-            addPageIfNeeded()
+            // Ensure we have enough space for the batten row (header + details + images)
+            const requiredSpace = 80 // Approximate space needed for batten row
+            if (yPosition > pageHeight - requiredSpace) {
+              addNewPage()
+              yPosition = 20
+            }
             
             // Styled batten row header with accent color
             pdf.setFillColor(240, 248, 255) // Light blue background
             pdf.rect(25, yPosition - 3, pageWidth - 50, 10, 'F')
+            
+            console.log(`Batten Row ${battenIndex + 1} at Y position: ${yPosition}, Page: ${currentPage}`)
             
             // Add subtle border
             pdf.setDrawColor(200, 200, 200)
@@ -3272,12 +3473,13 @@ const PDFExportButton: React.FC<{
             // Add images for this batten in a 2-column grid layout
             // Only show image section if there are valid images
             const validBattenImages = batten.images?.filter(img => {
-              return img && 
-                     img.file && 
-                     img.file instanceof File && 
-                     img.file.size > 0 && 
-                     img.file.name && 
-                     img.file.name.trim() !== ''
+              // Handle both ImageFile objects and direct File objects
+              const file = img && typeof img === 'object' && 'file' in img ? img.file : img
+              return file && 
+                     file instanceof File && 
+                     file.size > 0 && 
+                     file.name && 
+                     file.name.trim() !== ''
             }) || []
             
             console.log(`Batten Row ${battenIndex + 1}: Found ${batten.images?.length || 0} images, ${validBattenImages.length} are valid`)
@@ -3285,20 +3487,29 @@ const PDFExportButton: React.FC<{
             if (validBattenImages.length > 0) {
               yPosition += 5
               
-              // Add styled section header for images
+              // Create folder-like header with asset name and section type
+              const folderName = `Pre-Works Assessment Report - ${asset.assetName} - Battens`
+              
+              // Add styled section header for images with folder-like appearance
               pdf.setFillColor(0, 183, 255) // Bright blue/cyan background
-              pdf.rect(25, yPosition - 3, pageWidth - 50, 10, 'F')
+              pdf.rect(25, yPosition - 3, pageWidth - 50, 12, 'F')
               
               // Add subtle border
               pdf.setDrawColor(0, 150, 200)
               pdf.setLineWidth(0.5)
-              pdf.rect(25, yPosition - 3, pageWidth - 50, 10, 'S')
+              pdf.rect(25, yPosition - 3, pageWidth - 50, 12, 'S')
+              
+              // Add folder icon representation (small rectangle)
+              pdf.setFillColor(255, 255, 255)
+              pdf.rect(30, yPosition, 8, 6, 'F')
+              pdf.setDrawColor(0, 150, 200)
+              pdf.rect(30, yPosition, 8, 6, 'S')
               
               pdf.setFont('helvetica', 'bold')
               pdf.setFontSize(12)
               pdf.setTextColor(255, 255, 255) // White text on blue background
-              pdf.text(`Images for ${batten.kind} Row ${battenIndex + 1}:`, 30, yPosition + 3)
-              yPosition += 15
+              pdf.text(folderName, 45, yPosition + 5)
+              yPosition += 20
               
               // Calculate dynamic grid layout with minimal padding for maximum image size
               const totalImages = validBattenImages.length
@@ -3343,7 +3554,13 @@ const PDFExportButton: React.FC<{
                   // Image caption removed - cleaner appearance
                   
                   // Add image to PDF with dynamic sizing
-                  await addImageToPDF(image.file, xPos, yPos, maxImageWidth, maxImageHeight)
+                  const imageFile = image?.file || image
+                  // Ensure we have a File object, not ImageFile
+                  if (imageFile && 'file' in imageFile) {
+                    await addImageToPDF(imageFile.file, xPos, yPos, maxImageWidth, maxImageHeight)
+                  } else if (imageFile instanceof File) {
+                    await addImageToPDF(imageFile, xPos, yPos, maxImageWidth, maxImageHeight)
+                  }
                   
                   // Image filename removed - cleaner appearance
                   
@@ -3373,7 +3590,13 @@ const PDFExportButton: React.FC<{
         
         // Roof Framing with images
         if (asset.framing && asset.framing.length > 0) {
-          addPageIfNeeded()
+          // Ensure we have enough space for the framing section
+          if (yPosition > pageHeight - 80) {
+            addNewPage()
+            yPosition = 20
+          }
+          
+          console.log(`Framing section started at Y position: ${yPosition}, Page: ${currentPage}`)
           
           // Styled section header with gradient background
           const framingHeaderGradientColors = [
@@ -3403,7 +3626,12 @@ const PDFExportButton: React.FC<{
           for (let frameIndex = 0; frameIndex < asset.framing.length; frameIndex++) {
             const frame = asset.framing[frameIndex]
             
-            addPageIfNeeded()
+            // Ensure we have enough space for the framing row (header + details + images)
+            const requiredSpace = 80 // Approximate space needed for framing row
+            if (yPosition > pageHeight - requiredSpace) {
+              addNewPage()
+              yPosition = 20
+            }
             
             // Styled frame row header with accent color
             pdf.setFillColor(240, 248, 255) // Light blue background
@@ -3420,6 +3648,8 @@ const PDFExportButton: React.FC<{
             pdf.setTextColor(0, 51, 102) // Dark blue text
             pdf.text(`Row ${frameIndex + 1}:`, 30, yPosition + 3)
             yPosition += 15
+            
+            console.log(`Framing Row ${frameIndex + 1} at Y position: ${yPosition}, Page: ${currentPage}`)
             
             // Create a styled details box
             pdf.setFillColor(252, 252, 252) // Very light gray background
@@ -3489,12 +3719,13 @@ const PDFExportButton: React.FC<{
             // Add images for this frame in a 2-column grid layout
             // Only show image section if there are valid images with actual file objects
             const validFrameImages = frame.images?.filter(img => {
-              return img && 
-                     img.file && 
-                     img.file instanceof File && 
-                     img.file.size > 0 && 
-                     img.file.name && 
-                     img.file.name.trim() !== ''
+              // Handle both ImageFile objects and direct File objects
+              const file = img && typeof img === 'object' && 'file' in img ? img.file : img
+              return file && 
+                     file instanceof File && 
+                     file.size > 0 && 
+                     file.name && 
+                     file.name.trim() !== ''
             }) || []
             
             console.log(`Framing Row ${frameIndex + 1}: Found ${frame.images?.length || 0} images, ${validFrameImages.length} are valid`)
@@ -3560,7 +3791,13 @@ const PDFExportButton: React.FC<{
                   // Image caption removed - cleaner appearance
                   
                   // Add image to PDF with dynamic sizing
-                  await addImageToPDF(image.file, xPos, yPos, maxImageWidth, maxImageHeight)
+                  const imageFile = image?.file || image
+                  // Ensure we have a File object, not ImageFile
+                  if (imageFile && 'file' in imageFile) {
+                    await addImageToPDF(imageFile.file, xPos, yPos, maxImageWidth, maxImageHeight)
+                  } else if (imageFile instanceof File) {
+                    await addImageToPDF(imageFile, xPos, yPos, maxImageWidth, maxImageHeight)
+                  }
                   
                   // Image filename removed - cleaner appearance
                   
@@ -3647,15 +3884,14 @@ const PDFExportButton: React.FC<{
         pdf.text('Generated by ARW Roofing Pre-Works Assessment Form', pageWidth / 2, pageHeight - 8, { align: 'center' })
       }
       
-      // Save the PDF
-      const fileName = `pre-works-assessment-with-images-${new Date().toISOString().split('T')[0]}.pdf`
-      pdf.save(fileName)
-      
-      console.log('PDF with images generated successfully')
+      // Convert PDF to blob instead of saving
+      const pdfBlob = pdf.output('blob')
+      console.log('PDF with images generated successfully as blob')
+      return pdfBlob
       
     } catch (error) {
       console.error('Error generating PDF with images:', error)
-      alert('Error generating PDF with images. Please try again.')
+      throw error
     }
   }
 
@@ -3675,6 +3911,168 @@ const PDFExportButton: React.FC<{
         ) : (
           <>
             📄 Export as PDF (with Images)
+          </>
+        )}
+      </Button>
+
+      {/* Submit Button - Generate PDF and include it in webhook submission */}
+      <Button
+        onClick={async () => {
+          try {
+            setIsGenerating(true)
+            
+            // Generate PDF and get it as a blob instead of downloading
+            const pdfBlob = await generatePDFWithImages()
+            console.log('PDF generated as blob, size:', pdfBlob.size)
+            
+            // Create FormData with PDF included
+            const submitFormData = new FormData()
+            
+            // Add the PDF file
+            const pdfFile = new File([pdfBlob], `pre-works-assessment-${new Date().toISOString().split('T')[0]}.pdf`, { type: 'application/pdf' })
+            submitFormData.append('pdf', pdfFile)
+            console.log('PDF added to FormData:', pdfFile.name)
+            
+            // Add all the existing form data
+            submitFormData.append('formData', JSON.stringify(formData))
+            
+            // Add Job Description and Job Number separately for webhook processing
+            if (formData.selectedDescription) {
+              submitFormData.append('jobDescription', formData.selectedDescription)
+              
+              // Use the actual jobId from the selected job (pulled from sheets)
+              const jobNumber = jobId || 'N/A'
+              submitFormData.append('jobNumber', jobNumber)
+              
+              console.log('Added job details to webhook:', { jobDescription: formData.selectedDescription, jobNumber })
+            }
+            
+            // Add all images from assets
+            formData.assets.forEach((asset, assetIndex) => {
+              // Roof areas images
+              asset.roofAreas.forEach((area, areaIndex) => {
+                if (area.images && area.images.length > 0) {
+                  console.log(`Processing ${area.images.length} images for ${asset.assetName} - ${area.name}`)
+                  area.images.forEach((image, imageIndex) => {
+                    console.log(`Image ${imageIndex}:`, image)
+                    console.log(`Image file type:`, typeof image.file)
+                    console.log(`Image file constructor:`, image.file?.constructor?.name)
+                    console.log(`Image file instanceof File:`, image.file instanceof File)
+                    console.log(`Image file instanceof Blob:`, image.file instanceof Blob)
+                    
+                    // Ensure we have a valid File/Blob object before appending to FormData
+                    if (image && image.file) {
+                      const fileObj = image.file as any;
+                      if (fileObj instanceof File || fileObj instanceof Blob) {
+                        const fileName = fileObj instanceof File ? fileObj.name : `image_${imageIndex}`;
+                        console.log(`Adding valid image: ${fileName}`)
+                        submitFormData.append(`asset_${assetIndex}_area_${areaIndex}_image_${imageIndex}`, fileObj, fileName)
+                      } else {
+                        console.warn(`File object is not a File or Blob:`, fileObj)
+                      }
+                    } else {
+                      console.warn(`Invalid image object at index ${imageIndex}:`, image)
+                    }
+                  })
+                }
+              })
+              
+              // Battens images
+              asset.battens.forEach((batten, battenIndex) => {
+                if (batten.images && batten.images.length > 0) {
+                  console.log(`Processing ${batten.images.length} images for ${asset.assetName} - Batten ${battenIndex}`)
+                  batten.images.forEach((image, imageIndex) => {
+                    console.log(`Batten Image ${imageIndex}:`, image)
+                    // Ensure we have a valid File/Blob object before appending to FormData
+                    if (image && image.file) {
+                      const fileObj = image.file as any;
+                      if (fileObj instanceof File || fileObj instanceof Blob) {
+                        const fileName = fileObj instanceof File ? fileObj.name : `batten_image_${imageIndex}`;
+                        console.log(`Adding valid batten image: ${fileName}`)
+                        submitFormData.append(`asset_${assetIndex}_batten_${battenIndex}_image_${imageIndex}`, fileObj, fileName)
+                      } else {
+                        console.warn(`Batten file object is not a File or Blob:`, fileObj)
+                      }
+                    } else {
+                      console.warn(`Invalid batten image object at index ${imageIndex}:`, image)
+                    }
+                  })
+                }
+              })
+              
+              // Framing images
+              asset.framing.forEach((frame, frameIndex) => {
+                if (frame.images && frame.images.length > 0) {
+                  console.log(`Processing ${frame.images.length} images for ${asset.assetName} - Frame ${frameIndex}`)
+                  frame.images.forEach((image, imageIndex) => {
+                    console.log(`Frame Image ${imageIndex}:`, image)
+                    // Ensure we have a valid File/Blob object before appending to FormData
+                    if (image && image.file) {
+                      const fileObj = image.file as any;
+                      if (fileObj instanceof File || fileObj instanceof Blob) {
+                        const fileName = fileObj instanceof File ? fileObj.name : `frame_image_${imageIndex}`;
+                        console.log(`Adding valid frame image: ${fileName}`)
+                        submitFormData.append(`asset_${assetIndex}_framing_${frameIndex}_image_${imageIndex}`, fileObj, fileName)
+                      } else {
+                        console.warn(`Frame file object is not a File or Blob:`, fileObj)
+                      }
+                    } else {
+                      console.warn(`Invalid frame image object at index ${imageIndex}:`, image)
+                    }
+                  })
+                }
+              })
+            })
+            
+            // Add mudmap if exists
+            if (formData.mudmapUrl) {
+              submitFormData.append('mudmap', formData.mudmapUrl)
+            }
+            
+            // Add site map if exists
+            if (formData.siteMapUrl) {
+              submitFormData.append('siteMap', formData.siteMapUrl)
+            }
+            
+                          // Add power isolation image if exists
+              if (formData.powerIsolationImage) {
+                // Convert FileList to individual files
+                Array.from(formData.powerIsolationImage).forEach((file, index) => {
+                  submitFormData.append(`powerIsolationImage`, file)
+                })
+              }
+            
+            console.log('Submitting FormData with PDF included...')
+            
+            // Submit to webhook
+            const response = await fetch(CONFIG.webhookUrl, {
+              method: 'POST',
+              body: submitFormData
+            })
+            
+            if (response.ok) {
+              alert('✅ Form submitted successfully! PDF and all data have been sent to the webhook.')
+            } else {
+              throw new Error(`HTTP error! status: ${response.status}`)
+            }
+          } catch (error) {
+            console.error('Error submitting form:', error)
+            alert('❌ Error submitting form. Please try again.')
+          } finally {
+            setIsGenerating(false)
+          }
+        }}
+        disabled={isGenerating}
+        className="bg-blue-600 hover:bg-blue-700 text-white w-full"
+      >
+        {isGenerating ? (
+          <>
+            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2" />
+            Submitting...
+          </>
+        ) : (
+          <>
+            📤 Submit Form with PDF Included
           </>
         )}
       </Button>
@@ -3702,6 +4100,7 @@ const AdminPreWorksForm: React.FC = () => {
       selectedDescription: '',
       notes: '',
       mudmapUrl: '',
+      siteMapUrl: '',
       assets: [
         {
           assetName: 'Main House',
@@ -3727,6 +4126,13 @@ const AdminPreWorksForm: React.FC = () => {
     
     return () => clearTimeout(timeoutId)
   }, [formData])
+
+  // Debug form data changes
+  useEffect(() => {
+    if (formData.siteMapUrl) {
+      console.log('🔄 Form data updated - siteMapUrl:', formData.siteMapUrl)
+    }
+  }, [formData.siteMapUrl])
 
   // Show auto-save notification
   const [showAutoSave, setShowAutoSave] = useState(false)
@@ -3867,14 +4273,15 @@ const AdminPreWorksForm: React.FC = () => {
   const handleInputChange = (field: string, value: any) => {
     setFormData(prev => ({ ...prev, [field]: value }))
     
-    // Auto-generate mudmap when job description is selected
+    // Auto-generate mudmap and site map when job description is selected
     if (field === 'selectedDescription' && value) {
-      // Clear existing mudmap when new job is selected
-      setFormData(prev => ({ ...prev, mudmapUrl: '' }))
+      // Clear existing mudmap and site map when new job is selected
+      setFormData(prev => ({ ...prev, mudmapUrl: '', siteMapUrl: '' }))
       // Clear any previous mudmap errors
       setMudmapError(null)
-      // Generate new mudmap for the selected job
+      // Generate new mudmap and site map for the selected job
       generateMudmap(value)
+      generateSiteMap(value)
     }
   }
 
@@ -3950,6 +4357,62 @@ const AdminPreWorksForm: React.FC = () => {
       }
     } finally {
       setIsGeneratingMudmap(false)
+    }
+  }
+
+  // Generate site map from job description
+  const generateSiteMap = async (jobDescription: string) => {
+    console.log('🗺️ Generating site map for:', jobDescription)
+    try {
+      // Get the correct job ID for this description
+      const matchedJob = jobs.find(j => j.description === jobDescription)
+      const correctJobId = matchedJob?.jobId || ''
+      console.log('🔍 Found job ID:', correctJobId)
+      
+      // Call your webhook automation to generate site map
+      console.log('📡 Calling site map webhook...')
+      const response = await fetch('https://n8n.wayvvault.cc/webhook/site-map', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          jobDescription,
+          jobNumber: correctJobId,
+          timestamp: new Date().toISOString(),
+          requestId: `sitemap-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
+        })
+      })
+      
+      if (!response.ok) {
+        throw new Error(`Site map webhook failed: ${response.status}`)
+      }
+      
+      const data = await response.json()
+      console.log('📥 Site map webhook response:', data)
+      
+      // Extract image URL from response
+      if (data && data.siteMapUrl) {
+        console.log('✅ Found siteMapUrl:', data.siteMapUrl)
+        setFormData(prev => {
+          console.log('🔄 Setting siteMapUrl in form state:', data.siteMapUrl)
+          return { ...prev, siteMapUrl: data.siteMapUrl }
+        })
+      } else if (data && data.data && data.data.image && data.data.image.url) {
+        // Fallback to ImgBB format
+        console.log('✅ Found ImgBB URL:', data.data.image.url)
+        setFormData(prev => {
+          console.log('🔄 Setting siteMapUrl in form state (ImgBB):', data.data.image.url)
+          return { ...prev, siteMapUrl: data.data.image.url }
+        })
+      } else {
+        console.error('❌ No valid site map URL found in response')
+        throw new Error('No valid site map URL found in webhook response')
+      }
+      
+    } catch (error) {
+      console.error('Error generating site map:', error)
+      // Don't show error to user for site map - it's optional
     }
   }
 
@@ -4303,12 +4766,10 @@ const AdminPreWorksForm: React.FC = () => {
         show: true
       })
       
-      // Auto-hide notification after 3 seconds
+      // Auto-hide notification after 5 seconds (no redirect)
       setTimeout(() => {
         setNotification(null)
-        // Navigate to success page
-        navigate(`/forms/pre-works/success?ref=${encodeURIComponent(ref)}`)
-      }, 3000)
+      }, 5000)
 
     } catch (err: any) {
       console.error('Form submission error:', err)
@@ -4673,6 +5134,50 @@ const AdminPreWorksForm: React.FC = () => {
                       <p className="text-red-700 text-sm">{mudmapError}</p>
                     </div>
                   )}
+                </section>
+
+                <Separator />
+
+                {/* --- Step 2.5: Site Map --- */}
+                <section className="space-y-4">
+                  <h2 className="text-lg font-medium">Site Map</h2>
+                  <div className="space-y-4">
+                    {formData.siteMapUrl ? (
+                      <div className="space-y-3">
+                        <Label>Site Map Image</Label>
+                        <div className="relative">
+                          <img 
+                            src={formData.siteMapUrl} 
+                            alt="Site Map" 
+                            className="w-full max-w-2xl h-auto rounded-lg border shadow-sm"
+                            onError={(e) => {
+                              const target = e.target as HTMLImageElement
+                              target.style.display = 'none'
+                              const fallback = target.nextElementSibling as HTMLDivElement
+                              if (fallback) fallback.style.display = 'block'
+                            }}
+                          />
+                          <div className="hidden bg-gray-100 border rounded-lg p-8 text-center text-gray-500">
+                            <p>Site map image failed to load</p>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2 text-sm text-gray-600">
+                          <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                          <span>Site map loaded from webhook</span>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="space-y-3">
+                        <Label>Site Map</Label>
+                        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                          <div className="flex items-center gap-2 text-blue-700">
+                            <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></div>
+                            <span className="text-sm">Site map will be automatically generated when a job description is selected</span>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
                 </section>
 
                 <Separator />
@@ -5153,7 +5658,7 @@ const AdminPreWorksForm: React.FC = () => {
                       'Submit Form'
                     )}
                   </Button>
-                  <PDFExportButton formData={formData} />
+                  <PDFExportButton formData={formData} jobId={jobId} />
                 </div>
               </form>
             </CardContent>

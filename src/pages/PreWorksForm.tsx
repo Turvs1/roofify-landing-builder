@@ -1859,7 +1859,7 @@ const PDFExportButton: React.FC<{
               
           // Add images for this batten
               if (batten.images && batten.images.length > 0) {
-            yPosition += 3
+            // No additional spacing - images start immediately after details
             
             if (yPosition > pageHeight - 50) {
               pdf.addPage()
@@ -1868,14 +1868,14 @@ const PDFExportButton: React.FC<{
             
             pdf.setFont('helvetica', 'bold')
             pdf.text(`    Images for Row ${battenIndex + 1}:`, 30, yPosition)
-                yPosition += 5
+                yPosition += 2 // Reduced from 5 to 2 for tighter spacing
             
             // Add images with grid layout (2x3 for 6 images per page)
             const imageWidth = 75 // mm (smaller to fit 2 per row with margins)
             const imageHeight = 55 // mm (smaller to fit 3 per column with margins)
             const imageSpacing = 20 // mm (spacing between images)
             const marginLeft = 25 // mm (left margin to prevent bleeding)
-            const marginTop = 15 // mm (top margin)
+            const marginTop = 5 // mm (top margin - reduced from 15 to 5 for tighter spacing)
             
             for (let imgIndex = 0; imgIndex < batten.images.length; imgIndex++) {
               // Check if we need a new page (after 6 images)
