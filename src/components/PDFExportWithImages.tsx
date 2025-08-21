@@ -269,47 +269,62 @@ const PDFExportWithImages: React.FC<PDFExportWithImagesProps> = ({ formData, cla
               yPosition += 5;
             });
             
-            // Add images for this area
+            // Add images for this area in a grid layout
             if (area.images && area.images.length > 0) {
               yPosition += 5;
               
+              // Calculate grid layout - 3 columns with reduced spacing
+              const imgWidth = 55; // Slightly smaller to fit 3 columns
+              const imgHeight = (imgWidth * 0.75); // Maintain aspect ratio
+              const horizontalSpacing = 5; // Reduced spacing between columns
+              const verticalSpacing = 3; // Reduced spacing between rows
+              const startX = 30;
+              const maxImagesPerRow = 3;
+              
+              // Add section header for images
+              pdf.setFont('helvetica', 'bold');
+              pdf.text(`Images (${area.images.length}):`, 30, yPosition);
+              yPosition += 6;
+              
               for (let imgIndex = 0; imgIndex < area.images.length; imgIndex++) {
                 const image = area.images[imgIndex];
+                const row = Math.floor(imgIndex / maxImagesPerRow);
+                const col = imgIndex % maxImagesPerRow;
                 
                 try {
                   // Convert image to base64
                   const base64 = await convertImageToBase64(image.file);
                   
                   // Check if we need a new page for the image
-                  if (yPosition > pageHeight - 80) {
+                  if (yPosition + (row * (imgHeight + verticalSpacing + 15)) > pageHeight - 80) {
                     pdf.addPage();
                     currentPage++;
                     yPosition = 20;
                   }
                   
-                  // Add image caption
-                  pdf.setFont('helvetica', 'bold');
-                  pdf.text(`Image ${imgIndex + 1}:`, 30, yPosition);
-                  yPosition += 5;
+                  // Calculate position for this image
+                  const xPos = startX + (col * (imgWidth + horizontalSpacing));
+                  const yPos = yPosition + (row * (imgHeight + verticalSpacing + 15));
                   
                   // Add image to PDF
-                  const imgWidth = 60; // 60mm width
-                  const imgHeight = (imgWidth * 0.75); // Maintain aspect ratio
+                  pdf.addImage(base64, 'JPEG', xPos, yPos, imgWidth, imgHeight);
                   
-                  pdf.addImage(base64, 'JPEG', 30, yPosition, imgWidth, imgHeight);
-                  yPosition += imgHeight + 5;
-                  
-                  // Add image description
+                  // Add image caption below the image
+                  pdf.setFontSize(8);
                   pdf.setFont('helvetica', 'normal');
-                  pdf.text(`File: ${image.file.name}`, 30, yPosition);
-                  yPosition += 5;
+                  pdf.text(`Img ${imgIndex + 1}`, xPos, yPos + imgHeight + 2, { align: 'center' });
                   
                 } catch (imgError) {
                   console.error('Error processing image:', imgError);
-                  pdf.text(`Image ${imgIndex + 1}: Error loading image`, 30, yPosition);
-                  yPosition += 5;
+                  pdf.setFontSize(8);
+                  pdf.setFont('helvetica', 'normal');
+                  pdf.text(`Error: ${imgError}`, xPos, yPos + imgHeight + 2, { align: 'center' });
                 }
               }
+              
+              // Update yPosition to account for the grid height
+              const totalRows = Math.ceil(area.images.length / maxImagesPerRow);
+              yPosition += (totalRows * (imgHeight + verticalSpacing + 15)) + 5;
             }
             
             yPosition += 5;
@@ -343,42 +358,60 @@ const PDFExportWithImages: React.FC<PDFExportWithImagesProps> = ({ formData, cla
               yPosition += 5;
             });
             
-            // Add images for this batten
+            // Add images for this batten in a grid layout
             if (batten.images && batten.images.length > 0) {
               yPosition += 5;
               
+              // Calculate grid layout - 3 columns with reduced spacing
+              const imgWidth = 55; // Slightly smaller to fit 3 columns
+              const imgHeight = (imgWidth * 0.75); // Maintain aspect ratio
+              const horizontalSpacing = 5; // Reduced spacing between columns
+              const verticalSpacing = 3; // Reduced spacing between rows
+              const startX = 30;
+              const maxImagesPerRow = 3;
+              
+              // Add section header for images
+              pdf.setFont('helvetica', 'bold');
+              pdf.text(`Images (${batten.images.length}):`, 30, yPosition);
+              yPosition += 6;
+              
               for (let imgIndex = 0; imgIndex < batten.images.length; imgIndex++) {
                 const image = batten.images[imgIndex];
+                const row = Math.floor(imgIndex / maxImagesPerRow);
+                const col = imgIndex % maxImagesPerRow;
                 
                 try {
                   const base64 = await convertImageToBase64(image.file);
                   
-                  if (yPosition > pageHeight - 80) {
+                  if (yPosition + (row * (imgHeight + verticalSpacing + 15)) > pageHeight - 80) {
                     pdf.addPage();
                     currentPage++;
                     yPosition = 20;
                   }
                   
-                  pdf.setFont('helvetica', 'bold');
-                  pdf.text(`Image ${imgIndex + 1}:`, 30, yPosition);
-                  yPosition += 5;
+                  // Calculate position for this image
+                  const xPos = startX + (col * (imgWidth + horizontalSpacing));
+                  const yPos = yPosition + (row * (imgHeight + verticalSpacing + 15));
                   
-                  const imgWidth = 60;
-                  const imgHeight = (imgWidth * 0.75);
+                  // Add image to PDF
+                  pdf.addImage(base64, 'JPEG', xPos, yPos, imgWidth, imgHeight);
                   
-                  pdf.addImage(base64, 'JPEG', 30, yPosition, imgWidth, imgHeight);
-                  yPosition += imgHeight + 5;
-                  
+                  // Add image caption below the image
+                  pdf.setFontSize(8);
                   pdf.setFont('helvetica', 'normal');
-                  pdf.text(`File: ${image.file.name}`, 30, yPosition);
-                  yPosition += 5;
+                  pdf.text(`Img ${imgIndex + 1}`, xPos, yPos + imgHeight + 2, { align: 'center' });
                   
                 } catch (imgError) {
                   console.error('Error processing image:', imgError);
-                  pdf.text(`Image ${imgIndex + 1}: Error loading image`, 30, yPosition);
-                  yPosition += 5;
+                  pdf.setFontSize(8);
+                  pdf.setFont('helvetica', 'normal');
+                  pdf.text(`Error: ${imgError}`, xPos, yPos + imgHeight + 2, { align: 'center' });
                 }
               }
+              
+              // Update yPosition to account for the grid height
+              const totalRows = Math.ceil(batten.images.length / maxImagesPerRow);
+              yPosition += (totalRows * (imgHeight + verticalSpacing + 15)) + 5;
             }
             
             yPosition += 5;
@@ -412,42 +445,60 @@ const PDFExportWithImages: React.FC<PDFExportWithImagesProps> = ({ formData, cla
               yPosition += 5;
             });
             
-            // Add images for this frame
+            // Add images for this frame in a grid layout
             if (frame.images && frame.images.length > 0) {
               yPosition += 5;
               
+              // Calculate grid layout - 3 columns with reduced spacing
+              const imgWidth = 55; // Slightly smaller to fit 3 columns
+              const imgHeight = (imgWidth * 0.75); // Maintain aspect ratio
+              const horizontalSpacing = 5; // Reduced spacing between columns
+              const verticalSpacing = 3; // Reduced spacing between rows
+              const startX = 30;
+              const maxImagesPerRow = 3;
+              
+              // Add section header for images
+              pdf.setFont('helvetica', 'bold');
+              pdf.text(`Images (${frame.images.length}):`, 30, yPosition);
+              yPosition += 6;
+              
               for (let imgIndex = 0; imgIndex < frame.images.length; imgIndex++) {
                 const image = frame.images[imgIndex];
+                const row = Math.floor(imgIndex / maxImagesPerRow);
+                const col = imgIndex % maxImagesPerRow;
                 
                 try {
                   const base64 = await convertImageToBase64(image.file);
                   
-                  if (yPosition > pageHeight - 80) {
+                  if (yPosition + (row * (imgHeight + verticalSpacing + 15)) > pageHeight - 80) {
                     pdf.addPage();
                     currentPage++;
                     yPosition = 20;
                   }
                   
-                  pdf.setFont('helvetica', 'bold');
-                  pdf.text(`Image ${imgIndex + 1}:`, 30, yPosition);
-                  yPosition += 5;
+                  // Calculate position for this image
+                  const xPos = startX + (col * (imgWidth + horizontalSpacing));
+                  const yPos = yPosition + (row * (imgHeight + verticalSpacing + 15));
                   
-                  const imgWidth = 60;
-                  const imgHeight = (imgWidth * 0.75);
+                  // Add image to PDF
+                  pdf.addImage(base64, 'JPEG', xPos, yPos, imgWidth, imgHeight);
                   
-                  pdf.addImage(base64, 'JPEG', 30, yPosition, imgWidth, imgHeight);
-                  yPosition += imgHeight + 5;
-                  
+                  // Add image caption below the image
+                  pdf.setFontSize(8);
                   pdf.setFont('helvetica', 'normal');
-                  pdf.text(`File: ${image.file.name}`, 30, yPosition);
-                  yPosition += 5;
+                  pdf.text(`Img ${imgIndex + 1}`, xPos, yPos + imgHeight + 2, { align: 'center' });
                   
                 } catch (imgError) {
                   console.error('Error processing image:', imgError);
-                  pdf.text(`Image ${imgIndex + 1}: Error loading image`, 30, yPosition);
-                  yPosition += 5;
+                  pdf.setFontSize(8);
+                  pdf.setFont('helvetica', 'normal');
+                  pdf.text(`Error: ${imgError}`, xPos, yPos + imgHeight + 2, { align: 'center' });
                 }
               }
+              
+              // Update yPosition to account for the grid height
+              const totalRows = Math.ceil(frame.images.length / maxImagesPerRow);
+              yPosition += (totalRows * (imgHeight + verticalSpacing + 15)) + 5;
             }
             
             yPosition += 5;
