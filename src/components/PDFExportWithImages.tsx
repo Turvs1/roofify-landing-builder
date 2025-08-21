@@ -301,7 +301,7 @@ const PDFExportWithImages: React.FC<PDFExportWithImagesProps> = ({ formData, cla
                   
                   // Calculate position for this image
                   const xPos = startX + (col * (imgWidth + horizontalSpacing));
-                  const yPos = yPosition + (row * (imgHeight + verticalSpacing + 15));
+                  const yPos = yPosition + (row * (imgHeight + verticalSpacing + 8)); // Reduced from 15 to 8 for tighter spacing
                   
                   // Add image to PDF
                   pdf.addImage(base64, 'JPEG', xPos, yPos, imgWidth, imgHeight);
@@ -321,7 +321,7 @@ const PDFExportWithImages: React.FC<PDFExportWithImagesProps> = ({ formData, cla
               
               // Update yPosition to account for the grid height
               const totalRows = Math.ceil(area.images.length / maxImagesPerRow);
-              yPosition += (totalRows * (imgHeight + verticalSpacing + 15)) + 5;
+              yPosition += (totalRows * (imgHeight + verticalSpacing + 8)) + 5; // Reduced from 15 to 8
             }
             
             yPosition += 5;
@@ -385,7 +385,7 @@ const PDFExportWithImages: React.FC<PDFExportWithImagesProps> = ({ formData, cla
                   
                   // Calculate position for this image
                   const xPos = startX + (col * (imgWidth + horizontalSpacing));
-                  const yPos = yPosition + (row * (imgHeight + verticalSpacing + 15));
+                  const yPos = yPosition + (row * (imgHeight + verticalSpacing + 8)); // Reduced from 15 to 8 for tighter spacing
                   
                   // Add image to PDF
                   pdf.addImage(base64, 'JPEG', xPos, yPos, imgWidth, imgHeight);
@@ -405,7 +405,7 @@ const PDFExportWithImages: React.FC<PDFExportWithImagesProps> = ({ formData, cla
               
               // Update yPosition to account for the grid height
               const totalRows = Math.ceil(batten.images.length / maxImagesPerRow);
-              yPosition += (totalRows * (imgHeight + verticalSpacing + 15)) + 5;
+              yPosition += (totalRows * (imgHeight + verticalSpacing + 8)) + 5; // Reduced from 15 to 8
             }
             
             yPosition += 5;
@@ -469,7 +469,7 @@ const PDFExportWithImages: React.FC<PDFExportWithImagesProps> = ({ formData, cla
                   
                   // Calculate position for this image
                   const xPos = startX + (col * (imgWidth + horizontalSpacing));
-                  const yPos = yPosition + (row * (imgHeight + verticalSpacing + 15));
+                  const yPos = yPosition + (row * (imgHeight + verticalSpacing + 8)); // Reduced from 15 to 8 for tighter spacing
                   
                   // Add image to PDF
                   pdf.addImage(base64, 'JPEG', xPos, yPos, imgWidth, imgHeight);
@@ -489,7 +489,7 @@ const PDFExportWithImages: React.FC<PDFExportWithImagesProps> = ({ formData, cla
               
               // Update yPosition to account for the grid height
               const totalRows = Math.ceil(frame.images.length / maxImagesPerRow);
-              yPosition += (totalRows * (imgHeight + verticalSpacing + 15)) + 5;
+              yPosition += (totalRows * (imgHeight + verticalSpacing + 8)) + 5; // Reduced from 15 to 8
             }
             
             yPosition += 5;
