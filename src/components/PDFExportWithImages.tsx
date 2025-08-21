@@ -271,7 +271,7 @@ const PDFExportWithImages: React.FC<PDFExportWithImagesProps> = ({ formData, cla
             
             // Add images for this area in a grid layout
             if (area.images && area.images.length > 0) {
-              yPosition += 5;
+              yPosition += 2; // Reduced spacing to flow inline with section
               
               // Calculate grid layout - 3 columns with reduced spacing
               const imgWidth = 55; // Slightly smaller to fit 3 columns
@@ -281,10 +281,7 @@ const PDFExportWithImages: React.FC<PDFExportWithImagesProps> = ({ formData, cla
               const startX = 30;
               const maxImagesPerRow = 3;
               
-              // Add section header for images
-              pdf.setFont('helvetica', 'bold');
-              pdf.text(`Images (${area.images.length}):`, 30, yPosition);
-              yPosition += 6;
+              // No separate header - images will flow inline with section content
               
               for (let imgIndex = 0; imgIndex < area.images.length; imgIndex++) {
                 const image = area.images[imgIndex];
@@ -360,7 +357,7 @@ const PDFExportWithImages: React.FC<PDFExportWithImagesProps> = ({ formData, cla
             
             // Add images for this batten in a grid layout
             if (batten.images && batten.images.length > 0) {
-              yPosition += 5;
+              yPosition += 2; // Reduced spacing to flow inline with section
               
               // Calculate grid layout - 3 columns with reduced spacing
               const imgWidth = 55; // Slightly smaller to fit 3 columns
@@ -370,10 +367,7 @@ const PDFExportWithImages: React.FC<PDFExportWithImagesProps> = ({ formData, cla
               const startX = 30;
               const maxImagesPerRow = 3;
               
-              // Add section header for images
-              pdf.setFont('helvetica', 'bold');
-              pdf.text(`Images (${batten.images.length}):`, 30, yPosition);
-              yPosition += 6;
+              // No separate header - images will flow inline with section content
               
               for (let imgIndex = 0; imgIndex < batten.images.length; imgIndex++) {
                 const image = batten.images[imgIndex];
@@ -447,7 +441,7 @@ const PDFExportWithImages: React.FC<PDFExportWithImagesProps> = ({ formData, cla
             
             // Add images for this frame in a grid layout
             if (frame.images && frame.images.length > 0) {
-              yPosition += 5;
+              yPosition += 2; // Reduced spacing to flow inline with section
               
               // Calculate grid layout - 3 columns with reduced spacing
               const imgWidth = 55; // Slightly smaller to fit 3 columns
@@ -457,10 +451,7 @@ const PDFExportWithImages: React.FC<PDFExportWithImagesProps> = ({ formData, cla
               const startX = 30;
               const maxImagesPerRow = 3;
               
-              // Add section header for images
-              pdf.setFont('helvetica', 'bold');
-              pdf.text(`Images (${frame.images.length}):`, 30, yPosition);
-              yPosition += 6;
+              // No separate header - images will flow inline with section content
               
               for (let imgIndex = 0; imgIndex < frame.images.length; imgIndex++) {
                 const image = frame.images[imgIndex];
