@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -19,20 +19,134 @@ import {
 } from 'lucide-react';
 import AdminRoofReport from '../components/AdminRoofReport';
 import AdminJobUploads from '../components/AdminJobUploads';
-import AdminPreWorksForm from '../components/AdminPreWorksForm';
+import AdminPreWorksForm from '../components/AdminPreWorksForm'
 
 const AdminDashboard = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [activeTab, setActiveTab] = useState('roof-report');
+  const [sessionTimeRemaining, setSessionTimeRemaining] = useState<string>('');
+  const [showSessionWarning, setShowSessionWarning] = useState(false);
 
-  // Simple password authentication - you can make this more secure later
+  // Check for existing session on component mount
+  useEffect(() => {
+    const checkSession = () => {
+      const sessionData = localStorage.getItem('adminSession');
+      if (sessionData) {
+        try {
+          const { timestamp, isAuth } = JSON.parse(sessionData);
+          const now = new Date().getTime();
+          const sessionAge = now - timestamp;
+          const hours24 = 24 * 60 * 60 * 1000; // 24 hours in milliseconds
+          
+          if (sessionAge < hours24 && isAuth) {
+            setIsAuthenticated(true);
+          } else {
+            // Session expired, remove it
+            localStorage.removeItem('adminSession');
+          }
+        } catch (error) {
+          // Invalid session data, remove it
+          localStorage.removeItem('adminSession');
+        }
+      }
+    };
+
+    checkSession();
+  }, []);
+
+  // Update session time remaining every minute
+  useEffect(() => {
+    if (!isAuthenticated) return;
+
+    const updateSessionTime = () => {
+      const sessionData = localStorage.getItem('adminSession');
+      if (sessionData) {
+        try {
+          const { timestamp } = JSON.parse(sessionData);
+          const now = new Date().getTime();
+          const sessionAge = now - timestamp;
+          const hours24 = 24 * 60 * 60 * 1000;
+          const remaining = hours24 - sessionAge;
+          
+          if (remaining > 0) {
+            const hours = Math.floor(remaining / (60 * 60 * 1000));
+            const minutes = Math.floor((remaining % (60 * 60 * 1000)) / (60 * 1000));
+            setSessionTimeRemaining(`${hours}h ${minutes}m remaining`);
+            
+            // Show warning when less than 1 hour remaining
+            if (remaining < 60 * 60 * 1000) {
+              setShowSessionWarning(true);
+            } else {
+              setShowSessionWarning(false);
+            }
+          } else {
+            // Session expired
+            setIsAuthenticated(false);
+            localStorage.removeItem('adminSession');
+            setSessionTimeRemaining('');
+          }
+        } catch (error) {
+          setSessionTimeRemaining('');
+        }
+      }
+    };
+
+    // Update immediately
+    updateSessionTime();
+    
+    // Update every minute
+    const interval = setInterval(updateSessionTime, 60000);
+    
+    return () => clearInterval(interval);
+  }, [isAuthenticated]);
+
+  // Extend session on user activity
+  useEffect(() => {
+    if (!isAuthenticated) return;
+
+    const extendSession = () => {
+      const sessionData = localStorage.getItem('adminSession');
+      if (sessionData) {
+        try {
+          const { isAuth } = JSON.parse(sessionData);
+          const newSessionData = {
+            timestamp: new Date().getTime(),
+            isAuth: isAuth
+          };
+          localStorage.setItem('adminSession', JSON.stringify(newSessionData));
+        } catch (error) {
+          console.error('Error extending session:', error);
+        }
+      }
+    };
+
+    // Extend session on user activity (clicks, keypresses, scrolls)
+    const events = ['mousedown', 'mousemove', 'keypress', 'scroll', 'touchstart'];
+    events.forEach(event => {
+      document.addEventListener(event, extendSession, { passive: true });
+    });
+
+    return () => {
+      events.forEach(event => {
+        document.removeEventListener(event, extendSession);
+      });
+    };
+  }, [isAuthenticated]);
+
+  // Simple password authentication with session persistence
   const handleLogin = () => {
-    // Change this password to whatever you want
     if (password === 'ARW2024') {
       setIsAuthenticated(true);
       setError('');
+      
+      // Store session data with timestamp
+      const sessionData = {
+        timestamp: new Date().getTime(),
+        isAuth: true
+      };
+      localStorage.setItem('adminSession', JSON.stringify(sessionData));
     } else {
       setError('Invalid password');
     }
@@ -41,6 +155,9 @@ const AdminDashboard = () => {
   const handleLogout = () => {
     setIsAuthenticated(false);
     setPassword('');
+    
+    // Clear session data
+    localStorage.removeItem('adminSession');
   };
 
   if (!isAuthenticated) {
@@ -128,6 +245,14 @@ const AdminDashboard = () => {
               <div>
                 <h1 className="text-2xl font-bold text-slate-900">ARW Construction</h1>
                 <p className="text-sm text-slate-600">Staff Management Portal</p>
+                {sessionTimeRemaining && (
+                  <div className="flex items-center gap-2 mt-1">
+                    <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
+                    <span className="text-xs text-green-600 font-medium">
+                      Session: {sessionTimeRemaining}
+                    </span>
+                  </div>
+                )}
               </div>
             </div>
             <div className="flex items-center space-x-4">
@@ -135,6 +260,40 @@ const AdminDashboard = () => {
                 <CheckCircle className="h-4 w-4 text-green-500" />
                 <span>Secure Connection</span>
               </div>
+              {sessionTimeRemaining && (
+                <div className="relative group">
+                  <Badge variant="secondary" className="bg-green-100 text-green-700 border-green-200 cursor-help">
+                    <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse mr-1" />
+                    {sessionTimeRemaining}
+                  </Badge>
+                  {/* Session Info Tooltip */}
+                  <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-slate-900 text-white text-xs rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-50">
+                    <div className="text-center">
+                      <div className="font-medium">Session Active</div>
+                      <div className="text-slate-300">
+                        {(() => {
+                          const sessionData = localStorage.getItem('adminSession');
+                          if (sessionData) {
+                            try {
+                              const { timestamp } = JSON.parse(sessionData);
+                              return new Date(timestamp).toLocaleString('en-AU', {
+                                hour: '2-digit',
+                                minute: '2-digit',
+                                day: '2-digit',
+                                month: 'short'
+                              });
+                            } catch (error) {
+                              return 'Unknown';
+                            }
+                          }
+                          return 'Unknown';
+                        })()}
+                      </div>
+                    </div>
+                    <div className="absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-slate-900"></div>
+                  </div>
+                </div>
+              )}
               <Badge variant="secondary" className="bg-blue-100 text-blue-700 border-blue-200">
                 <Users className="h-3 w-3 mr-1" />
                 Staff Access
@@ -155,6 +314,55 @@ const AdminDashboard = () => {
 
       {/* Main Content */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Session Warning Banner */}
+        {showSessionWarning && (
+          <div className="mb-6 bg-amber-50 border border-amber-200 rounded-xl p-4">
+            <div className="flex items-center gap-3">
+              <AlertCircle className="h-5 w-5 text-amber-600" />
+              <div className="flex-1">
+                <h3 className="text-sm font-medium text-amber-800">Session Expiring Soon</h3>
+                <p className="text-sm text-amber-700 mt-1">
+                  Your admin session will expire in less than 1 hour. You can refresh your session to extend it for another 24 hours.
+                </p>
+              </div>
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    // Refresh session
+                    const sessionData = localStorage.getItem('adminSession');
+                    if (sessionData) {
+                      try {
+                        const { isAuth } = JSON.parse(sessionData);
+                        const newSessionData = {
+                          timestamp: new Date().getTime(),
+                          isAuth: isAuth
+                        };
+                        localStorage.setItem('adminSession', JSON.stringify(newSessionData));
+                        setShowSessionWarning(false);
+                      } catch (error) {
+                        console.error('Error refreshing session:', error);
+                      }
+                    }
+                  }}
+                  className="text-green-700 border-green-300 hover:bg-green-100"
+                >
+                  Refresh Session
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setShowSessionWarning(false)}
+                  className="text-amber-700 border-amber-300 hover:bg-amber-100"
+                >
+                  Dismiss
+                </Button>
+              </div>
+            </div>
+          </div>
+        )}
+        
         {/* Welcome Section */}
         <div className="mb-8">
           <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-200">

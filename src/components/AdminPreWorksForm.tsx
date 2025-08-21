@@ -13,9 +13,9 @@ import { cn } from '@/lib/utils'
 // Dynamic imports for heavy libraries
 // import jsPDF from 'jspdf'
 // import html2canvas from 'html2canvas'
-// CSS import removed for admin dashboard
+import '../pages/PreWorksForm.css'
 
-// Navigation and layout components removed for admin dashboard
+// Admin components only - no navigation/footer needed
 
 
 
@@ -145,6 +145,7 @@ interface FormValues {
   finalPlan?: FileList
   finalTakeoff?: FileList
   powerIsolationImage?: FileList
+  mudmapUrl?: string
 }
 
 // ---------- Time helpers locked to Australia/Brisbane ----------
@@ -373,82 +374,8 @@ const FormProgressTracker: React.FC<{ formData: FormValues }> = ({ formData }) =
   )
 }
 
-// Floating Help Panel Component
-const HelpPanel: React.FC = () => {
-  const [isOpen, setIsOpen] = useState(false)
-  
-  return (
-    <>
-      {/* Floating Help Button */}
-      <button
-        onClick={() => setIsOpen(!isOpen)}
-        className="fixed bottom-6 right-6 w-14 h-14 bg-blue-600 hover:bg-blue-700 text-white rounded-full shadow-lg hover:shadow-xl transition-all duration-200 flex items-center justify-center z-50"
-        title="Keyboard Shortcuts & Help"
-      >
-        <span className="text-xl">?</span>
-      </button>
-      
-      {/* Help Panel */}
-      {isOpen && (
-        <div className="fixed bottom-24 right-6 w-80 bg-white border border-gray-200 rounded-lg shadow-xl z-50 p-4">
-          <div className="flex items-center justify-between mb-3">
-            <h3 className="text-lg font-semibold text-gray-800">Keyboard Shortcuts</h3>
-            <button
-              onClick={() => setIsOpen(false)}
-              className="text-gray-400 hover:text-gray-600"
-            >
-              ✕
-            </button>
-          </div>
-          
-          <div className="space-y-2 text-sm">
-            <div className="flex justify-between">
-              <span className="text-gray-600">Save Form:</span>
-              <kbd className="px-2 py-1 bg-gray-100 rounded text-xs">⌘ + S</kbd>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-gray-600">Submit Form:</span>
-              <kbd className="px-2 py-1 bg-gray-100 rounded text-xs">⌘ + Enter</kbd>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-gray-600">Add Asset:</span>
-              <kbd className="px-2 py-1 bg-gray-100 rounded text-xs">Tab + A</kbd>
-            </div>
-          </div>
-          
-          <div className="mt-4 pt-3 border-t border-gray-200">
-            <h4 className="font-medium text-gray-800 mb-2">Form Tips</h4>
-            <ul className="text-xs text-gray-600 space-y-1">
-              <li>• Form auto-saves every second</li>
-              <li>• Use Tab to navigate between fields</li>
-              <li>• Color swatches show live previews</li>
-              <li>• Progress bar tracks completion</li>
-            </ul>
-          </div>
-          
-          <div className="space-y-4">
-            <h3 className="text-lg font-semibold">Keyboard Shortcuts</h3>
-            <div className="grid grid-cols-2 gap-4 text-sm">
-              <div>
-                <kbd className="bg-gray-100 px-2 py-1 rounded text-xs">⌘/Ctrl + S</kbd>
-                <span className="ml-2">Save form</span>
-              </div>
-              <div>
-                <kbd className="bg-gray-100 px-2 py-1 rounded text-xs">⌘/Ctrl + Enter</kbd>
-                <span className="ml-2">Submit form</span>
-              </div>
-              {/* Dark Mode Shortcut - DISABLED FOR NOW */}
-              {/* <div>
-                <kbd className="bg-gray-100 px-2 py-1 rounded text-xs">⌘/Ctrl + T</kbd>
-                <span className="ml-2">Toggle dark mode</span>
-              </div> */}
-            </div>
-          </div>
-        </div>
-      )}
-    </>
-  )
-}
+
+
 
 // Profile Info Component for Lysaght Profiles
 const ProfileInfo: React.FC = () => {
@@ -1052,13 +979,7 @@ const InteractiveDataVisualization: React.FC<{
     name: area.name,
     type: area.type || 'Unknown',
     pitch: area.pitchDeg || 0,
-    // Use actual measurements if available, otherwise fall back to calculated estimate
-    area: area.area || (area.length && area.width ? 
-      (area.length * area.width) / Math.cos((area.pitchDeg || 0) * Math.PI / 180) : 
-      calculateRoofArea(area.pitchDeg || 0)
-    ),
-    length: area.length || null,
-    width: area.width || null,
+    area: calculateRoofArea(area.pitchDeg || 0),
     materials: {
       profile: area.profile || 'Not specified',
       color: area.colour || 'Not specified',
@@ -1126,47 +1047,20 @@ const InteractiveDataVisualization: React.FC<{
                   <span className="text-sm text-gray-500">{area.area.toFixed(1)}m²</span>
                 </div>
                 
-                {/* Enhanced roof diagram with real measurements */}
-                <div className="relative bg-gradient-to-br from-blue-100 to-blue-200 rounded-lg mb-3 overflow-hidden">
+                {/* Simple roof diagram */}
+                <div className="relative h-24 bg-gradient-to-br from-blue-100 to-blue-200 rounded-lg mb-3 overflow-hidden">
                   <div 
-                    className="relative bg-gradient-to-br from-gray-300 to-gray-400"
+                    className="absolute inset-0 bg-gradient-to-br from-gray-300 to-gray-400"
                     style={{
-                      height: area.length && area.width ? `${Math.min(120, Math.max(80, (area.length / area.width) * 60))}px` : '80px',
-                      width: '100%',
-                      clipPath: area.pitch > 0 ? `polygon(0 100%, 100% 100%, 100% ${100 - (area.pitch / 2)}%, 0 ${100 - (area.pitch / 2)}%)` : 'none'
+                      clipPath: `polygon(0 100%, 100% 100%, 100% ${100 - (area.pitch / 2)}%, 0 ${100 - (area.pitch / 2)}%)`
                     }}
-                  >
-                    {area.length && area.width && (
-                      <div className="absolute inset-0 flex items-center justify-center">
-                        <div className="text-center">
-                          <div className="text-xs font-medium text-gray-800">
-                            {area.length}m × {area.width}m
-                          </div>
-                          <div className="text-xs text-gray-600">
-                            {area.area?.toFixed(1)}m²
-                          </div>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                  <div className="absolute top-2 left-2 text-xs text-gray-700 bg-white/80 px-1 rounded">
+                  />
+                  <div className="absolute top-2 left-2 text-xs text-gray-700">
                     {area.pitch}° pitch
                   </div>
                 </div>
                 
                 <div className="text-xs text-gray-600 space-y-1">
-                  {area.length && area.width && (
-                    <div className="bg-blue-50 p-2 rounded border border-blue-200 mb-2">
-                      <div className="font-medium text-blue-800 mb-1">Measurements</div>
-                      <div className="grid grid-cols-2 gap-2 text-xs">
-                        <div><strong>Length:</strong> {area.length}m</div>
-                        <div><strong>Width:</strong> {area.width}m</div>
-                        <div className="col-span-2 text-center">
-                          <strong className="text-blue-900">Total: {area.area?.toFixed(1)}m²</strong>
-                        </div>
-                      </div>
-                    </div>
-                  )}
                   <div><strong>Type:</strong> {area.type}</div>
                   <div><strong>Profile:</strong> {area.materials.profile}</div>
                   <div><strong>Color:</strong> {area.materials.color}</div>
@@ -1267,6 +1161,2527 @@ const InteractiveDataVisualization: React.FC<{
   )
 }
 
+// Simple PDF Export Component with Images
+const PDFExportButton: React.FC<{
+  formData: FormValues
+  className?: string
+}> = ({ formData, className = "" }) => {
+  const [isGenerating, setIsGenerating] = useState(false)
+
+  const generatePDF = async () => {
+    setIsGenerating(true)
+    
+    try {
+      await generatePDFWithImages()
+    } catch (error) {
+      console.error('Error generating PDF:', error)
+      alert('Error generating PDF. Please try again.')
+    } finally {
+      setIsGenerating(false)
+    }
+  }
+
+  const generateTextOnlyPDF = async () => {
+    // Dynamically import jsPDF only when needed
+    const { default: jsPDF } = await import('jspdf')
+    
+    // Create new PDF document
+    const pdf = new jsPDF('p', 'mm', 'a4')
+    const pageWidth = pdf.internal.pageSize.getWidth()
+    const pageHeight = pdf.internal.pageSize.getHeight()
+    let yPosition = 20
+    let currentPage = 1
+    
+    // Helper function to add new page if needed
+    const addPageIfNeeded = () => {
+      if (yPosition > pageHeight - 40) {
+        addNewPage()
+        return true
+      }
+      return false
+    }
+    
+    // Helper function to add new page (alias for consistency)
+    const addNewPage = () => {
+      pdf.addPage()
+      currentPage++
+      yPosition = 20
+    }
+    
+    // Helper function to convert image to base64
+    const convertImageToBase64 = (file: File): Promise<string> => {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader()
+        reader.onload = () => resolve(reader.result as string)
+        reader.onerror = reject
+        reader.readAsDataURL(file)
+      })
+    }
+    
+    // Helper function to add image to PDF with proper sizing
+    const addImageToPDF = async (imageFile: File, x: number, y: number, maxWidth: number, maxHeight: number) => {
+      try {
+        const base64 = await convertImageToBase64(imageFile)
+        const img = new Image()
+        
+        return new Promise<void>((resolve, reject) => {
+          img.onload = () => {
+            // Get original image dimensions
+            let { width, height } = img
+            const aspectRatio = width / height
+            
+            // Calculate dimensions to fit within maxWidth x maxHeight while maintaining aspect ratio
+            let finalWidth, finalHeight
+            
+            // Start with the maximum allowed dimensions
+            finalWidth = maxWidth
+            finalHeight = maxHeight
+            
+            // Calculate which dimension will be the limiting factor
+            if (width > height) {
+              // Landscape image - fit to width first
+              finalWidth = maxWidth
+              finalHeight = maxWidth / aspectRatio
+              
+              // If height exceeds maxHeight, scale down proportionally
+              if (finalHeight > maxHeight) {
+                finalHeight = maxHeight
+                finalWidth = maxHeight * aspectRatio
+              }
+            } else {
+              // Portrait image - fit to height first
+              finalHeight = maxHeight
+              finalWidth = maxHeight * aspectRatio
+              
+              // If width exceeds maxWidth, scale down proportionally
+              if (finalWidth > maxWidth) {
+                finalWidth = maxWidth
+                finalHeight = maxWidth / aspectRatio
+              }
+            }
+            
+            // Ensure minimum size for readability (but don't make images too small)
+            const minWidth = Math.max(30, maxWidth * 0.3) // At least 30mm or 30% of max width
+            const minHeight = Math.max(20, maxHeight * 0.3) // At least 20mm or 30% of max height
+            
+            if (finalWidth < minWidth) {
+              finalWidth = minWidth
+              finalHeight = minWidth / aspectRatio
+            }
+            if (finalHeight < minHeight) {
+              finalHeight = minHeight
+              finalWidth = minHeight * aspectRatio
+            }
+            
+            // Ensure we don't exceed maximum dimensions
+            finalWidth = Math.min(finalWidth, maxWidth)
+            finalHeight = Math.min(finalHeight, maxHeight)
+            
+            // Add image to PDF with calculated dimensions
+            pdf.addImage(base64, 'JPEG', x, y, finalWidth, finalHeight)
+            resolve()
+          }
+          img.onerror = reject
+          img.src = base64
+        })
+              } catch (error) {
+          console.error('Error processing image:', error)
+          // Don't add placeholder text - just log the error
+          // This prevents "Image failed to load" messages from appearing
+        }
+    }
+      
+    // Add header with logo and styling
+    console.log('🔄 Starting PDF styling...')
+    try {
+      // Smooth gradient header background
+      console.log('🎨 Setting header gradient background...')
+      const headerGradientColors = [
+        { r: 26, g: 57, b: 105 }, // Dark blue
+        { r: 0, g: 183, b: 255 }  // Bright blue/cyan
+      ]
+      
+      // Create smooth gradient effect for header
+      const headerGradientSteps = 30 // Many steps for very smooth blend
+      for (let i = 0; i < headerGradientSteps; i++) {
+        const ratio = i / (headerGradientSteps - 1)
+        const r = Math.round(headerGradientColors[0].r * (1 - ratio) + headerGradientColors[1].r * ratio)
+        const g = Math.round(headerGradientColors[0].g * (1 - ratio) + headerGradientColors[1].g * ratio)
+        const b = Math.round(headerGradientColors[0].b * (1 - ratio) + headerGradientColors[1].b * ratio)
+        
+        pdf.setFillColor(r, g, b)
+        const rectHeight = 40 / headerGradientSteps // Distribute height across all steps
+        pdf.rect(0, i * rectHeight, pageWidth, rectHeight, 'F')
+      }
+      console.log('✅ Header gradient set successfully')
+      
+      // Add logo and company branding
+      console.log('🎨 Setting logo and company name...')
+      try {
+        // Try to add the logo image first
+        const logoUrl = 'https://www.dropbox.com/scl/fi/buw0myidymhr9t34heyty/Screenshot-2025-07-03-at-12.01.38-pm.png?rlkey=l37u7xr5v9jrmshzubkjzjxir&st=sftzmmpd&raw=1'
+        
+        // Create a temporary image element to get dimensions
+        const img = new Image()
+        img.crossOrigin = 'anonymous'
+        
+        img.onload = async () => {
+          try {
+            // Convert image to base64 for PDF embedding
+            const canvas = document.createElement('canvas')
+            const ctx = canvas.getContext('2d')
+            canvas.width = img.width
+            canvas.height = img.height
+            ctx?.drawImage(img, 0, 0)
+            
+            const logoBase64 = canvas.toDataURL('image/png')
+            
+            // Add logo to PDF (left side of header)
+            const logoWidth = 30 // mm
+            const logoHeight = 20 // mm
+            const logoX = 20
+            const logoY = 10
+            
+            pdf.addImage(logoBase64, 'PNG', logoX, logoY, logoWidth, logoHeight)
+            console.log('✅ Logo added successfully')
+            
+            // Add company name to the right of logo
+            pdf.setTextColor(255, 255, 255) // White text
+            pdf.setFontSize(24)
+            pdf.setFont('helvetica', 'bold')
+            pdf.text('ARW ROOFING', logoX + logoWidth + 15, 25)
+            
+            // Add subtitle below company name
+            pdf.setFontSize(12)
+            pdf.setFont('helvetica', 'normal')
+            pdf.text('Pre-Works Assessment Report', logoX + logoWidth + 15, 35)
+            
+          } catch (logoError) {
+            console.error('❌ Error adding logo:', logoError)
+            // Fallback to text-only if logo fails
+            fallbackToTextOnly()
+          }
+        }
+        
+        img.onerror = () => {
+          console.log('⚠️ Logo failed to load, using text fallback')
+          fallbackToTextOnly()
+        }
+        
+        img.src = logoUrl
+        
+        // Fallback function for text-only header
+        const fallbackToTextOnly = () => {
+          pdf.setTextColor(255, 255, 255) // White text
+          pdf.setFontSize(28)
+          pdf.setFont('helvetica', 'bold')
+          pdf.text('ARW ROOFING', pageWidth / 2, 25, { align: 'center' })
+          
+          pdf.setFontSize(14)
+          pdf.setFont('helvetica', 'normal')
+          pdf.text('Pre-Works Assessment Report', pageWidth / 2, 35, { align: 'center' })
+        }
+        
+      } catch (error) {
+        console.error('❌ Error in logo setup:', error)
+        // Fallback to text-only
+        pdf.setTextColor(255, 255, 255) // White text
+        pdf.setFontSize(28)
+        pdf.setFont('helvetica', 'bold')
+        pdf.text('ARW ROOFING', pageWidth / 2, 25, { align: 'center' })
+        
+        pdf.setFontSize(14)
+        pdf.setFont('helvetica', 'normal')
+        pdf.text('Pre-Works Assessment Report', pageWidth / 2, 35, { align: 'center' })
+      }
+      
+      console.log('✅ Company branding set successfully')
+      
+      // Reset colors and position for body text
+      pdf.setTextColor(0, 0, 0) // Black text for body content
+      yPosition = 45 // Reduced from 50 to bring content closer to header
+      console.log('✅ Header styling completed successfully')
+    } catch (error) {
+      console.error('❌ Error styling header:', error)
+      // Fallback to basic header
+      pdf.setFontSize(24)
+      pdf.setFont('helvetica', 'bold')
+      pdf.text('ARW ROOFING - Pre-Works Assessment Report', pageWidth / 2, 25, { align: 'center' })
+      yPosition = 35 // Reduced from 40 to bring content closer to header
+    }
+    
+    // Add styled date section
+    try {
+      // Light blue background
+      pdf.setFillColor(240, 248, 255) // Light blue background
+      pdf.rect(15, yPosition - 5, pageWidth - 30, 15, 'F')
+      
+      yPosition += 15 // Reduced from 25 to minimize gap
+    } catch (error) {
+      console.error('Error styling date section:', error)
+      // Fallback to basic date
+        yPosition += 12 // Reduced from 20 to minimize gap
+    }
+        
+        // Add job information if available
+        if (formData.selectedDescription) {
+      try {
+        // Styled section header - properly sized to not cut off text
+        pdf.setFillColor(26, 57, 105) // Dark blue background
+        pdf.rect(15, yPosition - 3, pageWidth - 30, 12, 'F') // Reduced height from 15 to 12
+        
+        pdf.setFontSize(16)
+        pdf.setFont('helvetica', 'bold')
+        pdf.setTextColor(255, 255, 255) // White text on dark background
+        pdf.text('Job Information', 20, yPosition + 3) // Adjusted text position from +5 to +3
+        yPosition += 12 // Reduced spacing to match header height
+        
+        // Reset text color for content below
+        pdf.setTextColor(0, 0, 0) // Black text for content
+      } catch (error) {
+        console.error('Error styling job information header:', error)
+        // Fallback to basic header
+          pdf.setFontSize(16)
+          pdf.setFont('helvetica', 'bold')
+          pdf.text('Job Information', 20, yPosition)
+        yPosition += 15
+      }
+          
+          pdf.setFontSize(12)
+          pdf.setFont('helvetica', 'normal')
+          
+          // Try to extract job number from description if it follows a pattern
+          const jobMatch = formData.selectedDescription.match(/(\d+)/)
+          const jobNumber = jobMatch ? jobMatch[1] : 'N/A'
+          
+          const jobDetails = [
+            ['Job Description:', formData.selectedDescription],
+            ['Job Number:', jobNumber],
+            ['Assessment Date:', new Date().toLocaleDateString()]
+          ]
+          
+          jobDetails.forEach(([label, value]) => {
+            pdf.setFont('helvetica', 'bold')
+            pdf.setTextColor(0, 51, 102) // Dark blue labels for consistency
+            pdf.text(label, 20, yPosition)
+            pdf.setFont('helvetica', 'normal')
+            pdf.setTextColor(0, 0, 0) // Black values
+            pdf.text(value, 80, yPosition) // Increased spacing for better readability
+            yPosition += 6
+          })
+          
+          yPosition += 8 // Reduced spacing
+        }
+        
+    // Add form details with styling
+    try {
+      pdf.setFontSize(16)
+      pdf.setFont('helvetica', 'bold')
+      
+      // Add styled section header - properly sized to not cut off text
+      pdf.setFillColor(26, 57, 105) // Dark blue background to match Job Information
+      pdf.rect(15, yPosition - 3, pageWidth - 30, 12, 'F') // Reduced height from 15 to 12
+      
+      pdf.setTextColor(255, 255, 255) // White text on dark background
+      pdf.text('Project Details', 20, yPosition + 3) // Adjusted text position from +5 to +3
+      yPosition += 12 // Reduced spacing to match header height
+      
+      pdf.setFontSize(12)
+      pdf.setFont('helvetica', 'normal')
+      pdf.setTextColor(0, 0, 0)
+      
+      // Basic form information
+      const formDetails = [
+        ['Job Description:', formData.selectedDescription || 'Not specified'],
+        ['Property Type:', formData.propertyType || 'Not specified'],
+        ['Age of Property:', formData.ageOfProperty || 'Not specified'],
+        ['Property Condition:', formData.propertyCondition || 'Not specified'],
+        ['Construction Type:', formData.constructionType || 'Not specified'],
+        ['Reporter Name:', formData.reporterName || 'Not specified'],
+        ['Location of Structure:', formData.locationOfStructure || 'Not specified'],
+        ['Site Access:', formData.siteAccess || 'Not specified'],
+        ['Power Isolated:', formData.isPowerIsolated || 'Not specified']
+      ]
+      
+      formDetails.forEach(([label, value]) => {
+        addPageIfNeeded()
+        pdf.setFont('helvetica', 'bold')
+        pdf.setTextColor(0, 51, 102) // Dark blue labels for consistency
+        pdf.text(label, 20, yPosition)
+        pdf.setFont('helvetica', 'normal')
+        pdf.setTextColor(0, 0, 0) // Black values
+        pdf.text(value, 80, yPosition) // Increased spacing for better readability
+        yPosition += 6
+      })
+      
+      yPosition += 8 // Reduced spacing
+    } catch (error) {
+      console.error('Error styling project details header:', error)
+      // Fallback to basic header
+        pdf.setFontSize(16)
+        pdf.setFont('helvetica', 'bold')
+        pdf.text('Project Details', 20, yPosition)
+      yPosition += 20
+    }
+        
+        pdf.setFontSize(12)
+        pdf.setFont('helvetica', 'normal')
+        
+        // Basic form information
+        const formDetails = [
+          ['Job Description:', formData.selectedDescription || 'Not specified'],
+          ['Property Type:', formData.propertyType || 'Not specified'],
+          ['Age of Property:', formData.ageOfProperty || 'Not specified'],
+          ['Property Condition:', formData.propertyCondition || 'Not specified'],
+          ['Construction Type:', formData.constructionType || 'Not specified'],
+          ['Reporter Name:', formData.reporterName || 'Not specified'],
+          ['Location of Structure:', formData.locationOfStructure || 'Not specified'],
+          ['Location Other:', formData.locationOther || 'Not specified'],
+          ['Site Access:', formData.siteAccess || 'Not specified'],
+          ['Customer Notes:', formData.customerNotes || 'Not specified'],
+          ['Power Isolated:', formData.isPowerIsolated || 'Not specified']
+        ]
+        
+        formDetails.forEach(([label, value]) => {
+          pdf.setFont('helvetica', 'bold')
+          pdf.text(label, 20, yPosition)
+          pdf.setFont('helvetica', 'normal')
+          pdf.text(value, 70, yPosition)
+          yPosition += 6
+        })
+        
+        yPosition += 10
+        
+    // Add roof services information with styling
+        if (formData.roofServices && formData.roofServices.length > 0) {
+      pdf.setFillColor(0, 183, 255) // Bright blue/cyan from style guide
+      pdf.rect(15, yPosition - 3, pageWidth - 30, 12, 'F')
+      
+          pdf.setFontSize(14)
+          pdf.setFont('helvetica', 'bold')
+      pdf.setTextColor(255, 255, 255) // White text on bright blue background
+      pdf.text('Requested Roof Services:', 20, yPosition + 5)
+      yPosition += 20
+      
+      // Reset text color for content below
+      pdf.setTextColor(0, 0, 0) // Black text for content
+          
+          pdf.setFontSize(12)
+          pdf.setFont('helvetica', 'normal')
+          
+          formData.roofServices.forEach((service, index) => {
+            pdf.text(`  • ${service}`, 25, yPosition)
+            yPosition += 5
+          })
+          
+          yPosition += 10
+        }
+        
+        // Add mudmap guide image if available
+        if (formData.mudmapUrl) {
+          // Check if we need a new page for the mudmap - ensure full image fits
+          if (yPosition > pageHeight - 150) { // Increased from 80 to 150 to ensure full image fits
+            addNewPage()
+            yPosition = 20
+          }
+          
+          pdf.setFontSize(16)
+          pdf.setFont('helvetica', 'bold')
+          pdf.text('Site Mudmap Guide', 20, yPosition)
+          yPosition += 8
+          
+          pdf.setFontSize(12)
+          pdf.setFont('helvetica', 'normal')
+          pdf.text('Reference image showing roof areas and site layout:', 20, yPosition)
+          yPosition += 8
+          
+          try {
+            // Convert mudmap URL to base64 and add to PDF
+            const mudmapResponse = await fetch(formData.mudmapUrl)
+            const mudmapBlob = await mudmapResponse.blob()
+            const mudmapFile = new File([mudmapBlob], 'mudmap.jpg', { type: 'image/jpeg' })
+            
+            // Add mudmap image to PDF (centered, max width 160mm)
+            const mudmapWidth = 160
+            const mudmapHeight = 120
+            const mudmapX = (pageWidth - mudmapWidth) / 2
+            
+            await addImageToPDF(mudmapFile, mudmapX, yPosition, mudmapWidth, mudmapHeight)
+            yPosition += mudmapHeight + 10
+            
+            pdf.setFontSize(8)
+            pdf.setTextColor(128, 128, 128)
+            pdf.text('Mudmap image loaded from webhook', pageWidth / 2, yPosition, { align: 'center' })
+            pdf.setTextColor(0, 0, 0)
+            yPosition += 8
+            
+          } catch (error) {
+            console.error('Error adding mudmap to PDF:', error)
+            pdf.setFontSize(12)
+            pdf.setTextColor(128, 128, 128)
+            pdf.text('Mudmap image could not be loaded', 20, yPosition)
+            pdf.setTextColor(0, 0, 0)
+            yPosition += 8
+          }
+        }
+        
+    // Add assets information with images
+    for (let assetIndex = 0; assetIndex < formData.assets.length; assetIndex++) {
+      const asset = formData.assets[assetIndex]
+      
+      // Always start each asset on a new page for better organization
+      if (assetIndex > 0 || yPosition > pageHeight - 100) {
+            addNewPage()
+            yPosition = 20
+          }
+          
+      // Add asset header with blue gradient background (matching reference PDF)
+      const assetHeaderGradientColors = [
+        { r: 26, g: 57, b: 105 }, // Dark blue
+        { r: 0, g: 183, b: 255 }  // Bright blue/cyan
+      ]
+      
+      // Create smooth gradient effect for asset header
+      const assetHeaderGradientSteps = 20
+      for (let i = 0; i < assetHeaderGradientSteps; i++) {
+        const ratio = i / (assetHeaderGradientSteps - 1)
+        const r = Math.round(assetHeaderGradientColors[0].r * (1 - ratio) + assetHeaderGradientColors[1].r * ratio)
+        const g = Math.round(assetHeaderGradientColors[0].g * (1 - ratio) + assetHeaderGradientColors[1].g * ratio)
+        const b = Math.round(assetHeaderGradientColors[0].b * (1 - ratio) + assetHeaderGradientColors[1].b * ratio)
+        
+        pdf.setFillColor(r, g, b)
+        const rectHeight = 15 / assetHeaderGradientSteps
+        pdf.rect(15, yPosition - 5 + (i * rectHeight), pageWidth - 30, rectHeight, 'F')
+      }
+      
+      pdf.setFontSize(18)
+      pdf.setFont('helvetica', 'bold')
+      pdf.setTextColor(255, 255, 255) // White text on gradient background
+      pdf.text(`Asset ${assetIndex + 1}: ${asset.assetName}`, 20, yPosition + 5)
+      yPosition += 20
+      
+      // Reset text color for content below
+      pdf.setTextColor(0, 0, 0) // Black text for content
+          
+          pdf.setFontSize(12)
+          pdf.setFont('helvetica', 'normal')
+          
+      // Roof Areas with images
+      if (asset.roofAreas.length > 0) {
+        pdf.setFont('helvetica', 'bold')
+        pdf.text('Roof Areas:', 25, yPosition)
+        yPosition += 8
+        
+        for (let areaIndex = 0; areaIndex < asset.roofAreas.length; areaIndex++) {
+          const area = asset.roofAreas[areaIndex]
+          
+          // Add styled roof area header with blue gradient background (matching reference PDF)
+          const roofAreaHeaderGradientColors = [
+            { r: 26, g: 57, b: 105 }, // Dark blue
+            { r: 0, g: 183, b: 255 }  // Bright blue/cyan
+          ]
+          
+          // Create smooth gradient effect for roof area header
+          const roofAreaHeaderGradientSteps = 15
+          for (let i = 0; i < roofAreaHeaderGradientSteps; i++) {
+            const ratio = i / (roofAreaHeaderGradientSteps - 1)
+            const r = Math.round(roofAreaHeaderGradientColors[0].r * (1 - ratio) + roofAreaHeaderGradientColors[1].r * ratio)
+            const g = Math.round(roofAreaHeaderGradientColors[0].g * (1 - ratio) + roofAreaHeaderGradientColors[1].g * ratio)
+            const b = Math.round(roofAreaHeaderGradientColors[0].b * (1 - ratio) + roofAreaHeaderGradientColors[1].b * ratio)
+            
+            pdf.setFillColor(r, g, b)
+            const rectHeight = 12 / roofAreaHeaderGradientSteps
+            pdf.rect(20, yPosition - 3 + (i * rectHeight), pageWidth - 40, rectHeight, 'F')
+          }
+          
+          // Header text
+          pdf.setFont('helvetica', 'bold')
+          pdf.setFontSize(16)
+          pdf.setTextColor(255, 255, 255) // White text on gradient background
+          pdf.text(`Roof Area ${areaIndex + 1}: ${area.name}`, 25, yPosition + 5)
+          yPosition += 20
+          
+          // Reset text color for content
+          pdf.setTextColor(0, 0, 0)
+          
+          // Create a styled details box with light background (matching reference PDF)
+          pdf.setFillColor(248, 250, 252) // Light gray background
+          pdf.rect(20, yPosition - 3, pageWidth - 40, 55, 'F') // Height for 5 rows of details
+          
+          // Add subtle border
+          pdf.setDrawColor(200, 200, 200)
+          pdf.setLineWidth(0.5)
+          pdf.rect(20, yPosition - 3, pageWidth - 40, 45, 'S')
+          
+          // Organize details in a 2-column grid layout (matching reference PDF)
+          const leftColumn = [
+            { label: 'Type', value: area.type || 'Not specified' },
+            { label: 'Profile', value: area.profile || 'Not specified' },
+            { label: 'Pitch', value: `${area.pitchDeg || 'Not specified'}°` },
+            { label: 'Length', value: `${area.length || 'Not specified'}m` },
+            { label: 'Membrane', value: area.membrane || 'None' }
+          ]
+          
+          const rightColumn = [
+            { label: 'Width', value: `${area.width || 'Not specified'}m` },
+            { label: 'Calculated Area', value: `${area.area ? area.area.toFixed(2) : 'Not calculated'}m²` },
+            { label: 'Colour', value: area.colour || 'Not specified' },
+            { label: 'Thickness (BMT)', value: area.gauge || 'Not specified' }
+          ]
+          
+          // Left column details - properly left-aligned with good spacing
+          let detailY = yPosition
+          leftColumn.forEach((detail, index) => {
+            pdf.setFont('helvetica', 'bold')
+            pdf.setFontSize(10)
+            pdf.setTextColor(0, 51, 102) // Dark blue labels
+            pdf.text(detail.label, 25, detailY)
+            
+            pdf.setFont('helvetica', 'normal')
+            pdf.setFontSize(10)
+            pdf.setTextColor(0, 0, 0) // Black values
+            pdf.text(detail.value, 50, detailY) // 25mm gap between labels and values
+            
+            detailY += 10
+          })
+          
+          // Right column details - properly left-aligned with good spacing
+          detailY = yPosition
+          rightColumn.forEach((detail, index) => {
+            pdf.setFont('helvetica', 'bold')
+            pdf.setFontSize(10)
+            pdf.setTextColor(0, 51, 102) // Dark blue labels
+            pdf.text(detail.label, 120, detailY)
+            
+            pdf.setFont('helvetica', 'normal')
+            pdf.setFontSize(10)
+            pdf.setTextColor(0, 0, 0) // Black values
+            pdf.text(detail.value, 155, detailY) // 35mm gap between labels and values
+            
+            detailY += 10
+          })
+          
+          yPosition += 55 // Space for the styled details box
+              
+          // Add images for this area
+              if (area.images && area.images.length > 0) {
+            yPosition += 5
+            
+            // Check if we need a new page for images
+            if (yPosition > pageHeight - 50) {
+              addNewPage()
+              yPosition = 20
+            }
+            
+            pdf.setFont('helvetica', 'bold')
+            pdf.text(`    Images for ${area.name}:`, 30, yPosition)
+                yPosition += 5
+            
+                         // Calculate dynamic image layout with minimal padding for maximum image size
+             const totalImages = area.images.length
+             const imagesPerRow = totalImages <= 3 ? totalImages : Math.min(3, Math.ceil(Math.sqrt(totalImages)))
+             const maxImageWidth = Math.min(130, (pageWidth - 15 - (imagesPerRow - 1) * 2) / imagesPerRow) // Maximum width, almost no margin
+             const maxImageHeight = Math.min(100, maxImageWidth * 0.8) // Maximum height, maintain aspect ratio
+             const imageSpacing = 2 // mm (virtually no spacing between images)
+             const marginLeft = 7 // mm (virtually no left margin)
+             const marginTop = 3 // mm (virtually no top margin)
+            
+            for (let imgIndex = 0; imgIndex < area.images.length; imgIndex++) {
+              // Check if we need a new page for the image
+              const imagesPerPage = imagesPerRow * 3 // 3 rows per page
+              if (imgIndex > 0 && imgIndex % imagesPerPage === 0) {
+                addNewPage()
+                yPosition = 20
+              }
+              
+              // Calculate grid position
+              const gridRow = Math.floor((imgIndex % imagesPerPage) / imagesPerRow)
+              const gridCol = (imgIndex % imagesPerPage) % imagesPerRow
+              
+              // Calculate image position with right margin check
+              const xPos = marginLeft + (gridCol * (maxImageWidth + imageSpacing))
+              const yPos = yPosition + marginTop + (gridRow * (maxImageHeight + 3))
+              
+              // Ensure image doesn't go off the right edge of the page
+              if (xPos + maxImageWidth > pageWidth - 25) {
+                // Move to next row if this would overflow
+                const newRow = gridRow + 1
+                const newYPos = yPosition + marginTop + (newRow * (maxImageHeight + 15))
+                if (newYPos + maxImageHeight > pageHeight - 30) {
+                  // Need new page
+                  addNewPage()
+                  yPosition = 20
+                  const adjustedYPos = 20 + marginTop + (0 * (maxImageHeight + 15))
+                  const adjustedXPos = marginLeft + (0 * (maxImageWidth + imageSpacing))
+                  await addImageToPDF(area.images[imgIndex].file, adjustedXPos, adjustedYPos, maxImageWidth, maxImageHeight)
+                  continue
+                }
+              }
+              
+              // Image label removed - cleaner appearance
+              
+              // No border - clean look
+              
+              // Add image
+              await addImageToPDF(area.images[imgIndex].file, xPos, yPos, maxImageWidth, maxImageHeight)
+              
+              // Update yPosition for next section (after all images per page or end of images)
+              if ((imgIndex + 1) % imagesPerPage === 0 || imgIndex === area.images.length - 1) {
+                const lastRow = Math.floor(((imgIndex % imagesPerPage) / imagesPerRow))
+                yPosition = yPos + maxImageHeight + 5
+              }
+            }
+          }
+          
+          // Only add spacing if there were images
+          if (area.images && area.images.length > 0) {
+            yPosition += 10
+          }
+        }
+      }
+      
+      // Support Width (Battens/Purlins) with images
+          if (asset.battens.length > 0) {
+        // Add section separator
+        yPosition += 10
+        if (yPosition > pageHeight - 80) {
+              addNewPage()
+              yPosition = 20
+            }
+            
+        // Section header with accent color background
+        pdf.setFillColor(128, 128, 128) // Dark gray from style guide
+        pdf.rect(15, yPosition - 3, pageWidth - 30, 12, 'F')
+        
+        pdf.setFontSize(16)
+            pdf.setFont('helvetica', 'bold')
+        pdf.setTextColor(255, 255, 255) // White text on dark gray background
+        pdf.text('Support Width (Battens/Purlins)', 20, yPosition + 5)
+        yPosition += 20
+        
+        // Reset text color for content below
+        pdf.setTextColor(0, 0, 0) // Black text for content
+        
+        for (let battenIndex = 0; battenIndex < asset.battens.length; battenIndex++) {
+          const batten = asset.battens[battenIndex]
+          
+              pdf.setFont('helvetica', 'normal')
+              const battenDetails = [
+                `  Row ${battenIndex + 1}:`,
+                `    Type: ${batten.kind}`,
+                `    Spacing: ${batten.spacingMm || 'Not specified'}`,
+                `    Material: ${batten.material || 'Not specified'}`,
+                `    Size: ${batten.size || 'Not specified'}`,
+                `    Condition: ${batten.condition || 'Not specified'}`
+              ]
+              
+              battenDetails.forEach(detail => {
+            if (yPosition > pageHeight - 40) {
+                  addNewPage()
+                  yPosition = 20
+                }
+                pdf.text(detail, 30, yPosition)
+                yPosition += 5
+              })
+              
+          // Add images for this batten
+              if (batten.images && batten.images.length > 0) {
+            yPosition += 3
+            
+            if (yPosition > pageHeight - 50) {
+              addNewPage()
+              yPosition = 20
+            }
+            
+            pdf.setFont('helvetica', 'bold')
+            pdf.text(`    Images for Row ${battenIndex + 1}:`, 30, yPosition)
+                yPosition += 5
+            
+            // Add images with grid layout (2x3 for 6 images per page)
+            const maxImageWidth = 85 // mm (smaller to fit 2 per row with margins)
+            const maxImageHeight = 65 // mm (smaller to fit 3 per column with margins)
+            const imageSpacing = 25 // mm (spacing between images)
+            const marginLeft = 30 // mm (left margin to prevent bleeding)
+            const marginTop = 15 // mm (top margin)
+            
+            for (let imgIndex = 0; imgIndex < batten.images.length; imgIndex++) {
+              // Check if we need a new page (after 6 images)
+              if (imgIndex > 0 && imgIndex % 6 === 0) {
+                addNewPage()
+                yPosition = 20
+              }
+              
+              // Calculate grid position
+              const gridRow = Math.floor((imgIndex % 6) / 2)
+              const gridCol = (imgIndex % 6) % 2
+              
+              // Calculate image position
+              const xPos = marginLeft + (gridCol * (maxImageWidth + imageSpacing))
+              const yPos = yPosition + marginTop + (gridRow * (maxImageHeight + 3))
+              
+              // Image label removed - cleaner appearance
+              
+              // No border - clean look
+              
+              await addImageToPDF(batten.images[imgIndex].file, xPos, yPos, maxImageWidth, maxImageHeight)
+              
+              // Update yPosition for next section (after all 6 images or end of images)
+              if ((imgIndex + 1) % 6 === 0 || imgIndex === batten.images.length - 1) {
+                const lastRow = Math.floor(((imgIndex % 6) / 2))
+                yPosition = yPos + maxImageHeight + 5
+              }
+            }
+              }
+              
+              yPosition += 2
+        }
+          }
+          
+      // Roof Framing with images
+          if (asset.framing.length > 0) {
+        // Add section separator
+        yPosition += 10
+        if (yPosition > pageHeight - 80) {
+              addNewPage()
+              yPosition = 20
+            }
+            
+        // Section header with accent color background
+        pdf.setFillColor(128, 128, 128) // Dark gray from style guide
+        pdf.rect(15, yPosition - 3, pageWidth - 30, 12, 'F')
+        
+        pdf.setFontSize(14)
+            pdf.setFont('helvetica', 'bold')
+        pdf.setTextColor(255, 255, 255) // White text on dark gray background
+        pdf.text('Roof Framing', 20, yPosition + 5)
+        yPosition += 20
+        
+        // Reset text color for content below
+        pdf.setTextColor(0, 0, 0) // Black text for content
+        
+        for (let frameIndex = 0; frameIndex < asset.framing.length; frameIndex++) {
+          const frame = asset.framing[frameIndex]
+          
+              pdf.setFont('helvetica', 'normal')
+              const frameDetails = [
+                `  Row ${frameIndex + 1}:`,
+                `    Material: ${frame.material}`,
+                `    Spacing: ${frame.spacing || 'Not specified'}`,
+                `    Size: ${frame.size || 'Not specified'}`,
+                `    Span: ${frame.span || 'Not specified'}`,
+                `    Condition: ${frame.condition || 'Not specified'}`
+              ]
+              
+              frameDetails.forEach(detail => {
+            if (yPosition > pageHeight - 40) {
+                  addNewPage()
+                  yPosition = 20
+                }
+                pdf.text(detail, 30, yPosition)
+                yPosition += 5
+              })
+              
+          // Add images for this frame
+              if (frame.images && frame.images.length > 0) {
+            yPosition += 3
+            
+            if (yPosition > pageHeight - 50) {
+              addNewPage()
+              yPosition = 20
+            }
+            
+            pdf.setFont('helvetica', 'bold')
+            pdf.text(`    Images for Framing Row ${frameIndex + 1}:`, 30, yPosition)
+                yPosition += 5
+            
+            // Add images for this frame in a 2-column grid layout
+            const validFrameImages = frame.images?.filter(img => {
+              return img && 
+                     img.file && 
+                     img.file instanceof File && 
+                     img.file.size > 0 && 
+                     img.file.name && 
+                     img.file.name.trim() !== ''
+            }) || []
+            
+            console.log(`Framing Row ${frameIndex + 1}: Found ${frame.images?.length || 0} images, ${validFrameImages.length} are valid`)
+            
+            if (validFrameImages.length > 0) {
+              yPosition += 5
+              
+              // Add styled section header for images
+              pdf.setFillColor(0, 183, 255) // Bright blue/cyan background
+              pdf.rect(25, yPosition - 3, pageWidth - 50, 10, 'F')
+              
+              // Add subtle border
+              pdf.setDrawColor(0, 150, 200)
+              pdf.setLineWidth(0.5)
+              pdf.rect(25, yPosition - 3, pageWidth - 50, 10, 'S')
+              
+              pdf.setFont('helvetica', 'bold')
+              pdf.setFontSize(12)
+              pdf.setTextColor(255, 255, 255) // White text on blue background
+              pdf.text(`Images for Framing Row ${frameIndex + 1}:`, 30, yPosition + 3)
+              yPosition += 15
+              
+              // Calculate dynamic grid layout with reduced padding for larger images
+              const totalImages = validFrameImages.length
+              const imagesPerRow = totalImages <= 3 ? totalImages : Math.min(3, Math.ceil(Math.sqrt(totalImages)))
+              const maxImageWidth = Math.min(95, (pageWidth - 40 - (imagesPerRow - 1) * 10) / imagesPerRow) // Larger width, less margin
+              const maxImageHeight = Math.min(75, maxImageWidth * 0.8) // Larger height, maintain aspect ratio
+              const imageSpacing = 10 // Space between images (reduced)
+              const leftMargin = 20
+              
+              for (let imgIndex = 0; imgIndex < validFrameImages.length; imgIndex++) {
+                const image = validFrameImages[imgIndex]
+                
+                try {
+                  // Check if we need a new page for the image
+                  // Start new page after every imagesPerPage images or if current position is too low
+                  const imagesPerPage = imagesPerRow * 3 // 3 rows per page
+                  if (imgIndex > 0 && imgIndex % imagesPerPage === 0) {
+                    addNewPage()
+                    yPosition = 20
+                  } else if (yPosition > pageHeight - 100) {
+                    addNewPage()
+                    yPosition = 20
+                  }
+                  
+                  // Calculate grid position (reset for each page)
+                  const pageImageIndex = imgIndex % imagesPerPage
+                  const row = Math.floor(pageImageIndex / imagesPerRow)
+                  const col = pageImageIndex % imagesPerRow
+                  
+                  const xPos = leftMargin + (col * (maxImageWidth + imageSpacing))
+                  // Always start from the top of the current page (yPosition) and add row offset
+                  const yPos = yPosition + (row * (maxImageHeight + 3)) // 3mm spacing between rows (virtually none)
+                  
+                  // Image caption removed - cleaner appearance
+                  
+                  // Add image to PDF with dynamic sizing
+                  await addImageToPDF(image.file, xPos, yPos, maxImageWidth, maxImageHeight)
+                  
+                  // Image filename removed - cleaner appearance
+                  
+                  // Update yPosition for next section (after all images in this frame)
+                  if (imgIndex === validFrameImages.length - 1) {
+                    const totalRows = Math.ceil(validFrameImages.length / imagesPerRow)
+                    yPosition = yPos + maxImageHeight + 5 // 5mm below last image row
+                  }
+                  
+                } catch (imgError) {
+                  console.error('Error processing image:', imgError)
+                  // Don't add error messages to PDF - just log the error
+                  // This prevents error placeholders from appearing
+                }
+              }
+              
+              // Reset text color
+              pdf.setTextColor(0, 0, 0)
+            }
+              }
+              
+              yPosition += 2
+        }
+          }
+          
+          yPosition += 10
+    }
+        
+        // Add uploaded files information with bright blue header (matching reference PDF)
+        const uploadedFiles = []
+        if (formData.finalPlan && formData.finalPlan.length > 0) {
+          uploadedFiles.push(`Final Plan: ${formData.finalPlan[0].name}`)
+        }
+        if (formData.finalTakeoff && formData.finalTakeoff.length > 0) {
+          uploadedFiles.push(`Final Takeoff: ${formData.finalTakeoff[0].name}`)
+        }
+        if (formData.powerIsolationImage && formData.powerIsolationImage.length > 0) {
+          uploadedFiles.push(`Power Isolation Image: ${formData.powerIsolationImage[0].name}`)
+        }
+        
+        if (uploadedFiles.length > 0) {
+          if (yPosition > pageHeight - 60) {
+            addNewPage()
+            yPosition = 20
+          }
+          
+          // Bright blue header bar (matching reference PDF)
+          pdf.setFillColor(0, 183, 255) // Bright blue/cyan from reference PDF
+          pdf.rect(15, yPosition - 3, pageWidth - 30, 12, 'F')
+          
+          pdf.setFontSize(14)
+          pdf.setFont('helvetica', 'bold')
+          pdf.setTextColor(255, 255, 255) // White text on bright blue background
+          pdf.text('Uploaded Files:', 20, yPosition + 3)
+          yPosition += 15
+          
+          // Reset text color for content below
+          pdf.setTextColor(0, 0, 0) // Black text for content
+          
+          pdf.setFontSize(12)
+          pdf.setFont('helvetica', 'normal')
+          
+          uploadedFiles.forEach(file => {
+            pdf.text(`  • ${file}`, 25, yPosition)
+            yPosition += 5
+          })
+          
+          yPosition += 10
+        }
+        
+        // Add notes if available
+        if (formData.notes) {
+          if (yPosition > pageHeight - 30) {
+            addNewPage()
+            yPosition = 20
+          }
+          
+          pdf.setFontSize(14)
+          pdf.setFont('helvetica', 'bold')
+          pdf.text('General Notes:', 20, yPosition)
+          yPosition += 8
+          
+          pdf.setFontSize(12)
+          pdf.setFont('helvetica', 'normal')
+          
+          // Split notes into lines that fit the page width
+          const words = formData.notes.split(' ')
+          let line = ''
+          const maxWidth = pageWidth - 40
+          
+          words.forEach(word => {
+            const testLine = line + word + ' '
+            const textWidth = pdf.getTextWidth(testLine)
+            
+            if (textWidth > maxWidth) {
+              if (yPosition > pageHeight - 20) {
+                addNewPage()
+                yPosition = 20
+              }
+              pdf.text(line, 20, yPosition)
+              yPosition += 6
+              line = word + ' '
+            } else {
+              line = testLine
+            }
+          })
+          
+          if (line.trim()) {
+            if (yPosition > pageHeight - 20) {
+              addNewPage()
+              yPosition = 20
+            }
+            pdf.text(line, 20, yPosition)
+          }
+        }
+        
+        // Add additional observations section
+        if (yPosition > pageHeight - 40) {
+          addNewPage()
+          yPosition = 20
+        }
+    
+    // Styled section header
+    pdf.setFillColor(128, 128, 0) // Olive green from style guide
+    pdf.rect(15, yPosition - 3, pageWidth - 30, 12, 'F')
+        
+        pdf.setFontSize(14)
+        pdf.setFont('helvetica', 'bold')
+    pdf.setTextColor(255, 255, 255) // White text
+    pdf.text('Additional Observations:', 20, yPosition + 5)
+    yPosition += 20
+        
+        pdf.setFontSize(12)
+        pdf.setFont('helvetica', 'normal')
+        
+        // Add any important observations based on form data
+        const observations = []
+        
+        // Check for high-pitch roofs that might need special equipment
+        const hasHighPitch = formData.assets.some(asset => 
+          asset.roofAreas.some(area => area.pitchDeg && area.pitchDeg > 30)
+        )
+        if (hasHighPitch) {
+          observations.push('High-pitch roof areas detected - may require special safety equipment')
+        }
+        
+        // Check for multiple roof areas that might indicate complex project
+        const roofAreaCount = formData.assets.reduce((total, asset) => total + asset.roofAreas.length, 0)
+        if (roofAreaCount > 3) {
+          observations.push('Complex roof structure with multiple areas - plan for extended timeline')
+        }
+        
+        // Check for power isolation requirements
+        if (formData.isPowerIsolated === 'Yes') {
+          observations.push('Power isolation required - ensure electrical safety protocols')
+        }
+        
+        // Check for site access restrictions
+        if (formData.siteAccess && formData.siteAccess !== 'None') {
+          observations.push(`Site access considerations: ${formData.siteAccess}`)
+        }
+        
+        if (observations.length > 0) {
+          observations.forEach(obs => {
+            pdf.text(`  • ${obs}`, 25, yPosition)
+            yPosition += 5
+          })
+        } else {
+          pdf.text('  • No special observations noted', 25, yPosition)
+        }
+        
+        yPosition += 10
+        
+        // Add safety considerations section
+        if (yPosition > pageHeight - 40) {
+          addNewPage()
+          yPosition = 20
+        }
+    
+    // Styled section header
+    pdf.setFillColor(255, 0, 0) // Red for safety
+    pdf.rect(15, yPosition - 3, pageWidth - 30, 12, 'F')
+        
+        pdf.setFontSize(14)
+        pdf.setFont('helvetica', 'bold')
+    pdf.setTextColor(255, 255, 255) // White text
+    pdf.text('Safety Considerations:', 20, yPosition + 5)
+    yPosition += 20
+        
+        pdf.setFontSize(12)
+        pdf.setFont('helvetica', 'normal')
+        
+        const safetyNotes = []
+        
+        // Check for steep roofs
+        const hasSteepRoof = formData.assets.some(asset => 
+          asset.roofAreas.some(area => area.pitchDeg && area.pitchDeg > 45)
+        )
+        if (hasSteepRoof) {
+          safetyNotes.push('Steep roof areas detected - ensure proper fall protection equipment')
+        }
+        
+        // Check for power isolation
+        if (formData.isPowerIsolated === 'Yes') {
+          safetyNotes.push('Electrical safety protocols required - power isolation confirmed')
+        }
+        
+        // Check for site access restrictions
+        if (formData.siteAccess && formData.siteAccess.includes('Height restriction')) {
+          safetyNotes.push('Height restrictions noted - verify equipment clearance requirements')
+        }
+        
+        if (formData.siteAccess && formData.siteAccess.includes('Overhead power nearby')) {
+          safetyNotes.push('Overhead power lines nearby - maintain safe working distances')
+        }
+        
+        if (safetyNotes.length > 0) {
+          safetyNotes.forEach(note => {
+            pdf.text(`  ⚠️ ${note}`, 25, yPosition)
+            yPosition += 5
+          })
+        } else {
+          pdf.text('  ✓ No special safety concerns identified', 25, yPosition)
+        }
+        
+        yPosition += 10
+        
+        // Add material specifications section
+        if (yPosition > pageHeight - 40) {
+          addNewPage()
+          yPosition = 20
+        }
+    
+    // Styled section header
+    pdf.setFillColor(0, 183, 255) // Bright blue/cyan from style guide
+    pdf.rect(15, yPosition - 3, pageWidth - 30, 12, 'F')
+        
+        pdf.setFontSize(14)
+        pdf.setFont('helvetica', 'bold')
+    pdf.setTextColor(255, 255, 255) // White text
+    pdf.text('Material Specifications:', 20, yPosition + 5)
+    yPosition += 20
+        
+        pdf.setFontSize(12)
+        pdf.setFont('helvetica', 'normal')
+        
+        // Collect all unique materials used across all assets
+        const materials = new Set<string>()
+        const profiles = new Set<string>()
+        const membranes = new Set<string>()
+        
+        formData.assets.forEach(asset => {
+          asset.roofAreas.forEach(area => {
+            if (area.profile) profiles.add(area.profile)
+            if (area.membrane && area.membrane !== 'None') membranes.add(area.membrane)
+          })
+        })
+        
+        if (profiles.size > 0) {
+          pdf.text('  Roof Profiles Required:', 25, yPosition)
+          yPosition += 5
+          Array.from(profiles).forEach(profile => {
+            pdf.text(`    • ${profile}`, 30, yPosition)
+            yPosition += 4
+          })
+          yPosition += 2
+        }
+        
+        if (membranes.size > 0) {
+          pdf.text('  Membranes Required:', 25, yPosition)
+          yPosition += 5
+          Array.from(membranes).forEach(membrane => {
+            pdf.text(`    • ${membrane}`, 30, yPosition)
+            yPosition += 4
+          })
+          yPosition += 2
+        }
+        
+        if (profiles.size === 0 && membranes.size === 0) {
+          pdf.text('  • No specific materials specified', 25, yPosition)
+        }
+        
+        yPosition += 10
+        
+        // Add special requirements section
+        const specialRequirements = []
+        if (formData.siteAccess && formData.siteAccess !== 'None') {
+          specialRequirements.push(`Site Access: ${formData.siteAccess}`)
+        }
+        if (formData.isPowerIsolated === 'Yes') {
+          specialRequirements.push('Power Isolation Required')
+        }
+        if (formData.customerNotes && formData.customerNotes.trim()) {
+          specialRequirements.push(`Customer Notes: ${formData.customerNotes}`)
+        }
+        
+        if (specialRequirements.length > 0) {
+          if (yPosition > pageHeight - 40) {
+            addNewPage()
+            yPosition = 20
+          }
+          
+          pdf.setFontSize(14)
+          pdf.setFont('helvetica', 'bold')
+          pdf.text('Special Requirements & Notes:', 20, yPosition)
+          yPosition += 8
+          
+          pdf.setFontSize(12)
+          pdf.setFont('helvetica', 'normal')
+          
+          specialRequirements.forEach(req => {
+            pdf.text(`  • ${req}`, 25, yPosition)
+            yPosition += 5
+          })
+          
+          yPosition += 10
+        }
+        
+        // Add summary section
+        if (yPosition > pageHeight - 40) {
+          addNewPage()
+          yPosition = 20
+        }
+        
+    // Styled section header with smooth gradient
+    const summaryGradientColors = [
+      { r: 26, g: 57, b: 105 }, // Dark blue
+      { r: 0, g: 183, b: 255 }  // Bright blue/cyan
+    ]
+    
+    // Create smooth gradient effect with many thin rectangles
+    const summaryGradientSteps = 25 // More steps for smoother blend
+    for (let i = 0; i < summaryGradientSteps; i++) {
+      const ratio = i / (summaryGradientSteps - 1)
+      const r = Math.round(summaryGradientColors[0].r * (1 - ratio) + summaryGradientColors[1].r * ratio)
+      const g = Math.round(summaryGradientColors[0].g * (1 - ratio) + summaryGradientColors[1].g * ratio)
+      const b = Math.round(summaryGradientColors[0].b * (1 - ratio) + summaryGradientColors[1].b * ratio)
+      
+      pdf.setFillColor(r, g, b)
+      const rectHeight = 12 / summaryGradientSteps // Distribute height across all steps
+      pdf.rect(15, yPosition - 3 + (i * rectHeight), pageWidth - 30, rectHeight, 'F')
+    }
+    
+    pdf.setFontSize(16)
+        pdf.setFont('helvetica', 'bold')
+    pdf.setTextColor(255, 255, 255) // White text
+    pdf.text('Project Summary:', 20, yPosition + 5)
+    yPosition += 20
+        
+        pdf.setFontSize(12)
+        pdf.setFont('helvetica', 'normal')
+        
+        const totalAssets = formData.assets.length
+        const totalRoofAreas = formData.assets.reduce((total, asset) => total + asset.roofAreas.length, 0)
+        const totalBattens = formData.assets.reduce((total, asset) => total + asset.battens.length, 0)
+        const totalFraming = formData.assets.reduce((total, asset) => total + asset.framing.length, 0)
+        const totalServices = formData.roofServices ? formData.roofServices.length : 0
+    
+    // Count total images
+    const totalImages = formData.assets.reduce((total, asset) => {
+      return total + 
+        asset.roofAreas.reduce((areaTotal, area) => areaTotal + (area.images?.length || 0), 0) +
+        asset.battens.reduce((battenTotal, batten) => battenTotal + (batten.images?.length || 0), 0) +
+        asset.framing.reduce((frameTotal, frame) => frameTotal + (frame.images?.length || 0), 0)
+    }, 0) + (formData.powerIsolationImage?.length || 0)
+        
+        const summaryDetails = [
+          `Total Assets: ${totalAssets}`,
+          `Total Roof Areas: ${totalRoofAreas}`,
+          `Total Batten/Purlin Rows: ${totalBattens}`,
+          `Total Framing Rows: ${totalFraming}`,
+          `Total Services Requested: ${totalServices}`,
+      `Files Uploaded: ${uploadedFiles.length}`,
+      `Total Images Captured: ${totalImages}`
+        ]
+        
+        // Add estimated timeline if we have roof areas
+        if (totalRoofAreas > 0) {
+          const baseDays = 3 // Base days for any project
+          const additionalDays = totalRoofAreas * 0.5 // 0.5 days per roof area
+          const estimatedTimeline = Math.round(baseDays + additionalDays)
+          
+          summaryDetails.push(`Estimated Timeline: ${estimatedTimeline} days`)
+        }
+        
+        summaryDetails.forEach(detail => {
+          pdf.text(`  • ${detail}`, 25, yPosition)
+          yPosition += 5
+        })
+        
+        yPosition += 10
+        
+    // Add styled footer
+        const totalPages = pdf.getNumberOfPages()
+        for (let i = 1; i <= totalPages; i++) {
+          pdf.setPage(i)
+      
+      // Footer background
+      pdf.setFillColor(26, 57, 105) // Dark blue
+      pdf.rect(0, pageHeight - 25, pageWidth, 25, 'F')
+      
+      // Footer text
+      pdf.setFontSize(12)
+      pdf.setFont('helvetica', 'bold')
+      pdf.setTextColor(255, 255, 255) // White text
+      pdf.text(`Page ${i} of ${totalPages}`, pageWidth / 2, pageHeight - 15, { align: 'center' })
+      
+          pdf.setFontSize(8)
+          pdf.setFont('helvetica', 'normal')
+      pdf.text('Generated by ARW Roofing Pre-Works Assessment Form', pageWidth / 2, pageHeight - 8, { align: 'center' })
+      
+      // Add accent line
+      pdf.setDrawColor(0, 183, 255) // Bright blue/cyan
+      pdf.setLineWidth(2)
+      pdf.line(20, pageHeight - 22, pageWidth - 20, pageHeight - 22)
+    }
+    
+    // Test basic styling to ensure it works
+    console.log('🧪 Testing basic PDF styling...')
+    try {
+      // Add a test colored rectangle at the bottom
+      pdf.setFillColor(255, 0, 0) // Red
+      pdf.rect(20, pageHeight - 50, 50, 20, 'F')
+      pdf.setTextColor(255, 255, 255)
+      pdf.setFontSize(12)
+      pdf.text('TEST', 25, pageHeight - 40)
+      console.log('✅ Basic styling test passed')
+    } catch (error) {
+      console.error('❌ Basic styling test failed:', error)
+    }
+        
+    // Save the PDF
+    const fileName = `pre-works-assessment-${new Date().toISOString().split('T')[0]}.pdf`
+    console.log('💾 Saving PDF:', fileName)
+    pdf.save(fileName)
+    console.log('✅ PDF saved successfully')
+  }
+
+  const generatePDFWithImages = async () => {
+    try {
+      // Dynamically import jsPDF only when needed
+      const { default: jsPDF } = await import('jspdf')
+      
+      // Create new PDF document
+      const pdf = new jsPDF('p', 'mm', 'a4')
+      const pageWidth = pdf.internal.pageSize.getWidth()
+      const pageHeight = pdf.internal.pageSize.getHeight()
+      let yPosition = 20
+      let currentPage = 1
+      
+      // Helper function to add new page if needed
+      const addPageIfNeeded = () => {
+        if (yPosition > pageHeight - 40) {
+          addNewPage()
+          currentPage++
+          yPosition = 20
+          return true
+        }
+        return false
+      }
+      
+      // Helper function to add new page (alias for consistency)
+      const addNewPage = () => {
+        pdf.addPage()
+        currentPage++
+        yPosition = 20
+      }
+      
+      // Helper function to convert image to base64
+      const convertImageToBase64 = (file: File): Promise<string> => {
+        return new Promise((resolve, reject) => {
+          const reader = new FileReader()
+          reader.onload = () => resolve(reader.result as string)
+          reader.onerror = reject
+          reader.readAsDataURL(file)
+        })
+      }
+      
+      // Helper function to add image to PDF with proper sizing
+      const addImageToPDF = async (imageFile: File, x: number, y: number, maxWidth: number, maxHeight: number) => {
+        try {
+          const base64 = await convertImageToBase64(imageFile)
+          const img = new Image()
+          
+          return new Promise<void>((resolve, reject) => {
+            img.onload = () => {
+              // Get original image dimensions
+              let { width, height } = img
+              const aspectRatio = width / height
+              
+              // Calculate dimensions to fit within maxWidth x maxHeight while maintaining aspect ratio
+              let finalWidth, finalHeight
+              
+              // Start with the maximum allowed dimensions
+              finalWidth = maxWidth
+              finalHeight = maxHeight
+              
+              // Calculate which dimension will be the limiting factor
+              if (width > height) {
+                // Landscape image - fit to width first
+                finalWidth = maxWidth
+                finalHeight = maxWidth / aspectRatio
+                
+                // If height exceeds maxHeight, scale down proportionally
+                if (finalHeight > maxHeight) {
+                  finalHeight = maxHeight
+                  finalWidth = maxHeight * aspectRatio
+                }
+              } else {
+                // Portrait image - fit to height first
+                finalHeight = maxHeight
+                finalWidth = maxHeight * aspectRatio
+                
+                // If width exceeds maxWidth, scale down proportionally
+                if (finalWidth > maxWidth) {
+                  finalWidth = maxWidth
+                  finalHeight = maxWidth / aspectRatio
+                }
+              }
+              
+              // Ensure minimum size for readability (but don't make images too small)
+              const minWidth = Math.max(30, maxWidth * 0.3) // At least 30mm or 30% of max width
+              const minHeight = Math.max(20, maxHeight * 0.3) // At least 20mm or 30% of max height
+              
+              if (finalWidth < minWidth) {
+                finalWidth = minWidth
+                finalHeight = minWidth / aspectRatio
+              }
+              if (finalHeight < minHeight) {
+                finalHeight = minHeight
+                finalWidth = minHeight * aspectRatio
+              }
+              
+              // Ensure we don't exceed maximum dimensions
+              finalWidth = Math.min(finalWidth, maxWidth)
+              finalHeight = Math.min(finalHeight, maxHeight)
+              
+              // Add image to PDF with calculated dimensions
+              pdf.addImage(base64, 'JPEG', x, y, finalWidth, finalHeight)
+              resolve()
+            }
+            img.onerror = reject
+            img.src = base64
+          })
+        } catch (error) {
+          console.error('Error processing image:', error)
+          // Don't add placeholder text - just log the error
+          // This prevents "Image failed to load" messages from appearing
+        }
+      }
+      
+      // Add header with blue gradient banner (matching reference PDF)
+      const headerGradientColors = [
+        { r: 26, g: 57, b: 105 }, // Dark blue
+        { r: 0, g: 183, b: 255 }  // Bright blue/cyan
+      ]
+      
+      // Create smooth gradient effect for header
+      const headerGradientSteps = 20
+      for (let i = 0; i < headerGradientSteps; i++) {
+        const ratio = i / (headerGradientSteps - 1)
+        const r = Math.round(headerGradientColors[0].r * (1 - ratio) + headerGradientColors[1].r * ratio)
+        const g = Math.round(headerGradientColors[0].g * (1 - ratio) + headerGradientColors[1].g * ratio)
+        const b = Math.round(headerGradientColors[0].b * (1 - ratio) + headerGradientColors[1].b * ratio)
+        
+        pdf.setFillColor(r, g, b)
+        const rectHeight = 40 / headerGradientSteps
+        pdf.rect(0, i * rectHeight, pageWidth, rectHeight, 'F')
+      }
+      
+      // Add title text
+      pdf.setTextColor(255, 255, 255) // White text
+      pdf.setFontSize(24)
+      pdf.setFont('helvetica', 'bold')
+      pdf.text('ARW Roofing Pre-Works Assessment Form', pageWidth / 2, 25, { align: 'center' })
+      
+      // Reset text color and position
+      pdf.setTextColor(0, 0, 0)
+      yPosition = 60 // Increased spacing to match reference PDF layout
+      
+      // Add job information if available with styling
+      if (formData.selectedDescription) {
+        // Add section background - properly sized to not cut off text
+        pdf.setFillColor(26, 57, 105) // Dark blue background to match other sections
+        pdf.rect(15, yPosition - 3, pageWidth - 30, 12, 'F') // Reduced height to 12mm for better proportions
+        
+        pdf.setFontSize(16)
+        pdf.setFont('helvetica', 'bold')
+        pdf.setTextColor(255, 255, 255) // White text on dark background
+        pdf.text('Job Information', 20, yPosition + 3) // Centered text in header
+        yPosition += 12 // Match header height
+        
+        pdf.setFontSize(12)
+        pdf.setFont('helvetica', 'normal')
+        pdf.setTextColor(0, 0, 0)
+        
+        // Try to extract job number from description if it follows a pattern
+        const jobMatch = formData.selectedDescription.match(/(\d+)/)
+        const jobNumber = jobMatch ? jobMatch[1] : 'N/A'
+        
+        const jobDetails = [
+          ['Job Description:', formData.selectedDescription],
+          ['Job Number:', jobNumber],
+          ['Assessment Date:', new Date().toLocaleDateString()]
+        ]
+        
+        jobDetails.forEach(([label, value]) => {
+          pdf.setFont('helvetica', 'bold')
+          pdf.setTextColor(0, 51, 102) // Dark blue labels for consistency
+          pdf.text(label, 20, yPosition)
+          pdf.setFont('helvetica', 'normal')
+          pdf.setTextColor(0, 0, 0) // Black values
+          pdf.text(value, 80, yPosition) // Increased spacing for better readability
+          yPosition += 6
+        })
+        
+        yPosition += 6 // Reduced spacing to match reference PDF
+      }
+      
+      // Add form details
+      pdf.setFontSize(16)
+      pdf.setFont('helvetica', 'bold')
+      
+      // Add styled section header - properly sized to not cut off text
+      pdf.setFillColor(26, 57, 105) // Dark blue background to match other sections
+      pdf.rect(15, yPosition - 3, pageWidth - 30, 12, 'F') // Consistent 12mm height
+      
+      pdf.setTextColor(255, 255, 255) // White text on dark background
+      pdf.text('Project Details', 20, yPosition + 3) // Centered text in header
+      yPosition += 12 // Match header height
+      
+      pdf.setFontSize(12)
+      pdf.setFont('helvetica', 'normal')
+      pdf.setTextColor(0, 0, 0)
+      
+      // Basic form information
+      const formDetails = [
+        ['Job Description:', formData.selectedDescription || 'Not specified'],
+        ['Property Type:', formData.propertyType || 'Not specified'],
+        ['Age of Property:', formData.ageOfProperty || 'Not specified'],
+        ['Property Condition:', formData.propertyCondition || 'Not specified'],
+        ['Construction Type:', formData.constructionType || 'Not specified'],
+        ['Reporter Name:', formData.reporterName || 'Not specified'],
+        ['Location of Structure:', formData.locationOfStructure || 'Not specified'],
+        ['Site Access:', formData.siteAccess || 'Not specified'],
+        ['Power Isolated:', formData.isPowerIsolated || 'Not specified']
+      ]
+      
+      formDetails.forEach(([label, value]) => {
+        addPageIfNeeded()
+        pdf.setFont('helvetica', 'bold')
+        pdf.setTextColor(0, 51, 102) // Dark blue labels for consistency
+        pdf.text(label, 20, yPosition)
+        pdf.setFont('helvetica', 'normal')
+        pdf.setTextColor(0, 0, 0) // Black values
+        pdf.text(value, 80, yPosition) // Increased spacing for better readability
+        yPosition += 6
+      })
+      
+      yPosition += 6 // Reduced spacing to match reference PDF
+      
+      // Add Safety Considerations section with light switch icon (matching reference PDF)
+      if (yPosition > pageHeight - 60) {
+        addNewPage()
+        yPosition = 20
+      }
+      
+      // Safety section header with light switch icon
+      pdf.setFillColor(255, 0, 0) // Red background for safety (matching reference PDF)
+      pdf.rect(15, yPosition - 3, pageWidth - 30, 12, 'F')
+      
+      pdf.setFontSize(14)
+      pdf.setFont('helvetica', 'bold')
+      pdf.setTextColor(255, 255, 255) // White text on red background
+      pdf.text('Safety Considerations:', 20, yPosition + 3) // Removed problematic emoji
+      yPosition += 15
+      
+      // Reset text color for content below
+      pdf.setTextColor(0, 0, 0) // Black text for content
+      
+      pdf.setFontSize(12)
+      pdf.setFont('helvetica', 'normal')
+      
+      // Add safety considerations based on form data
+      const safetyNotes = []
+      
+      // Check for power isolation
+      if (formData.isPowerIsolated === 'Yes') {
+        safetyNotes.push('Electrical safety protocols required - power isolation confirmed')
+      }
+      
+      // Check for site access restrictions
+      if (formData.siteAccess && formData.siteAccess.includes('Height restriction')) {
+        safetyNotes.push('Height restrictions noted - verify equipment clearance requirements')
+      }
+      
+      if (formData.siteAccess && formData.siteAccess.includes('Overhead power nearby')) {
+        safetyNotes.push('Overhead power lines nearby - maintain safe working distances')
+      }
+      
+      if (safetyNotes.length > 0) {
+        safetyNotes.forEach(note => {
+          pdf.text(`  • ${note}`, 25, yPosition)
+          yPosition += 6
+        })
+      } else {
+        pdf.text('  • No special safety concerns identified', 25, yPosition)
+        yPosition += 6
+      }
+      
+      yPosition += 6 // Reduced spacing after safety section
+      
+      // Add Material Specifications section (matching reference PDF)
+      if (yPosition > pageHeight - 60) {
+        addNewPage()
+        yPosition = 20
+      }
+      
+      // Material specifications section header
+      pdf.setFillColor(0, 183, 255) // Bright blue background (matching reference PDF)
+      pdf.rect(15, yPosition - 3, pageWidth - 30, 12, 'F')
+      
+      pdf.setFontSize(14)
+      pdf.setFont('helvetica', 'bold')
+      pdf.setTextColor(255, 255, 255) // White text on bright blue background
+      pdf.text('Material Specifications:', 20, yPosition + 3)
+      yPosition += 15
+      
+      // Reset text color for content below
+      pdf.setTextColor(0, 0, 0) // Black text for content
+      
+      pdf.setFontSize(12)
+      pdf.setFont('helvetica', 'normal')
+      
+      // Collect all unique materials used across all assets
+      const profiles = new Set<string>()
+      const membranes = new Set<string>()
+      
+      formData.assets.forEach(asset => {
+        asset.roofAreas.forEach(area => {
+          if (area.profile) profiles.add(area.profile)
+          if (area.membrane && area.membrane !== 'None') membranes.add(area.membrane)
+        })
+      })
+      
+      if (profiles.size > 0) {
+        pdf.text('  Roof Profiles Required:', 25, yPosition)
+        yPosition += 5
+        Array.from(profiles).forEach(profile => {
+          pdf.text(`    • ${profile}`, 30, yPosition)
+          yPosition += 5
+        })
+        yPosition += 3
+      }
+      
+      if (membranes.size > 0) {
+        pdf.text('  Membranes Required:', 25, yPosition)
+        yPosition += 5
+        Array.from(membranes).forEach(membrane => {
+          pdf.text(`    • ${membrane}`, 30, yPosition)
+          yPosition += 5
+        })
+        yPosition += 3
+      }
+      
+      if (profiles.size === 0 && membranes.size === 0) {
+        pdf.text('  • No specific materials specified', 25, yPosition)
+        yPosition += 5
+      }
+      
+      yPosition += 6 // Reduced spacing after materials section
+      
+      // Add roof services information with bright blue header (matching reference PDF)
+      if (formData.roofServices && formData.roofServices.length > 0) {
+        // Bright blue header bar
+        pdf.setFillColor(0, 183, 255) // Bright blue/cyan from reference PDF
+        pdf.rect(15, yPosition - 3, pageWidth - 30, 12, 'F')
+        
+        pdf.setFontSize(14)
+        pdf.setFont('helvetica', 'bold')
+        pdf.setTextColor(255, 255, 255) // White text on bright blue background
+        pdf.text('Requested Roof Services:', 20, yPosition + 3)
+        yPosition += 15
+        
+        // Reset text color for content below
+        pdf.setTextColor(0, 0, 0) // Black text for content
+        
+        pdf.setFontSize(12)
+        pdf.setFont('helvetica', 'normal')
+        
+        formData.roofServices.forEach((service, index) => {
+          pdf.text(`  • ${service}`, 25, yPosition)
+          yPosition += 5
+        })
+        
+        yPosition += 10
+      }
+      
+      // Add mudmap guide image if available
+      if (formData.mudmapUrl) {
+        // Check if we need a new page for the mudmap - ensure full image fits
+        if (yPosition > pageHeight - 150) { // Increased from 80 to 150 to ensure full image fits
+          addNewPage()
+          yPosition = 20
+        }
+        
+        pdf.setFontSize(16)
+        pdf.setFont('helvetica', 'bold')
+        pdf.text('Site Mudmap Guide', 20, yPosition)
+        yPosition += 8
+        
+        pdf.setFontSize(12)
+        pdf.setFont('helvetica', 'normal')
+        pdf.text('Reference image showing roof areas and site layout:', 20, yPosition)
+        yPosition += 8
+        
+        try {
+          // Convert mudmap URL to base64 and add to PDF
+          const mudmapResponse = await fetch(formData.mudmapUrl)
+          const mudmapBlob = await mudmapResponse.blob()
+          const mudmapFile = new File([mudmapBlob], 'mudmap.jpg', { type: 'image/jpeg' })
+          
+          // Add mudmap image to PDF (centered, max width 160mm)
+          const mudmapWidth = 160
+          const mudmapHeight = 120
+          const mudmapX = (pageWidth - mudmapWidth) / 2
+          
+          await addImageToPDF(mudmapFile, mudmapX, yPosition, mudmapWidth, mudmapHeight)
+          yPosition += mudmapHeight + 10
+          
+          pdf.setFontSize(8)
+          pdf.setTextColor(128, 128, 128)
+          pdf.text('Mudmap image loaded from webhook', pageWidth / 2, yPosition, { align: 'center' })
+          pdf.setTextColor(0, 0, 0)
+          yPosition += 8
+          
+        } catch (error) {
+          console.error('Error adding mudmap to PDF:', error)
+          pdf.setFontSize(12)
+          pdf.setTextColor(128, 128, 128)
+          pdf.text('Mudmap image could not be loaded', 20, yPosition)
+          pdf.setTextColor(0, 0, 0)
+          yPosition += 8
+        }
+      }
+      
+      // Add assets information with images
+      for (let assetIndex = 0; assetIndex < formData.assets.length; assetIndex++) {
+        const asset = formData.assets[assetIndex]
+        
+        addPageIfNeeded()
+        
+        // Add styled asset header with gradient background
+        const assetHeaderGradientColors = [
+          { r: 26, g: 57, b: 105 }, // Dark blue
+          { r: 0, g: 183, b: 255 }  // Bright blue/cyan
+        ]
+        
+        // Create smooth gradient effect for header
+        const assetHeaderGradientSteps = 20
+        for (let i = 0; i < assetHeaderGradientSteps; i++) {
+          const ratio = i / (assetHeaderGradientSteps - 1)
+          const r = Math.round(assetHeaderGradientColors[0].r * (1 - ratio) + assetHeaderGradientColors[1].r * ratio)
+          const g = Math.round(assetHeaderGradientColors[0].g * (1 - ratio) + assetHeaderGradientColors[1].g * ratio)
+          const b = Math.round(assetHeaderGradientColors[0].b * (1 - ratio) + assetHeaderGradientColors[1].b * ratio)
+          
+          pdf.setFillColor(r, g, b)
+          const rectHeight = 15 / assetHeaderGradientSteps
+          pdf.rect(15, yPosition - 5 + (i * rectHeight), pageWidth - 30, rectHeight, 'F')
+        }
+        
+        // Add subtle border
+        pdf.setDrawColor(0, 150, 200)
+        pdf.setLineWidth(0.8)
+        pdf.rect(15, yPosition - 5, pageWidth - 30, 15, 'S')
+        
+        pdf.setFontSize(18)
+        pdf.setFont('helvetica', 'bold')
+        pdf.setTextColor(255, 255, 255) // White text on gradient background
+        pdf.text(`Asset ${assetIndex + 1}: ${asset.assetName}`, 20, yPosition + 5)
+        yPosition += 20
+        
+        pdf.setFontSize(12)
+        pdf.setFont('helvetica', 'normal')
+        pdf.setTextColor(0, 0, 0)
+        
+        // Roof Areas with images
+        if (asset.roofAreas && asset.roofAreas.length > 0) {
+          for (let areaIndex = 0; areaIndex < asset.roofAreas.length; areaIndex++) {
+            const area = asset.roofAreas[areaIndex]
+            
+            addPageIfNeeded()
+            
+            // Styled section header with gradient background
+            const headerGradientColors = [
+              { r: 26, g: 57, b: 105 }, // Dark blue
+              { r: 0, g: 183, b: 255 }  // Bright blue/cyan
+            ]
+            
+            // Create smooth gradient effect for header
+            const headerGradientSteps = 15
+            for (let i = 0; i < headerGradientSteps; i++) {
+              const ratio = i / (headerGradientSteps - 1)
+              const r = Math.round(headerGradientColors[0].r * (1 - ratio) + headerGradientColors[1].r * ratio)
+              const g = Math.round(headerGradientColors[0].g * (1 - ratio) + headerGradientColors[1].g * ratio)
+              const b = Math.round(headerGradientColors[0].b * (1 - ratio) + headerGradientColors[1].b * ratio)
+              
+              pdf.setFillColor(r, g, b)
+              const rectHeight = 12 / headerGradientSteps
+              pdf.rect(20, yPosition - 3 + (i * rectHeight), pageWidth - 40, rectHeight, 'F')
+            }
+            
+            // Header text
+            pdf.setFont('helvetica', 'bold')
+            pdf.setFontSize(16)
+            pdf.setTextColor(255, 255, 255) // White text on gradient background
+            pdf.text(`Roof Area ${areaIndex + 1}: ${area.name}`, 25, yPosition + 5)
+            yPosition += 20
+            
+            // Reset text color for content
+            pdf.setTextColor(0, 0, 0)
+            
+            // Create a styled details box with light background
+            pdf.setFillColor(248, 250, 252) // Light gray background
+            pdf.rect(20, yPosition - 3, pageWidth - 40, 55, 'F') // Height for 5 rows of details
+            
+            // Add subtle border
+            pdf.setDrawColor(200, 200, 200)
+            pdf.setLineWidth(0.5)
+            pdf.rect(20, yPosition - 3, pageWidth - 40, 45, 'S')
+            
+            // Organize details in a 2-column grid layout
+            const leftColumn = [
+              { label: 'Type', value: area.type || 'Not specified' },
+              { label: 'Profile', value: area.profile || 'Not specified' },
+              { label: 'Pitch', value: `${area.pitchDeg || 'Not specified'}°` },
+              { label: 'Length', value: `${area.length || 'Not specified'}m` },
+              { label: 'Membrane', value: area.membrane || 'None' }
+            ]
+            
+            const rightColumn = [
+              { label: 'Width', value: `${area.width || 'Not specified'}m` },
+              { label: 'Calculated Area', value: `${area.area ? area.area.toFixed(2) : 'Not calculated'}m²` },
+              { label: 'Colour', value: area.colour || 'Not specified' },
+              { label: 'Thickness (BMT)', value: area.gauge || 'Not specified' }
+            ]
+            
+            // Left column details - properly left-aligned with good spacing
+            let detailY = yPosition
+            leftColumn.forEach((detail, index) => {
+              pdf.setFont('helvetica', 'bold')
+              pdf.setFontSize(10)
+              pdf.setTextColor(0, 51, 102) // Dark blue labels
+              pdf.text(detail.label, 25, detailY)
+              
+              pdf.setFont('helvetica', 'normal')
+              pdf.setFontSize(10)
+              pdf.setTextColor(0, 0, 0) // Black values
+              pdf.text(detail.value, 50, detailY) // 25mm gap between labels and values
+              
+              detailY += 10
+            })
+            
+            // Right column details - properly left-aligned with good spacing
+            detailY = yPosition
+            rightColumn.forEach((detail, index) => {
+              pdf.setFont('helvetica', 'bold')
+              pdf.setFontSize(10)
+              pdf.setTextColor(0, 51, 102) // Dark blue labels
+              pdf.text(detail.label, 120, detailY)
+              
+              pdf.setFont('helvetica', 'normal')
+              pdf.setFontSize(10)
+              pdf.setTextColor(0, 0, 0) // Black values
+              pdf.text(detail.value, 155, detailY) // 35mm gap between labels and values
+              
+              detailY += 10
+            })
+            
+            yPosition += 55 // Space for the styled details box
+            
+            // Add images for this area in a 2-column grid layout
+            // Only show image section if there are valid images with actual file objects
+            const validImages = area.images?.filter(img => {
+              return img && 
+                     img.file && 
+                     img.file instanceof File && 
+                     img.file.size > 0 && 
+                     img.file.name && 
+                     img.file.name.trim() !== ''
+            }) || []
+            
+            console.log(`Area ${area.name}: Found ${area.images?.length || 0} images, ${validImages.length} are valid`)
+            
+            if (validImages.length > 0) {
+              yPosition += 5
+              
+              // Add styled section header for images
+              pdf.setFillColor(0, 183, 255) // Bright blue/cyan background
+              pdf.rect(25, yPosition - 3, pageWidth - 50, 10, 'F')
+              
+              // Add subtle border
+              pdf.setDrawColor(0, 150, 200)
+              pdf.setLineWidth(0.5)
+              pdf.rect(25, yPosition - 3, pageWidth - 50, 10, 'S')
+              
+              pdf.setFont('helvetica', 'bold')
+              pdf.setFontSize(12)
+              pdf.setTextColor(255, 255, 255) // White text on blue background
+              pdf.text(`Images for ${area.name}:`, 30, yPosition + 3)
+              yPosition += 15
+              
+              // Calculate dynamic grid layout with minimal padding for maximum image size
+              const totalImages = validImages.length
+              const imagesPerRow = totalImages <= 3 ? totalImages : Math.min(3, Math.ceil(Math.sqrt(totalImages)))
+              const maxImageWidth = Math.min(130, (pageWidth - 15 - (imagesPerRow - 1) * 2) / imagesPerRow) // Maximum width, almost no margin
+              const maxImageHeight = Math.min(100, maxImageWidth * 0.8) // Maximum height, maintain aspect ratio
+              const imageSpacing = 2 // Space between images (virtually none)
+              const leftMargin = 7
+              
+              for (let imgIndex = 0; imgIndex < validImages.length; imgIndex++) {
+                const image = validImages[imgIndex]
+                
+                try {
+                  // Check if we need a new page for the image
+                  // Start new page after every imagesPerPage images or if current position is too low
+                  const imagesPerPage = imagesPerRow * 3 // 3 rows per page
+                  if (imgIndex > 0 && imgIndex % imagesPerPage === 0) {
+                    addNewPage()
+                    yPosition = 20
+                  } else if (yPosition > pageHeight - 100) {
+                    addNewPage()
+                    yPosition = 20
+                  }
+                  
+                  // Additional check: Ensure we have enough space for this image row
+                  const currentRow = Math.floor((imgIndex % imagesPerPage) / imagesPerRow)
+                  const requiredHeight = yPosition + (currentRow * (maxImageHeight + 25)) + maxImageHeight + 30 // 30mm for caption and description
+                  if (requiredHeight > pageHeight - 20) {
+                    addNewPage()
+                    yPosition = 20
+                  }
+                  
+                  // Ensure proper positioning after page breaks
+                  if (yPosition === 20) {
+                    // We're on a new page, ensure proper spacing from top
+                    yPosition = 20
+                  }
+                  
+                  // Calculate grid position (reset for each page)
+                  const pageImageIndex = imgIndex % imagesPerPage
+                  const row = Math.floor(pageImageIndex / imagesPerRow)
+                  const col = pageImageIndex % imagesPerRow
+                  
+                  const xPos = leftMargin + (col * (maxImageWidth + imageSpacing))
+                  // Always start from the top of the current page (yPosition) and add row offset
+                  const yPos = yPosition + (row * (maxImageHeight + 3)) // 3mm spacing between rows (virtually none)
+                  
+                  // Image caption removed - cleaner appearance
+                  
+                  // Add image to PDF with dynamic sizing
+                  await addImageToPDF(image.file, xPos, yPos, maxImageWidth, maxImageHeight)
+                  
+                  // Image filename removed - cleaner appearance
+                  
+                  // Update yPosition for next section (after all images in this area)
+                  if (imgIndex === validImages.length - 1) {
+                    const totalRows = Math.ceil(validImages.length / imagesPerRow)
+                    yPosition = yPos + maxImageHeight + 5 // 5mm below last image row
+                  }
+                  
+                  // Ensure proper spacing for next content after images
+                  if (imgIndex === validImages.length - 1) {
+                    yPosition += 10 // Add extra space before next section
+                  }
+                  
+                } catch (imgError) {
+                  console.error('Error processing image:', imgError)
+                  // Don't add error messages to PDF - just log the error
+                  // This prevents error placeholders from appearing
+                }
+              }
+              
+              // Reset text color
+              pdf.setTextColor(0, 0, 0)
+            }
+            
+            // Only add spacing if there were valid images
+            if (validImages.length > 0) {
+              yPosition += 5
+            }
+          }
+        }
+        
+        // Support Width (Battens/Purlins) with images
+        if (asset.battens && asset.battens.length > 0) {
+          addPageIfNeeded()
+          
+          // Styled section header with gradient background
+          const battenHeaderGradientColors = [
+            { r: 128, g: 128, b: 128 }, // Dark gray
+            { r: 180, g: 180, b: 180 }  // Light gray
+          ]
+          
+          // Create smooth gradient effect for header
+          const battenHeaderGradientSteps = 12
+          for (let i = 0; i < battenHeaderGradientSteps; i++) {
+            const ratio = i / (battenHeaderGradientSteps - 1)
+            const r = Math.round(battenHeaderGradientColors[0].r * (1 - ratio) + battenHeaderGradientColors[1].r * ratio)
+            const g = Math.round(battenHeaderGradientColors[0].g * (1 - ratio) + battenHeaderGradientColors[1].g * ratio)
+            const b = Math.round(battenHeaderGradientColors[0].b * (1 - ratio) + battenHeaderGradientColors[1].b * ratio)
+            
+            pdf.setFillColor(r, g, b)
+            const rectHeight = 12 / battenHeaderGradientSteps
+            pdf.rect(20, yPosition - 3 + (i * rectHeight), pageWidth - 40, rectHeight, 'F')
+          }
+          
+          pdf.setFont('helvetica', 'bold')
+          pdf.setFontSize(16)
+          pdf.setTextColor(255, 255, 255) // White text on gradient background
+          pdf.text('Support Width (Battens/Purlins):', 25, yPosition + 5)
+          yPosition += 20
+          
+          for (let battenIndex = 0; battenIndex < asset.battens.length; battenIndex++) {
+            const batten = asset.battens[battenIndex]
+            
+            addPageIfNeeded()
+            
+            // Styled batten row header with accent color
+            pdf.setFillColor(240, 248, 255) // Light blue background
+            pdf.rect(25, yPosition - 3, pageWidth - 50, 10, 'F')
+            
+            // Add subtle border
+            pdf.setDrawColor(200, 200, 200)
+            pdf.setLineWidth(0.3)
+            pdf.rect(25, yPosition - 3, pageWidth - 50, 10, 'S')
+            
+            // Row header
+            pdf.setFont('helvetica', 'bold')
+            pdf.setFontSize(12)
+            pdf.setTextColor(0, 51, 102) // Dark blue text
+            pdf.text(`Row ${battenIndex + 1}:`, 30, yPosition + 3)
+            yPosition += 15
+            
+            // Create a styled details box
+            pdf.setFillColor(252, 252, 252) // Very light gray background
+            pdf.rect(25, yPosition - 3, pageWidth - 50, 30, 'F') // Height for 3 rows
+            
+            // Add subtle border
+            pdf.setDrawColor(220, 220, 220)
+            pdf.setLineWidth(0.3)
+            pdf.rect(25, yPosition - 3, pageWidth - 50, 30, 'S')
+            
+            // Organize details in a 2-column grid layout
+            const battenLeftColumn = [
+              { label: 'Type', value: batten.kind },
+              { label: 'Spacing', value: batten.spacingMm || 'Not specified' }
+            ]
+            
+            const battenRightColumn = [
+              { label: 'Material', value: batten.material || 'Not specified' },
+              { label: 'Size', value: batten.size || 'Not specified' }
+            ]
+            
+            // Left column details
+            let battenDetailY = yPosition
+            battenLeftColumn.forEach((detail, index) => {
+              pdf.setFont('helvetica', 'bold')
+              pdf.setFontSize(9)
+              pdf.setTextColor(0, 51, 102) // Dark blue labels
+              pdf.text(detail.label, 30, battenDetailY)
+              
+              pdf.setFont('helvetica', 'normal')
+              pdf.setFontSize(9)
+              pdf.setTextColor(0, 0, 0) // Black values
+              pdf.text(detail.value, 55, battenDetailY)
+              
+              battenDetailY += 8
+            })
+            
+            // Right column details
+            battenDetailY = yPosition
+            battenRightColumn.forEach((detail, index) => {
+              pdf.setFont('helvetica', 'bold')
+              pdf.setFontSize(9)
+              pdf.setTextColor(0, 51, 102) // Dark blue labels
+              pdf.text(detail.label, 130, battenDetailY)
+              
+              pdf.setFont('helvetica', 'normal')
+              pdf.setFontSize(9)
+              pdf.setTextColor(0, 0, 0) // Black values
+              pdf.text(detail.value, 155, battenDetailY)
+              
+              battenDetailY += 8
+            })
+            
+            // Add condition info below the grid (full width)
+            pdf.setFont('helvetica', 'bold')
+            pdf.setFontSize(9)
+            pdf.setTextColor(0, 51, 102) // Dark blue label
+            pdf.text('Condition', 30, yPosition + 20)
+            
+            pdf.setFont('helvetica', 'normal')
+            pdf.setFontSize(9)
+            pdf.setTextColor(0, 0, 0) // Black value
+            pdf.text(batten.condition || 'Not specified', 55, yPosition + 20)
+            
+            yPosition += 40 // Space for the styled details box
+            
+            // Add images for this batten in a 2-column grid layout
+            // Only show image section if there are valid images
+            const validBattenImages = batten.images?.filter(img => {
+              return img && 
+                     img.file && 
+                     img.file instanceof File && 
+                     img.file.size > 0 && 
+                     img.file.name && 
+                     img.file.name.trim() !== ''
+            }) || []
+            
+            console.log(`Batten Row ${battenIndex + 1}: Found ${batten.images?.length || 0} images, ${validBattenImages.length} are valid`)
+            
+            if (validBattenImages.length > 0) {
+              yPosition += 5
+              
+              // Add styled section header for images
+              pdf.setFillColor(0, 183, 255) // Bright blue/cyan background
+              pdf.rect(25, yPosition - 3, pageWidth - 50, 10, 'F')
+              
+              // Add subtle border
+              pdf.setDrawColor(0, 150, 200)
+              pdf.setLineWidth(0.5)
+              pdf.rect(25, yPosition - 3, pageWidth - 50, 10, 'S')
+              
+              pdf.setFont('helvetica', 'bold')
+              pdf.setFontSize(12)
+              pdf.setTextColor(255, 255, 255) // White text on blue background
+              pdf.text(`Images for ${batten.kind} Row ${battenIndex + 1}:`, 30, yPosition + 3)
+              yPosition += 15
+              
+              // Calculate dynamic grid layout with minimal padding for maximum image size
+              const totalImages = validBattenImages.length
+              const imagesPerRow = totalImages <= 3 ? totalImages : Math.min(3, Math.ceil(Math.sqrt(totalImages)))
+              const maxImageWidth = Math.min(130, (pageWidth - 15 - (imagesPerRow - 1) * 2) / imagesPerRow) // Maximum width, almost no margin
+              const maxImageHeight = Math.min(100, maxImageWidth * 0.8) // Maximum height, maintain aspect ratio
+              const imageSpacing = 2 // Space between images (virtually none)
+              const leftMargin = 7
+              
+              for (let imgIndex = 0; imgIndex < validBattenImages.length; imgIndex++) {
+                const image = validBattenImages[imgIndex]
+                
+                try {
+                  // Check if we need a new page for the image
+                  // Start new page after every imagesPerPage images or if current position is too low
+                  const imagesPerPage = imagesPerRow * 3 // 3 rows per page
+                  if (imgIndex > 0 && imgIndex % imagesPerPage === 0) {
+                    addNewPage()
+                    yPosition = 20
+                  } else if (yPosition > pageHeight - 100) {
+                    addNewPage()
+                    yPosition = 20
+                  }
+                  
+                  // Additional check: Ensure we have enough space for this image row
+                  const currentRow = Math.floor((imgIndex % imagesPerPage) / imagesPerRow)
+                  const requiredHeight = yPosition + (currentRow * (maxImageHeight + 25)) + maxImageHeight + 30 // 30mm for caption and description
+                  if (requiredHeight > pageHeight - 20) {
+                    addNewPage()
+                    yPosition = 20
+                  }
+                  
+                  // Calculate grid position (reset for each page)
+                  const pageImageIndex = imgIndex % imagesPerPage
+                  const row = Math.floor(pageImageIndex / imagesPerRow)
+                  const col = pageImageIndex % imagesPerRow
+                  
+                  const xPos = leftMargin + (col * (maxImageWidth + imageSpacing))
+                  // Always start from the top of the current page (yPosition) and add row offset
+                  const yPos = yPosition + (row * (maxImageHeight + 3)) // 3mm spacing between rows (virtually none)
+                  
+                  // Image caption removed - cleaner appearance
+                  
+                  // Add image to PDF with dynamic sizing
+                  await addImageToPDF(image.file, xPos, yPos, maxImageWidth, maxImageHeight)
+                  
+                  // Image filename removed - cleaner appearance
+                  
+                  // Update yPosition for next section (after all images in this batten)
+                  if (imgIndex === validBattenImages.length - 1) {
+                    const totalRows = Math.ceil(validBattenImages.length / imagesPerRow)
+                    yPosition = yPos + maxImageHeight + 5 // 5mm below last image row
+                  }
+                  
+                } catch (imgError) {
+                  console.error('Error processing image:', imgError)
+                  // Don't add error messages to PDF - just log the error
+                  // This prevents error placeholders from appearing
+                }
+              }
+              
+              // Reset text color
+              pdf.setTextColor(0, 0, 0)
+            }
+            
+            // Only add spacing if there were valid images
+            if (validBattenImages.length > 0) {
+              yPosition += 5
+            }
+          }
+        }
+        
+        // Roof Framing with images
+        if (asset.framing && asset.framing.length > 0) {
+          addPageIfNeeded()
+          
+          // Styled section header with gradient background
+          const framingHeaderGradientColors = [
+            { r: 128, g: 128, b: 128 }, // Dark gray
+            { r: 180, g: 180, b: 180 }  // Light gray
+          ]
+          
+          // Create smooth gradient effect for header
+          const framingHeaderGradientSteps = 12
+          for (let i = 0; i < framingHeaderGradientSteps; i++) {
+            const ratio = i / (framingHeaderGradientSteps - 1)
+            const r = Math.round(framingHeaderGradientColors[0].r * (1 - ratio) + framingHeaderGradientColors[1].r * ratio)
+            const g = Math.round(framingHeaderGradientColors[0].g * (1 - ratio) + framingHeaderGradientColors[1].g * ratio)
+            const b = Math.round(framingHeaderGradientColors[0].b * (1 - ratio) + framingHeaderGradientColors[1].b * ratio)
+            
+            pdf.setFillColor(r, g, b)
+            const rectHeight = 12 / framingHeaderGradientSteps
+            pdf.rect(20, yPosition - 3 + (i * rectHeight), pageWidth - 40, rectHeight, 'F')
+          }
+          
+          pdf.setFont('helvetica', 'bold')
+          pdf.setFontSize(16)
+          pdf.setTextColor(255, 255, 255) // White text on gradient background
+          pdf.text('Roof Framing:', 25, yPosition + 5)
+          yPosition += 20
+          
+          for (let frameIndex = 0; frameIndex < asset.framing.length; frameIndex++) {
+            const frame = asset.framing[frameIndex]
+            
+            addPageIfNeeded()
+            
+            // Styled frame row header with accent color
+            pdf.setFillColor(240, 248, 255) // Light blue background
+            pdf.rect(25, yPosition - 3, pageWidth - 50, 10, 'F')
+            
+            // Add subtle border
+            pdf.setDrawColor(200, 200, 200)
+            pdf.setLineWidth(0.3)
+            pdf.rect(25, yPosition - 3, pageWidth - 50, 10, 'S')
+            
+            // Row header
+            pdf.setFont('helvetica', 'bold')
+            pdf.setFontSize(12)
+            pdf.setTextColor(0, 51, 102) // Dark blue text
+            pdf.text(`Row ${frameIndex + 1}:`, 30, yPosition + 3)
+            yPosition += 15
+            
+            // Create a styled details box
+            pdf.setFillColor(252, 252, 252) // Very light gray background
+            pdf.rect(25, yPosition - 3, pageWidth - 50, 30, 'F') // Height for 3 rows
+            
+            // Add subtle border
+            pdf.setDrawColor(220, 220, 220)
+            pdf.setLineWidth(0.3)
+            pdf.rect(25, yPosition - 3, pageWidth - 50, 30, 'S')
+            
+            // Organize details in a 2-column grid layout
+            const frameLeftColumn = [
+              { label: 'Material', value: frame.material },
+              { label: 'Spacing', value: frame.spacing || 'Not specified' }
+            ]
+            
+            const frameRightColumn = [
+              { label: 'Size', value: frame.size || 'Not specified' },
+              { label: 'Span', value: frame.span || 'Not specified' }
+            ]
+            
+            // Left column details
+            let frameDetailY = yPosition
+            frameLeftColumn.forEach((detail, index) => {
+              pdf.setFont('helvetica', 'bold')
+              pdf.setFontSize(9)
+              pdf.setTextColor(0, 51, 102) // Dark blue labels
+              pdf.text(detail.label, 30, frameDetailY)
+              
+              pdf.setFont('helvetica', 'normal')
+              pdf.setFontSize(9)
+              pdf.setTextColor(0, 0, 0) // Black values
+              pdf.text(detail.value, 55, frameDetailY)
+              
+              frameDetailY += 8
+            })
+            
+            // Right column details
+            frameDetailY = yPosition
+            frameRightColumn.forEach((detail, index) => {
+              pdf.setFont('helvetica', 'bold')
+              pdf.setFontSize(9)
+              pdf.setTextColor(0, 51, 102) // Dark blue labels
+              pdf.text(detail.label, 130, frameDetailY)
+              
+              pdf.setFont('helvetica', 'normal')
+              pdf.setFontSize(9)
+              pdf.setTextColor(0, 0, 0) // Black values
+              pdf.text(detail.value, 155, frameDetailY)
+              
+              frameDetailY += 8
+            })
+            
+            // Add condition info below the grid (full width)
+            pdf.setFont('helvetica', 'bold')
+            pdf.setFontSize(9)
+            pdf.setTextColor(0, 51, 102) // Dark blue label
+            pdf.text('Condition', 30, yPosition + 20)
+            
+            pdf.setFont('helvetica', 'normal')
+            pdf.setFontSize(9)
+            pdf.setTextColor(0, 0, 0) // Black value
+            pdf.text(frame.condition || 'Not specified', 55, yPosition + 20)
+            
+            yPosition += 40 // Space for the styled details box
+            
+            // Add images for this frame in a 2-column grid layout
+            // Only show image section if there are valid images with actual file objects
+            const validFrameImages = frame.images?.filter(img => {
+              return img && 
+                     img.file && 
+                     img.file instanceof File && 
+                     img.file.size > 0 && 
+                     img.file.name && 
+                     img.file.name.trim() !== ''
+            }) || []
+            
+            console.log(`Framing Row ${frameIndex + 1}: Found ${frame.images?.length || 0} images, ${validFrameImages.length} are valid`)
+            
+            if (validFrameImages.length > 0) {
+              yPosition += 5
+              
+              // Add styled section header for images
+              pdf.setFillColor(0, 183, 255) // Bright blue/cyan background
+              pdf.rect(25, yPosition - 3, pageWidth - 50, 10, 'F')
+              
+              // Add subtle border
+              pdf.setDrawColor(0, 150, 200)
+              pdf.setLineWidth(0.5)
+              pdf.rect(25, yPosition - 3, pageWidth - 50, 10, 'S')
+              
+              pdf.setFont('helvetica', 'bold')
+              pdf.setFontSize(12)
+              pdf.setTextColor(255, 255, 255) // White text on blue background
+              pdf.text(`Images for Framing Row ${frameIndex + 1}:`, 30, yPosition + 3)
+              yPosition += 15
+              
+              // Calculate dynamic grid layout with reduced padding for larger images
+              const totalImages = validFrameImages.length
+              const imagesPerRow = totalImages <= 3 ? totalImages : Math.min(3, Math.ceil(Math.sqrt(totalImages)))
+              const maxImageWidth = Math.min(95, (pageWidth - 40 - (imagesPerRow - 1) * 10) / imagesPerRow) // Larger width, less margin
+              const maxImageHeight = Math.min(75, maxImageWidth * 0.8) // Larger height, maintain aspect ratio
+              const imageSpacing = 10 // Space between images (reduced)
+              const leftMargin = 20
+              
+              for (let imgIndex = 0; imgIndex < validFrameImages.length; imgIndex++) {
+                const image = validFrameImages[imgIndex]
+                
+                try {
+                  // Check if we need a new page for the image
+                  // Start new page after every imagesPerPage images or if current position is too low
+                  const imagesPerPage = imagesPerRow * 3 // 3 rows per page
+                  if (imgIndex > 0 && imgIndex % imagesPerPage === 0) {
+                    addNewPage()
+                    yPosition = 20
+                  } else if (yPosition > pageHeight - 100) {
+                    addNewPage()
+                    yPosition = 20
+                  }
+                  
+                  // Additional check: Ensure we have enough space for this image row
+                  const currentRow = Math.floor((imgIndex % imagesPerPage) / imagesPerRow)
+                  const requiredHeight = yPosition + (currentRow * (maxImageHeight + 25)) + maxImageHeight + 30 // 30mm for caption and description
+                  if (requiredHeight > pageHeight - 20) {
+                    addNewPage()
+                    yPosition = 20
+                  }
+                  
+                  // Calculate grid position (reset for each page)
+                  const pageImageIndex = imgIndex % imagesPerPage
+                  const row = Math.floor(pageImageIndex / imagesPerRow)
+                  const col = pageImageIndex % imagesPerRow
+                  
+                  const xPos = leftMargin + (col * (maxImageWidth + imageSpacing))
+                  // Always start from the top of the current page (yPosition) and add row offset
+                  const yPos = yPosition + (row * (maxImageHeight + 3)) // 3mm spacing between rows (virtually none)
+                  
+                  // Image caption removed - cleaner appearance
+                  
+                  // Add image to PDF with dynamic sizing
+                  await addImageToPDF(image.file, xPos, yPos, maxImageWidth, maxImageHeight)
+                  
+                  // Image filename removed - cleaner appearance
+                  
+                  // Update yPosition for next section (after all images in this frame)
+                  if (imgIndex === validFrameImages.length - 1) {
+                    const totalRows = Math.ceil(validFrameImages.length / imagesPerRow)
+                    yPosition = yPos + maxImageHeight + 5 // 5mm below last image row
+                  }
+                  
+                } catch (imgError) {
+                  console.error('Error processing image:', imgError)
+                  // Don't add error messages to PDF - just log the error
+                  // This prevents error placeholders from appearing
+                }
+              }
+              
+              // Reset text color
+              pdf.setTextColor(0, 0, 0)
+            }
+            
+            // Only add spacing if there were valid images
+            if (validFrameImages.length > 0) {
+              yPosition += 5
+            }
+          }
+        }
+        
+        yPosition += 10
+      }
+      
+      // Add notes if available
+      if (formData.notes) {
+        addPageIfNeeded()
+        pdf.setFontSize(14)
+        pdf.setFont('helvetica', 'bold')
+        pdf.text('General Notes:', 20, yPosition)
+        yPosition += 8
+        
+        pdf.setFontSize(12)
+        pdf.setFont('helvetica', 'normal')
+        
+        // Split notes into lines that fit the page width
+        const words = formData.notes.split(' ')
+        let line = ''
+        const maxWidth = pageWidth - 40
+        
+        words.forEach(word => {
+          const testLine = line + word + ' '
+          const textWidth = pdf.getTextWidth(testLine)
+          
+          if (textWidth > maxWidth) {
+            addPageIfNeeded()
+            pdf.text(line, 20, yPosition)
+            yPosition += 6
+            line = word + ' '
+          } else {
+            line = testLine
+          }
+        })
+        
+        if (line.trim()) {
+          addPageIfNeeded()
+          pdf.text(line, 20, yPosition)
+        }
+      }
+      
+      // Add footer to all pages (matching reference PDF)
+      const totalPages = pdf.getNumberOfPages()
+      for (let i = 1; i <= totalPages; i++) {
+        pdf.setPage(i)
+        
+        // Dark blue footer bar (matching reference PDF)
+        pdf.setFillColor(26, 57, 105) // Dark blue
+        pdf.rect(0, pageHeight - 25, pageWidth, 25, 'F')
+        
+        // Footer text in white
+        pdf.setFontSize(10)
+        pdf.setFont('helvetica', 'bold')
+        pdf.setTextColor(255, 255, 255) // White text
+        pdf.text(`Page ${i} of ${totalPages}`, pageWidth - 30, pageHeight - 15, { align: 'right' })
+        
+        pdf.setFontSize(8)
+        pdf.setFont('helvetica', 'normal')
+        pdf.text('Generated by ARW Roofing Pre-Works Assessment Form', pageWidth / 2, pageHeight - 8, { align: 'center' })
+      }
+      
+      // Save the PDF
+      const fileName = `pre-works-assessment-with-images-${new Date().toISOString().split('T')[0]}.pdf`
+      pdf.save(fileName)
+      
+      console.log('PDF with images generated successfully')
+      
+    } catch (error) {
+      console.error('Error generating PDF with images:', error)
+      alert('Error generating PDF with images. Please try again.')
+    }
+  }
+
+      return (
+    <div className="space-y-4">
+      {/* Export Button */}
+      <Button
+        onClick={generatePDF}
+        disabled={isGenerating}
+        className={`bg-green-600 hover:bg-green-700 text-white ${className}`}
+      >
+        {isGenerating ? (
+          <>
+            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2" />
+            Generating PDF with Images...
+          </>
+        ) : (
+          <>
+            📄 Export as PDF (with Images)
+          </>
+        )}
+      </Button>
+    </div>
+  )
+}
+
 const AdminPreWorksForm: React.FC = () => {
   const navigate = useNavigate()
 
@@ -1286,12 +3701,13 @@ const AdminPreWorksForm: React.FC = () => {
     return {
       selectedDescription: '',
       notes: '',
+      mudmapUrl: '',
       assets: [
         {
           assetName: 'Main House',
-          roofAreas: [
-            { name: 'Area A', type: '', profile: '', pitchDeg: null, colour: '', gauge: '', membrane: '', images: [] },
-          ],
+                  roofAreas: [
+          { name: 'Area A', type: '', profile: '', pitchDeg: null, colour: '', gauge: '', membrane: '', length: null, width: null, area: null, images: [] },
+        ],
           battens: [
             { kind: 'Batten', spacingMm: '600 centres', material: 'Timber', size: '', condition: 'Good', images: [] }
           ],
@@ -1314,6 +3730,9 @@ const AdminPreWorksForm: React.FC = () => {
 
   // Show auto-save notification
   const [showAutoSave, setShowAutoSave] = useState(false)
+  // Mudmap generation state
+  const [isGeneratingMudmap, setIsGeneratingMudmap] = useState(false)
+  const [mudmapError, setMudmapError] = useState<string | null>(null)
   useEffect(() => {
     setShowAutoSave(true)
     const timer = setTimeout(() => setShowAutoSave(false), 2000)
@@ -1404,10 +3823,6 @@ const AdminPreWorksForm: React.FC = () => {
     message: string;
     show: boolean;
   } | null>(null)
-  
-  // Mud map image state
-  const [mudMapImage, setMudMapImage] = useState<string>('')
-  const [isLoadingMudMap, setIsLoadingMudMap] = useState(false)
 
   // Timestamps
   const now = useMemo(() => new Date(), [])
@@ -1439,51 +3854,7 @@ const AdminPreWorksForm: React.FC = () => {
     const matched = jobs.find(j => j.description === formData.selectedDescription) || null
     setSelectedJob(matched)
     setJobId(matched?.jobId || '')
-    
-    // Fetch mud map when job is selected
-    if (matched?.jobId) {
-      fetchMudMap(matched.jobId)
-    } else {
-      setMudMapImage('')
-    }
   }, [formData.selectedDescription, jobs])
-  
-  // Function to fetch mud map from webhook
-  const fetchMudMap = async (jobId: string) => {
-    setIsLoadingMudMap(true)
-    setMudMapImage('')
-    
-    try {
-      const response = await fetch('https://n8n.wayvvault.cc/webhook/image-load', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ jobId }),
-      })
-      
-      if (response.ok) {
-        const data = await response.json()
-        console.log('Mud map webhook response:', data)
-        
-        // Handle the actual n8n response format
-        if (data.data && data.data.url) {
-          setMudMapImage(data.data.url)
-        } else if (data.url) {
-          // Fallback for direct URL response
-          setMudMapImage(data.url)
-        } else {
-          console.log('No image URL found in response:', data)
-        }
-      } else {
-        console.error('Failed to fetch mud map:', response.status)
-      }
-    } catch (error) {
-      console.error('Error fetching mud map:', error)
-    } finally {
-      setIsLoadingMudMap(false)
-    }
-  }
 
   // Helper numeric parser to keep number|null
   const toNumberOrNull = (v: string) => {
@@ -1495,6 +3866,91 @@ const AdminPreWorksForm: React.FC = () => {
   // Form handlers
   const handleInputChange = (field: string, value: any) => {
     setFormData(prev => ({ ...prev, [field]: value }))
+    
+    // Auto-generate mudmap when job description is selected
+    if (field === 'selectedDescription' && value) {
+      // Clear existing mudmap when new job is selected
+      setFormData(prev => ({ ...prev, mudmapUrl: '' }))
+      // Clear any previous mudmap errors
+      setMudmapError(null)
+      // Generate new mudmap for the selected job
+      generateMudmap(value)
+    }
+  }
+
+  // Generate mudmap from job description
+  const generateMudmap = async (jobDescription: string) => {
+    setIsGeneratingMudmap(true)
+    setMudmapError(null)
+    
+    try {
+      // Get the correct job ID for this description
+      const matchedJob = jobs.find(j => j.description === jobDescription)
+      const correctJobId = matchedJob?.jobId || ''
+      
+      // Prepare webhook payload
+      const payload = {
+        jobDescription,
+        jobNumber: correctJobId,
+        timestamp: new Date().toISOString(),
+        requestId: `mudmap-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
+      }
+      
+      // Call your webhook automation to generate mudmap
+      const response = await fetch('https://n8n.wayvvault.cc/webhook/image-load', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          jobDescription,
+          jobNumber: correctJobId,
+          timestamp: new Date().toISOString(),
+          requestId: `mudmap-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
+        })
+      })
+      
+      if (!response.ok) {
+        // Try to get error details from response
+        let errorDetails = ''
+        try {
+          const errorData = await response.text()
+          errorDetails = ` - ${errorData}`
+          
+          // Check for specific n8n error messages
+          if (errorData.includes('No item to return got found')) {
+            throw new Error('n8n workflow completed but no data was returned. Check workflow output configuration.')
+          }
+        } catch (e) {
+          errorDetails = ' - Could not read error details'
+        }
+        throw new Error(`Webhook failed: ${response.status}${errorDetails}`)
+      }
+      
+      const data = await response.json()
+      
+      // Extract image URL from ImgBB response
+      if (data && data.data && data.data.image && data.data.image.url) {
+        const mudmapUrl = data.data.image.url
+        setFormData(prev => ({ ...prev, mudmapUrl }))
+      } else {
+        throw new Error('No valid image URL found in webhook response. Check response structure.')
+      }
+      
+    } catch (error) {
+      console.error('Error generating mudmap:', error)
+      if (error instanceof Error) {
+        if (error.message.includes('Failed to fetch')) {
+          setMudmapError('Webhook endpoint unreachable. Please check if https://n8n.wayvvault.cc/webhook/image-load is running.')
+        } else {
+          setMudmapError(`Error: ${error.message}`)
+        }
+      } else {
+        setMudmapError('Failed to generate mudmap - unknown error')
+      }
+    } finally {
+      setIsGeneratingMudmap(false)
+    }
   }
 
   const handleAssetChange = (assetIndex: number, field: string, value: any) => {
@@ -1554,7 +4010,7 @@ const AdminPreWorksForm: React.FC = () => {
       ...prev,
       assets: [...prev.assets, {
         assetName: `Shed ${prev.assets.length + 1}`,
-        roofAreas: [{ name: `Area ${String.fromCharCode(65 + prev.assets.length)}`, type: '', profile: '', pitchDeg: null, colour: '', gauge: '', membrane: '', images: [] }],
+        roofAreas: [{ name: `Area ${String.fromCharCode(65 + prev.assets.length)}`, type: '', profile: '', pitchDeg: null, colour: '', gauge: '', membrane: '', length: null, width: null, area: null, images: [] }],
         battens: [
           { kind: 'Batten', spacingMm: '600 centres', material: 'Timber', size: '', condition: 'Good', images: [] }
         ],
@@ -1582,7 +4038,7 @@ const AdminPreWorksForm: React.FC = () => {
           ...asset,
           roofAreas: [...asset.roofAreas, { 
             name: `Area ${String.fromCharCode(65 + asset.roofAreas.length)}`, 
-            type: '', profile: '', pitchDeg: null, colour: '', gauge: '', membrane: '', images: [] 
+            type: '', profile: '', pitchDeg: null, colour: '', gauge: '', membrane: '', length: null, width: null, area: null, images: [] 
           }]
         } : asset
       )
@@ -1883,277 +4339,8 @@ const AdminPreWorksForm: React.FC = () => {
     }
   }
 
-  // PDF Export Component
-  const PDFExportButton: React.FC<{
-    formData: FormValues
-    className?: string
-  }> = ({ formData, className = "" }) => {
-    const [isGenerating, setIsGenerating] = useState(false)
-
-    const generatePDF = async () => {
-      setIsGenerating(true)
-      
-      try {
-        // Dynamically import jsPDF only when needed
-        const { default: jsPDF } = await import('jspdf')
-        
-        // Create new PDF document
-        const pdf = new jsPDF('p', 'mm', 'a4')
-        const pageWidth = pdf.internal.pageSize.getWidth()
-        const pageHeight = pdf.internal.pageSize.getHeight()
-        let yPosition = 20
-        
-        // Add header
-        pdf.setFontSize(24)
-        pdf.setFont('helvetica', 'bold')
-        pdf.text('Pre-Works Assessment Report', pageWidth / 2, yPosition, { align: 'center' })
-        yPosition += 15
-        
-        // Add date
-        pdf.setFontSize(12)
-        pdf.setFont('helvetica', 'normal')
-        pdf.text(`Generated: ${new Date().toLocaleDateString()}`, pageWidth / 2, yPosition, { align: 'center' })
-        yPosition += 20
-        
-        // Add form details
-        pdf.setFontSize(16)
-        pdf.setFont('helvetica', 'bold')
-        pdf.text('Project Details', 20, yPosition)
-        yPosition += 10
-        
-        pdf.setFontSize(10)
-        pdf.setFont('helvetica', 'normal')
-        
-        // Basic form information
-        const formDetails = [
-          ['Job Description:', formData.selectedDescription || 'Not specified'],
-          ['Property Type:', formData.propertyType || 'Not specified'],
-          ['Age of Property:', formData.ageOfProperty || 'Not specified'],
-          ['Property Condition:', formData.propertyCondition || 'Not specified'],
-          ['Construction Type:', formData.constructionType || 'Not specified'],
-          ['Reporter Name:', formData.reporterName || 'Not specified']
-        ]
-        
-        formDetails.forEach(([label, value]) => {
-          pdf.setFont('helvetica', 'bold')
-          pdf.text(label, 20, yPosition)
-          pdf.setFont('helvetica', 'normal')
-          pdf.text(value, 70, yPosition)
-          yPosition += 6
-        })
-        
-        yPosition += 10
-        
-        // Add assets information
-        formData.assets.forEach((asset, assetIndex) => {
-          // Check if we need a new page
-          if (yPosition > pageHeight - 40) {
-            pdf.addPage()
-            yPosition = 20
-          }
-          
-          pdf.setFontSize(14)
-          pdf.setFont('helvetica', 'bold')
-          pdf.text(`Asset ${assetIndex + 1}: ${asset.assetName}`, 20, yPosition)
-          yPosition += 8
-          
-          pdf.setFontSize(10)
-          pdf.setFont('helvetica', 'normal')
-          
-          // Roof Areas
-          if (asset.roofAreas.length > 0) {
-            pdf.setFont('helvetica', 'bold')
-            pdf.text('Roof Areas:', 25, yPosition)
-            yPosition += 6
-            
-            asset.roofAreas.forEach((area, areaIndex) => {
-              pdf.setFont('helvetica', 'normal')
-              const areaDetails = [
-                `  Area ${areaIndex + 1}: ${area.name}`,
-                `    Type: ${area.type || 'Not specified'}`,
-                `    Profile: ${area.profile || 'Not specified'}`,
-                `    Pitch: ${area.pitchDeg || 'Not specified'}°`,
-                `    Colour: ${area.colour || 'Not specified'}`,
-                `    Thickness (BMT): ${area.gauge || 'Not specified'}`,
-                `    Membrane: ${area.membrane || 'None'}`
-              ]
-              
-              areaDetails.forEach(detail => {
-                if (yPosition > pageHeight - 20) {
-                  pdf.addPage()
-                  yPosition = 20
-                }
-                pdf.text(detail, 30, yPosition)
-                yPosition += 5
-              })
-              yPosition += 2
-            })
-          }
-          
-          // Support Width (Battens/Purlins)
-          if (asset.battens.length > 0) {
-            if (yPosition > pageHeight - 30) {
-              pdf.addPage()
-              yPosition = 20
-            }
-            
-            pdf.setFont('helvetica', 'bold')
-            pdf.text('Support Width (Battens/Purlins):', 25, yPosition)
-            yPosition += 6
-            
-            asset.battens.forEach((batten, battenIndex) => {
-              pdf.setFont('helvetica', 'normal')
-              const battenDetails = [
-                `  Row ${battenIndex + 1}:`,
-                `    Type: ${batten.kind}`,
-                `    Spacing: ${batten.spacingMm || 'Not specified'}`,
-                `    Material: ${batten.material || 'Not specified'}`,
-                `    Size: ${batten.size || 'Not specified'}`,
-                `    Condition: ${batten.condition || 'Not specified'}`
-              ]
-              
-              battenDetails.forEach(detail => {
-                if (yPosition > pageHeight - 20) {
-                  pdf.addPage()
-                  yPosition = 20
-                }
-                pdf.text(detail, 30, yPosition)
-                yPosition += 5
-              })
-              yPosition += 2
-            })
-          }
-          
-          // Roof Framing
-          if (asset.framing.length > 0) {
-            if (yPosition > pageHeight - 30) {
-              pdf.addPage()
-              yPosition = 20
-            }
-            
-            pdf.setFont('helvetica', 'bold')
-            pdf.text('Roof Framing:', 25, yPosition)
-            yPosition += 6
-            
-            asset.framing.forEach((frame, frameIndex) => {
-              pdf.setFont('helvetica', 'normal')
-              const frameDetails = [
-                `  Row ${frameIndex + 1}:`,
-                `    Material: ${frame.material}`,
-                `    Spacing: ${frame.spacing || 'Not specified'}`,
-                `    Size: ${frame.size || 'Not specified'}`,
-                `    Span: ${frame.span || 'Not specified'}`,
-                `    Condition: ${frame.condition || 'Not specified'}`
-              ]
-              
-              frameDetails.forEach(detail => {
-                if (yPosition > pageHeight - 20) {
-                  pdf.addPage()
-                  yPosition = 20
-                }
-                pdf.text(detail, 30, yPosition)
-                yPosition += 5
-              })
-              yPosition += 2
-            })
-          }
-          
-          yPosition += 10
-        })
-        
-        // Add notes if available
-        if (formData.notes) {
-          if (yPosition > pageHeight - 30) {
-            pdf.addPage()
-            yPosition = 20
-          }
-          
-          pdf.setFontSize(14)
-          pdf.setFont('helvetica', 'bold')
-          pdf.text('General Notes:', 20, yPosition)
-          yPosition += 8
-          
-          pdf.setFontSize(10)
-          pdf.setFont('helvetica', 'normal')
-          
-          // Split notes into lines that fit the page width
-          const words = formData.notes.split(' ')
-          let line = ''
-          const maxWidth = pageWidth - 40
-          
-          words.forEach(word => {
-            const testLine = line + word + ' '
-            const textWidth = pdf.getTextWidth(testLine)
-            
-            if (textWidth > maxWidth) {
-              if (yPosition > pageHeight - 20) {
-                pdf.addPage()
-                yPosition = 20
-              }
-              pdf.text(line, 20, yPosition)
-              yPosition += 6
-              line = word + ' '
-            } else {
-              line = testLine
-            }
-          })
-          
-          if (line.trim()) {
-            if (yPosition > pageHeight - 20) {
-              pdf.addPage()
-              yPosition = 20
-            }
-            pdf.text(line, 20, yPosition)
-          }
-        }
-        
-        // Add footer
-        const totalPages = pdf.getNumberOfPages()
-        for (let i = 1; i <= totalPages; i++) {
-          pdf.setPage(i)
-          pdf.setFontSize(8)
-          pdf.setFont('helvetica', 'normal')
-          pdf.text(`Page ${i} of ${totalPages}`, pageWidth / 2, pageHeight - 10, { align: 'center' })
-          pdf.text('Generated by Roofify Pre-Works Assessment Form', pageWidth / 2, pageHeight - 5, { align: 'center' })
-        }
-        
-        // Save the PDF
-        const fileName = `pre-works-assessment-${new Date().toISOString().split('T')[0]}.pdf`
-        pdf.save(fileName)
-        
-      } catch (error) {
-        console.error('Error generating PDF:', error)
-        alert('Error generating PDF. Please try again.')
-      } finally {
-        setIsGenerating(false)
-      }
-    }
-
-    return (
-      <Button
-        onClick={generatePDF}
-        disabled={isGenerating}
-        className={`bg-green-600 hover:bg-green-700 text-white ${className}`}
-      >
-        {isGenerating ? (
-          <>
-            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2" />
-            Generating PDF...
-          </>
-        ) : (
-          <>
-            📄 Export as PDF
-          </>
-        )}
-      </Button>
-    )
-  }
-
   return (
     <div className="min-h-screen bg-background overflow-x-hidden">
-              {/* SEO removed for admin dashboard */}
-      {/* Navigation removed for admin dashboard */}
-      
       {/* Notification Banner */}
       {notification && (
         <div className={cn(
@@ -2165,13 +4352,13 @@ const AdminPreWorksForm: React.FC = () => {
           <div className="flex items-center gap-2">
             {notification.type === 'success' && <CheckCircle className="h-5 w-5 text-green-600" />}
             {notification.type === 'error' && <AlertCircle className="h-5 w-5 text-red-600" />}
-            {notification.type === 'info' && <Loader2 className="h-5 w-5 text-blue-600" />}
+            {notification.type === 'error' && <AlertCircle className="h-5 w-5 text-red-600" />}
             <span className="font-medium">{notification.message}</span>
           </div>
         </div>
       )}
       
-      <div className="p-2 sm:p-4 mt-24">
+      <div className="p-2 sm:p-4 mt-8">
         <div className="max-w-4xl mx-auto w-full">
           <Card className="overflow-hidden">
             <CardHeader className="px-3 sm:px-6">
@@ -2284,8 +4471,6 @@ const AdminPreWorksForm: React.FC = () => {
                       />
                     </div>
                   </div>
-                  
-
                   
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                     <div>
@@ -2436,88 +4621,59 @@ const AdminPreWorksForm: React.FC = () => {
                       </div>
                     </div>
                   )}
-                </section>
-
-                <Separator />
-
-                {/* Mud Map Display - Positioned above Assets for measure up reference */}
-                {jobId && (
-                  <section className="space-y-4">
-                    <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-xl p-6">
-                      <div className="flex items-center justify-between mb-4">
-                        <div>
-                          <h3 className="text-lg font-semibold text-blue-900 flex items-center gap-2">
-                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-1.447-.894L15 4m0 13V4m0 0L9 7" />
-                            </svg>
-                            Mud Map (BuildXact)
-                          </h3>
-                          <p className="text-sm text-blue-700">Reference this mud map for accurate measure up and asset planning</p>
-                        </div>
-                        <div className="text-right">
-                          <div className="text-xs text-blue-600 bg-blue-100 px-2 py-1 rounded-full">
-                            Job ID: {jobId}
-                          </div>
-                        </div>
+                  
+                  {/* Mudmap Display - Auto-generated when job is selected */}
+                  {formData.mudmapUrl && (
+                    <div className="bg-orange-50 border border-orange-200 rounded-lg p-4">
+                      <div className="flex items-center justify-between mb-3">
+                        <Label className="text-orange-900 font-medium">Generated Mudmap</Label>
+                        <Button
+                          onClick={() => handleInputChange('mudmapUrl', '')}
+                          variant="outline"
+                          size="sm"
+                          className="text-orange-600 border-orange-300 hover:bg-orange-50"
+                        >
+                          Remove
+                        </Button>
                       </div>
-                      
-                      <div className="w-full">
-                        {isLoadingMudMap ? (
-                          <div className="flex items-center justify-center p-12 bg-white rounded-lg border-2 border-dashed border-blue-300">
-                            <div className="flex items-center space-x-3">
-                              <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
-                              <span className="text-blue-700 font-medium">Loading mud map from BuildXact...</span>
-                            </div>
-                          </div>
-                        ) : mudMapImage ? (
-                          <div className="relative w-full">
-                            <div className="bg-white rounded-lg border border-blue-200 p-4 shadow-sm">
-                              <img 
-                                src={mudMapImage} 
-                                alt="Mud Map" 
-                                className="w-full h-auto rounded-lg shadow-md"
-                                style={{ maxHeight: '70vh' }}
-                                onError={(e) => {
-                                  console.error('Failed to load mud map image')
-                                  e.currentTarget.style.display = 'none'
-                                }}
-                              />
-                            </div>
-                            <div className="mt-3 flex items-center justify-between text-sm">
-                              <span className="text-blue-600 flex items-center gap-2">
-                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                                </svg>
-                                Mud map loaded successfully from BuildXact
-                              </span>
-                              <button 
-                                onClick={() => window.open(mudMapImage, '_blank')}
-                                className="text-blue-600 hover:text-blue-800 underline text-xs flex items-center gap-1"
-                              >
-                                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-                                </svg>
-                                Open Full Size
-                              </button>
-                            </div>
-                          </div>
-                        ) : (
-                          <div className="flex items-center justify-center p-12 bg-white rounded-lg border-2 border-dashed border-blue-300">
-                            <div className="text-center">
-                              <div className="text-blue-400 mb-3">
-                                <svg className="mx-auto h-16 w-16" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                                </svg>
-                              </div>
-                              <p className="text-blue-700 font-medium mb-2">No mud map available</p>
-                              <p className="text-sm text-blue-600">Mud map will load automatically when job is selected</p>
-                            </div>
-                          </div>
-                        )}
+                      <div className="mt-2 p-3 bg-white border border-orange-200 rounded-lg">
+                        <img 
+                          src={formData.mudmapUrl} 
+                          alt="Site Mudmap" 
+                          className="w-full h-auto rounded border shadow-lg"
+                          style={{ maxWidth: '100%', height: 'auto' }}
+                        />
+                        <div className="mt-2">
+                          <a 
+                            href={formData.mudmapUrl} 
+                            target="_blank" 
+                            rel="noopener noreferrer"
+                            className="text-orange-600 hover:text-orange-700 text-sm font-medium"
+                          >
+                            View Full Size
+                          </a>
+                        </div>
                       </div>
                     </div>
-                  </section>
-                )}
+                  )}
+                  
+                  {/* Mudmap Generation Status */}
+                  {isGeneratingMudmap && (
+                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                      <div className="flex items-center">
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600 mr-3" />
+                        <span className="text-blue-700">Generating mudmap from job description...</span>
+                      </div>
+                    </div>
+                  )}
+                  
+                  {/* Mudmap Error Display */}
+                  {mudmapError && (
+                    <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+                      <p className="text-red-700 text-sm">{mudmapError}</p>
+                    </div>
+                  )}
+                </section>
 
                 <Separator />
 
@@ -2626,7 +4782,7 @@ const AdminPreWorksForm: React.FC = () => {
 
                               {/* Measurement Fields - Full width below other inputs */}
                               <div className="col-span-full">
-                                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 p-4 bg-gray-50 rounded-lg border border-gray-200">
+                                <div className="grid grid-cols-1 sm:grid-cols-4 gap-4 p-4 bg-gray-50 rounded-lg border border-gray-200">
                                   <div>
                                     <Label>Length (m)</Label>
                                     <Input 
@@ -2663,100 +4819,35 @@ const AdminPreWorksForm: React.FC = () => {
                                         onChange={(e) => handleRoofAreaChange(assetIndex, areaIndex, 'area', toNumberOrNull(e.target.value))} 
                                         placeholder="0.00"
                                         className="flex-1"
+                                        readOnly
                                       />
                                       <Button 
                                         type="button" 
                                         variant="outline" 
                                         size="sm"
                                         onClick={() => {
-                                          if (area.length && area.width) {
-                                            const calculatedArea = (area.length * area.width) / Math.cos((area.pitchDeg || 0) * Math.PI / 180)
+                                          if (area.length && area.width && area.pitchDeg) {
+                                            const calculatedArea = (area.length * area.width) / Math.cos((area.pitchDeg * Math.PI) / 180)
                                             handleRoofAreaChange(assetIndex, areaIndex, 'area', Math.round(calculatedArea * 100) / 100)
                                           }
                                         }}
-                                        disabled={!area.length || !area.width}
+                                        disabled={!area.length || !area.width || !area.pitchDeg}
                                         className="whitespace-nowrap"
                                       >
                                         Calculate
                                       </Button>
                                     </div>
                                   </div>
-                                </div>
-                              </div>
-
-                              {/* Visual Representation - Full width below measurements */}
-                              {(area.length || area.width || area.area) && (
-                                <div className="col-span-full">
-                                  <div className="p-4 bg-blue-50 rounded-lg border border-blue-200">
-                                    <h4 className="font-medium text-blue-900 mb-3 flex items-center gap-2">
-                                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-1.447-.894L15 4m0 13V4m0 0L9 7" />
-                                      </svg>
-                                      {area.name} - Visual Representation
-                                    </h4>
-                                    
-                                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                                      {/* Area Diagram */}
-                                      <div className="space-y-3">
-                                        <h5 className="font-medium text-blue-800">Area Diagram</h5>
-                                        <div className="relative bg-white rounded-lg border border-blue-300 p-4">
-                                          <div 
-                                            className="relative mx-auto border-2 border-blue-500 bg-blue-100"
-                                            style={{
-                                              width: '200px',
-                                              height: '120px',
-                                              transform: area.pitchDeg ? `skewY(${area.pitchDeg}deg)` : 'none',
-                                              transformOrigin: 'bottom center'
-                                            }}
-                                          >
-                                            {area.length && area.width && (
-                                              <>
-                                                <div className="absolute inset-0 flex items-center justify-center text-xs font-medium text-blue-900">
-                                                  {area.length}m × {area.width}m
-                                                </div>
-                                                <div className="absolute -bottom-6 left-1/2 transform -translate-x-1/2 text-xs text-blue-700">
-                                                  {area.pitchDeg ? `${area.pitchDeg}° pitch` : 'Flat roof'}
-                                                </div>
-                                              </>
-                                            )}
-                                          </div>
-                                        </div>
-                                      </div>
-
-                                      {/* Measurements Summary */}
-                                      <div className="space-y-3">
-                                        <h5 className="font-medium text-blue-800">Measurements</h5>
-                                        <div className="bg-white rounded-lg border border-blue-300 p-4 space-y-2">
-                                          {area.length && (
-                                            <div className="flex justify-between">
-                                              <span className="text-sm text-gray-600">Length:</span>
-                                              <span className="font-medium text-blue-900">{area.length}m</span>
-                                            </div>
-                                          )}
-                                          {area.width && (
-                                            <div className="flex justify-between">
-                                              <span className="text-sm text-gray-600">Width:</span>
-                                              <span className="font-medium text-blue-900">{area.width}m</span>
-                                            </div>
-                                          )}
-                                          {area.area && (
-                                            <div className="flex justify-between border-t pt-2">
-                                              <span className="text-sm font-medium text-gray-700">Total Area:</span>
-                                              <span className="font-bold text-blue-900 text-lg">{area.area}m²</span>
-                                            </div>
-                                          )}
-                                          {area.pitchDeg && (
-                                            <div className="flex justify-between">
-                                              <span className="text-sm text-gray-600">Pitch:</span>
-                                              <span className="font-medium text-blue-900">{area.pitchDeg}°</span>
-                                            </div>
-                                          )}
-                                        </div>
-                                      </div>
+                                  <div>
+                                    <Label>Total Area (m²)</Label>
+                                    <div className="p-2 bg-blue-50 border border-blue-200 rounded text-center">
+                                      <span className="text-lg font-bold text-blue-900">
+                                        {area.area ? area.area.toFixed(2) : '0.00'}
+                                      </span>
                                     </div>
                                   </div>
                                 </div>
-                              )}
+                              </div>
 
                               {/* Area Images - Full width below inputs */}
                               <div>
@@ -3056,7 +5147,7 @@ const AdminPreWorksForm: React.FC = () => {
                     {isSubmitting ? (
                       <>
                         <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                        Submitting to n8n...
+                        Submitting Form...
                       </>
                     ) : (
                       'Submit Form'
@@ -3069,10 +5160,10 @@ const AdminPreWorksForm: React.FC = () => {
           </Card>
         </div>
       </div>
-      {/* Footer removed for admin dashboard */}
-              {/* HelpPanel removed for admin dashboard */}
+
     </div>
   )
 }
 
 export default AdminPreWorksForm
+

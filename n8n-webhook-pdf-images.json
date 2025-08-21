@@ -1,0 +1,267 @@
+{
+  "name": "PDF Generation with Images",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "pdf-images",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "webhook-trigger",
+      "name": "Webhook Trigger",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [240, 300],
+      "webhookId": "pdf-images-webhook"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Extract form data from webhook\nconst formData = $input.all()[0].formData;\nconst includeImages = $input.all()[0].includeImages;\nconst imageSize = $input.all()[0].imageSize;\nconst requestId = $input.all()[0].requestId;\n\n// Log the incoming data\nconsole.log('Processing PDF request:', requestId);\nconsole.log('Form data received:', Object.keys(formData));\nconsole.log('Include images:', includeImages);\n\n// Return the data for processing\nreturn {\n  formData,\n  includeImages,\n  imageSize,\n  requestId,\n  timestamp: new Date().toISOString()\n};"
+      },
+      "id": "extract-data",
+      "name": "Extract Form Data",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [460, 300]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "include-images",
+              "leftValue": "={{ $json.includeImages }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "equal"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "check-images",
+      "name": "Check if Images Required",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [680, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Process images from form data\nconst formData = $json.formData;\nconst processedImages = [];\n\n// Extract images from roof areas, battens, and framing\nif (formData.assets && formData.assets.length > 0) {\n  formData.assets.forEach((asset, assetIndex) => {\n    // Process roof area images\n    if (asset.roofAreas && asset.roofAreas.length > 0) {\n      asset.roofAreas.forEach((area, areaIndex) => {\n        if (area.images && area.images.length > 0) {\n          area.images.forEach((image, imageIndex) => {\n            processedImages.push({\n              source: 'roof-area',\n              assetIndex,\n              areaIndex,\n              imageIndex,\n              imageName: image.name,\n              imageUrl: image.url || image.src,\n              context: `${asset.assetName} - ${area.name}`\n            });\n          });\n        }\n      });\n    }\n    \n    // Process batten images\n    if (asset.battens && asset.battens.length > 0) {\n      asset.battens.forEach((batten, battenIndex) => {\n        if (batten.images && batten.images.length > 0) {\n          batten.images.forEach((image, imageIndex) => {\n            processedImages.push({\n              source: 'batten',\n              assetIndex,\n              battenIndex,\n              imageIndex,\n              imageName: image.name,\n              imageUrl: image.url || image.src,\n              context: `${asset.assetName} - Batten ${battenIndex + 1}`\n            });\n          });\n        }\n      });\n    }\n    \n    // Process framing images\n    if (asset.framing && asset.framing.length > 0) {\n      asset.framing.forEach((frame, frameIndex) => {\n        if (frame.images && frame.images.length > 0) {\n          frame.images.forEach((image, imageIndex) => {\n            processedImages.push({\n              source: 'framing',\n              assetIndex,\n              frameIndex,\n              imageIndex,\n              imageName: image.name,\n              imageUrl: image.url || image.src,\n              context: `${asset.assetName} - Frame ${frameIndex + 1}`\n            });\n          });\n        }\n      });\n    }\n  });\n}\n\nconsole.log(`Found ${processedImages.length} images to process`);\n\nreturn {\n  formData,\n  processedImages,\n  requestId: $json.requestId\n};"
+      },
+      "id": "process-images",
+      "name": "Process Image Data",
+      "type": "nCode",
+      "typeVersion": 2,
+      "position": [900, 200]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Download and process images\nconst processedImages = $json.processedImages;\nconst downloadedImages = [];\n\n// For each image, we'll simulate downloading and processing\n// In a real implementation, you'd use HTTP Request nodes\nfor (const image of processedImages) {\n  try {\n    // Simulate image processing\n    const processedImage = {\n      ...image,\n      processed: true,\n      thumbnailUrl: `https://example.com/thumbnails/${image.imageName}`,\n      fullSizeUrl: image.imageUrl,\n      dimensions: '300x300',\n      fileSize: '45KB'\n    };\n    \n    downloadedImages.push(processedImage);\n  } catch (error) {\n    console.error(`Error processing image ${image.imageName}:`, error);\n  }\n}\n\nconsole.log(`Successfully processed ${downloadedImages.length} images`);\n\nreturn {\n  formData: $json.formData,\n  processedImages: downloadedImages,\n  requestId: $json.requestId\n};"
+      },
+      "id": "download-images",
+      "name": "Download & Process Images",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1120, 200]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Generate PDF with images using PDFKit\nconst formData = $json.formData;\nconst processedImages = $json.processedImages;\nconst requestId = $json.requestId;\n\n// In a real implementation, you'd use a PDF generation library\n// For now, we'll create a mock PDF structure\nconst pdfData = {\n  title: 'Pre-Works Assessment Report',\n  generated: new Date().toISOString(),\n  requestId,\n  sections: [\n    {\n      title: 'Project Details',\n      content: [\n        `Job Description: ${formData.selectedDescription || 'Not specified'}`,\n        `Property Type: ${formData.propertyType || 'Not specified'}`,\n        `Reporter Name: ${formData.reporterName || 'Not specified'}`\n      ]\n    },\n    {\n      title: 'Images Included',\n      content: processedImages.map(img => \n        `${img.context}: ${img.imageName} (${img.dimensions})`\n      )\n    }\n  ],\n  totalImages: processedImages.length,\n  imageSources: processedImages.map(img => img.source)\n};\n\nconsole.log('PDF data prepared:', pdfData);\n\nreturn {\n  pdfData,\n  processedImages,\n  requestId\n};"
+      },
+      "id": "generate-pdf",
+      "name": "Generate PDF with Images",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1340, 200]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Create a mock PDF file (in real implementation, use PDFKit or similar)\nconst pdfData = $json.pdfData;\nconst requestId = $json.requestId;\n\n// Create a simple HTML representation that can be converted to PDF\nconst htmlContent = `\n<!DOCTYPE html>\n<html>\n<head>\n  <title>${pdfData.title}</title>\n  <style>\n    body { font-family: Arial, sans-serif; margin: 40px; }\n    .header { text-align: center; border-bottom: 2px solid #333; padding-bottom: 20px; }\n    .section { margin: 20px 0; }\n    .section-title { font-size: 18px; font-weight: bold; color: #333; margin-bottom: 10px; }\n    .content { margin-left: 20px; }\n    .image-info { background: #f5f5f5; padding: 10px; margin: 5px 0; border-radius: 5px; }\n    .footer { margin-top: 40px; text-align: center; color: #666; font-size: 12px; }\n  </style>\n</head>\n<body>\n  <div class=\"header\">\n    <h1>${pdfData.title}</h1>\n    <p>Generated: ${new Date(pdfData.generated).toLocaleString()}</p>\n    <p>Request ID: ${requestId}</p>\n  </div>\n  \n  ${pdfData.sections.map(section => \n    `<div class=\"section\">\n      <div class=\"section-title\">${section.title}</div>\n      <div class=\"content\">\n        ${section.content.map(item => `<div>${item}</div>`).join('')}\n      </div>\n    </div>`\n  ).join('')}\n  \n  <div class=\"footer\">\n    <p>Generated by ARW Construction Pre-Works Assessment System</p>\n    <p>Total Images: ${pdfData.totalImages} | Sources: ${pdfData.imageSources.join(', ')}</p>\n  </div>\n</body>\n</html>`;\n\n// In a real implementation, you'd convert this HTML to PDF\n// For now, return the HTML content as a mock PDF\nreturn {\n  htmlContent,\n  pdfData,\n  requestId,\n  contentType: 'text/html',\n  fileName: `pre-works-assessment-${requestId}.html`\n};"
+      },
+      "id": "create-pdf",
+      "name": "Create PDF Document",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1560, 200]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ $json.htmlContent }}",
+        "options": {
+          "responseHeaders": {
+            "values": [
+              {
+                "name": "Content-Type",
+                "value": "{{ $json.contentType }}"
+              },
+              {
+                "name": "Content-Disposition",
+                "value": "attachment; filename=\"{{ $json.fileName }}\""
+              }
+            ]
+          }
+        }
+      },
+      "id": "respond-success",
+      "name": "Respond with PDF",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [1780, 200]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Generate text-only PDF (fallback)\nconst formData = $json.formData;\nconst requestId = $json.requestId;\n\n// Create a simple text-based PDF structure\nconst pdfData = {\n  title: 'Pre-Works Assessment Report (Text Only)',\n  generated: new Date().toISOString(),\n  requestId,\n  sections: [\n    {\n      title: 'Project Details',\n      content: [\n        `Job Description: ${formData.selectedDescription || 'Not specified'}`,\n        `Property Type: ${formData.propertyType || 'Not specified'}`,\n        `Reporter Name: ${formData.reporterName || 'Not specified'}`\n      ]\n    },\n    {\n      title: 'Note',\n      content: ['Images were not included in this PDF as requested.']\n    }\n  ]\n};\n\nconsole.log('Text-only PDF data prepared:', pdfData);\n\nreturn {\n  pdfData,\n  requestId\n};"
+      },
+      "id": "text-only-pdf",
+      "name": "Generate Text-Only PDF",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [900, 400]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ $json.pdfData }}",
+        "options": {
+          "responseHeaders": {
+            "values": [
+              {
+                "name": "Content-Type",
+                "application/json"
+              }
+            ]
+          }
+        }
+      },
+      "id": "respond-text",
+      "name": "Respond with Text PDF",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [1120, 400]
+    }
+  ],
+  "connections": {
+    "Webhook Trigger": {
+      "main": [
+        [
+          {
+            "node": "Extract Form Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract Form Data": {
+      "main": [
+        [
+          {
+            "node": "Check if Images Required",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check if Images Required": {
+      "main": [
+        [
+          {
+            "node": "Process Image Data",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Generate Text-Only PDF",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Process Image Data": {
+      "main": [
+        [
+          {
+            "node": "Download & Process Images",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Download & Process Images": {
+      "main": [
+        [
+          {
+            "node": "Generate PDF with Images",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate PDF with Images": {
+      "main": [
+        [
+          {
+            "node": "Create PDF Document",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create PDF Document": {
+      "main": [
+        [
+          {
+            "node": "Respond with PDF",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate Text-Only PDF": {
+      "main": [
+        [
+          {
+            "node": "Respond with Text PDF",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "tags": [
+    {
+      "createdAt": "2024-01-01T00:00:00.000Z",
+      "updatedAt": "2024-01-01T00:00:00.000Z",
+      "id": "pdf-generation",
+      "name": "PDF Generation"
+    }
+  ],
+  "triggerCount": 0,
+  "updatedAt": "2024-01-01T00:00:00.000Z",
+  "versionId": "1"
+}
