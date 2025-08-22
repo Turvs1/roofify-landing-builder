@@ -34,15 +34,15 @@ const JobViewerPage: React.FC = () => {
             <div className="flex items-center gap-3">
               <Button
                 variant="outline"
-                onClick={() => navigate('/admin')}
+                onClick={() => navigate('/')}
               >
-                Admin Dashboard
+                Home
               </Button>
               <Button
-                onClick={() => navigate('/admin/pre-works')}
+                onClick={() => navigate('/admin')}
                 className="bg-blue-600 hover:bg-blue-700"
               >
-                Pre-Works Form
+                Admin Dashboard
               </Button>
             </div>
           </div>

@@ -115,12 +115,12 @@ const App = () => (
               <Route path="/pre-works-test" element={<PreWorksFormTest />} />
               {/* HIDDEN ADMIN ROUTE - Internal staff only */}
               <Route path="/admin" element={<AdminDashboard />} />
-              <Route path="/admin/job-viewer" element={
+              {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+              <Route path="/job-viewer" element={
                 <Suspense fallback={<LoadingSpinner />}>
                   <JobViewerPage />
                 </Suspense>
               } />
-              {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
             </Routes>
           </BrowserRouter>
