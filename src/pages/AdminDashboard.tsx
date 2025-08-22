@@ -20,7 +20,6 @@ import {
 import AdminRoofReport from '../components/AdminRoofReport';
 import AdminJobUploads from '../components/AdminJobUploads';
 import AdminPreWorksForm from '../components/AdminPreWorksForm';
-import JobViewer from '../components/JobViewer';
 
 const AdminDashboard = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -427,7 +426,7 @@ const AdminDashboard = () => {
         {/* Mobile-First Tabs */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
           {/* Desktop Tabs */}
-          <TabsList className="hidden md:grid w-full grid-cols-4 h-16 bg-white rounded-xl shadow-sm border border-slate-200 p-1">
+          <TabsList className="hidden md:grid w-full grid-cols-3 h-16 bg-white rounded-xl shadow-sm border border-slate-200 p-1">
             <TabsTrigger 
               value="roof-report" 
               className="flex items-center space-x-3 data-[state=active]:bg-blue-50 data-[state=active]:text-blue-700 data-[state=active]:shadow-sm rounded-lg transition-all duration-200"
@@ -451,19 +450,6 @@ const AdminDashboard = () => {
               <div className="text-left">
                 <div className="font-semibold">Job Uploads</div>
                 <div className="text-xs text-slate-500">Manager</div>
-              </div>
-            </TabsTrigger>
-            
-            <TabsTrigger 
-              value="job-viewer" 
-              className="flex items-center space-x-2 data-[state=active]:bg-orange-50 data-[state=active]:text-orange-700 data-[state=active]:shadow-sm rounded-lg transition-all duration-200"
-            >
-              <div className="h-8 w-8 bg-orange-100 rounded-lg flex items-center justify-center">
-                <Building2 className="h-4 w-4 text-orange-600" />
-              </div>
-              <div className="text-left">
-                <div className="font-semibold">Job Viewer</div>
-                <div className="text-xs text-slate-500">Database</div>
               </div>
             </TabsTrigger>
             
@@ -509,19 +495,6 @@ const AdminDashboard = () => {
                   <div className="text-left">
                     <div className="font-semibold text-green-900">Job Uploads Manager</div>
                     <div className="text-sm text-green-700">Manage file uploads</div>
-                  </div>
-                </button>
-                
-                <button
-                  onClick={() => setActiveTab('job-viewer')}
-                  className="w-full flex items-center space-x-3 p-4 bg-orange-50 hover:bg-orange-100 rounded-lg border border-orange-200 transition-colors"
-                >
-                  <div className="h-10 w-10 bg-orange-100 rounded-lg flex items-center justify-center">
-                    <Building2 className="h-5 w-5 text-orange-600" />
-                  </div>
-                  <div className="text-left">
-                    <div className="font-semibold text-orange-900">Job Viewer</div>
-                    <div className="text-sm text-orange-700">Browse job database</div>
                   </div>
                 </button>
                 
@@ -614,44 +587,6 @@ const AdminDashboard = () => {
               </CardHeader>
               <CardContent className="p-0">
                 <AdminJobUploads />
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          <TabsContent value="job-viewer" className="space-y-4">
-            {/* Mobile Tool Header */}
-            <div className="md:hidden bg-white rounded-xl shadow-sm border border-slate-200 p-4 mb-4">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-3">
-                  <div className="h-10 w-10 bg-orange-100 rounded-lg flex items-center justify-center">
-                    <Building2 className="h-5 w-5 text-orange-600" />
-                  </div>
-                  <div>
-                    <h3 className="font-semibold text-orange-900">Job Viewer</h3>
-                    <p className="text-sm text-orange-700">Currently Active</p>
-                  </div>
-                </div>
-                <button
-                  onClick={() => (document.querySelector('[data-value="job-viewer"]') as HTMLElement)?.click()}
-                  className="text-orange-600 hover:text-orange-700 text-sm font-medium"
-                >
-                  Change Tool
-                </button>
-              </div>
-            </div>
-            
-            <Card className="border-0 shadow-lg bg-white/80 backdrop-blur-sm">
-              <CardHeader className="bg-gradient-to-r from-orange-50 to-orange-100 border-b border-orange-200 rounded-t-lg">
-                <CardTitle className="flex items-center space-x-3 text-orange-900">
-                  <Building2 className="h-6 w-6 text-orange-600" />
-                  <span>Job Viewer</span>
-                </CardTitle>
-                <CardDescription className="text-orange-700">
-                  Browse and manage all jobs from the Google Sheets database
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="p-0">
-                <JobViewer />
               </CardContent>
             </Card>
           </TabsContent>
