@@ -51,6 +51,12 @@ const JobUploads = lazy(() =>
   }))
 );
 
+const JobViewerPage = lazy(() => 
+  import("./pages/JobViewerPage").catch(() => ({
+    default: () => <div className="flex items-center justify-center min-h-screen">Error loading job viewer. Please refresh the page.</div>
+  }))
+);
+
 // Loading component with better UX
 const LoadingSpinner = () => (
   <div className="flex flex-col items-center justify-center min-h-screen">
@@ -109,6 +115,11 @@ const App = () => (
               <Route path="/pre-works-test" element={<PreWorksFormTest />} />
               {/* HIDDEN ADMIN ROUTE - Internal staff only */}
               <Route path="/admin" element={<AdminDashboard />} />
+              <Route path="/admin/job-viewer" element={
+                <Suspense fallback={<LoadingSpinner />}>
+                  <JobViewerPage />
+                </Suspense>
+              } />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
             </Routes>
