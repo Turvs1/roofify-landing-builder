@@ -211,13 +211,53 @@ const JobViewer: React.FC<JobViewerProps> = ({ className = "" }) => {
         jobId: job.jobId,
         tasksCount: job.tasks ? job.tasks.length : 'No tasks array',
         tasks: job.tasks,
+        tasksType: job.tasks ? typeof job.tasks : 'undefined',
+        isTasksArray: job.tasks ? Array.isArray(job.tasks) : false,
         hasJobTaskId: !!job.jobTaskId,
         hasTaskName: !!job.taskName,
-        hasStartDate: !!job.startDate
+        hasStartDate: !!job.startDate,
+        // Check if tasks might be nested or have different structure
+        firstTask: job.tasks && job.tasks.length > 0 ? job.tasks[0] : 'No first task',
+        taskKeys: job.tasks && job.tasks.length > 0 ? Object.keys(job.tasks[0]) : 'No task keys'
       })
     })
     
-    return rawData // Return data as-is since API should now include tasks
+    // Process and validate tasks data
+    const processedData = rawData.map(job => {
+      if (job.tasks && Array.isArray(job.tasks)) {
+        // Validate and clean tasks data
+        const validTasks = job.tasks.filter(task => 
+          task && 
+          typeof task === 'object' && 
+          (task.taskName || task.name) && 
+          (task.startDate || task.start)
+        ).map(task => ({
+          taskId: task.taskId || task.id || `task-${Math.random().toString(36).substr(2, 9)}`,
+          taskName: task.taskName || task.name || 'Unnamed Task',
+          startDate: task.startDate || task.start || null,
+          endDate: task.endDate || task.end || null
+        }))
+        
+        console.log(`Job ${job.number}: Processed ${validTasks.length} valid tasks from ${job.tasks.length} total`)
+        return { ...job, tasks: validTasks }
+      } else if (job.tasks && typeof job.tasks === 'object' && !Array.isArray(job.tasks)) {
+        // Handle case where tasks might be a single object instead of array
+        console.log(`Job ${job.number}: Tasks is object, converting to array`)
+        const task = job.tasks
+        const validTask = {
+          taskId: task.taskId || task.id || `task-${Math.random().toString(36).substr(2, 9)}`,
+          taskName: task.taskName || task.name || 'Unnamed Task',
+          startDate: task.startDate || task.start || null,
+          endDate: task.endDate || task.end || null
+        }
+        return { ...job, tasks: [validTask] }
+      } else {
+        console.log(`Job ${job.number}: No valid tasks data found`)
+        return { ...job, tasks: [] }
+      }
+    })
+    
+    return processedData
   }
 
   // Calculate contract length based on available dates
@@ -630,13 +670,20 @@ const JobViewer: React.FC<JobViewerProps> = ({ className = "" }) => {
                         </div>
                       </TableCell>
                       <TableCell>
-                        <Button 
-                          size="sm" 
-                          variant="outline"
-                          onClick={() => openJobModal(job)}
-                        >
-                          View
-                        </Button>
+                        <div className="flex items-center gap-2">
+                          <Button 
+                            size="sm" 
+                            variant="outline"
+                            onClick={() => openJobModal(job)}
+                          >
+                            View
+                          </Button>
+                          {job.tasks && job.tasks.length > 0 && (
+                            <Badge variant="secondary" className="text-xs">
+                              {job.tasks.length} task{job.tasks.length !== 1 ? 's' : ''}
+                            </Badge>
+                          )}
+                        </div>
                       </TableCell>
                     </TableRow>
                   ))
@@ -766,6 +813,7 @@ const JobViewer: React.FC<JobViewerProps> = ({ className = "" }) => {
                     <p><span className="font-medium">Created:</span> {formatDate(selectedJob.creationDate)}</p>
                     <p><span className="font-medium">Target:</span> {selectedJob.targetDate ? formatDate(selectedJob.targetDate) : 'Not set'}</p>
                     <p><span className="font-medium">Contract Length:</span> {calculateContractLength(selectedJob)}</p>
+                    <p><span className="font-medium">Tasks:</span> {selectedJob.tasks ? selectedJob.tasks.length : 0} task{selectedJob.tasks && selectedJob.tasks.length !== 1 ? 's' : ''}</p>
                   </div>
                 </div>
               </div>
@@ -776,23 +824,37 @@ const JobViewer: React.FC<JobViewerProps> = ({ className = "" }) => {
                   <Calendar className="h-5 w-5 text-blue-600" />
                   <h3 className="text-xl font-semibold text-gray-900">Task Timeline</h3>
                   <span className="ml-2 text-sm text-gray-500">
-                    {selectedJob.tasks ? `${selectedJob.tasks.length} tasks` : 'No tasks available'}
+                    {selectedJob.tasks && selectedJob.tasks.length > 0 ? `${selectedJob.tasks.length} tasks` : 'No tasks available'}
                   </span>
                 </div>
                 
-                {selectedJob.tasks && selectedJob.tasks.length > 0 ? (
+                {/* Debug info - remove this in production */}
+                <div className="mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded text-xs text-yellow-800">
+                  <strong>Debug Info:</strong> Tasks data: {JSON.stringify(selectedJob.tasks, null, 2)}
+                </div>
+                
+                {selectedJob.tasks && Array.isArray(selectedJob.tasks) && selectedJob.tasks.length > 0 ? (
                   <div className="space-y-3 max-h-96 overflow-y-auto">
                     {selectedJob.tasks
-                      .sort((a, b) => new Date(a.startDate).getTime() - new Date(b.startDate).getTime())
+                      .filter(task => task && task.taskName && task.startDate) // Filter out invalid tasks
+                      .sort((a, b) => {
+                        try {
+                          const dateA = new Date(a.startDate).getTime()
+                          const dateB = new Date(b.startDate).getTime()
+                          return dateA - dateB
+                        } catch {
+                          return 0
+                        }
+                      })
                       .map((task, index) => (
-                        <div key={index} className="flex items-center gap-4 p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
+                        <div key={`${task.taskId || index}-${task.taskName}`} className="flex items-center gap-4 p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
                           <div className="w-3 h-3 bg-blue-500 rounded-full flex-shrink-0"></div>
                           <div className="flex-1 min-w-0">
                             <div className="text-sm font-medium text-gray-900 truncate">
-                              {task.taskName}
+                              {task.taskName || 'Unnamed Task'}
                             </div>
                             <div className="text-xs text-gray-600">
-                              {formatDate(task.startDate)}
+                              {task.startDate ? formatDate(task.startDate) : 'No start date'}
                               {task.endDate && task.endDate !== task.startDate && (
                                 <span> - {formatDate(task.endDate)}</span>
                               )}
@@ -800,10 +862,16 @@ const JobViewer: React.FC<JobViewerProps> = ({ className = "" }) => {
                           </div>
                           <div className="text-xs text-gray-500 flex-shrink-0">
                             {(() => {
-                              const start = new Date(task.startDate)
-                              const end = new Date(task.endDate || task.startDate)
-                              const days = Math.ceil((end.getTime() - start.getTime()) / (1000 * 3600 * 24))
-                              return days === 0 ? 'Same day' : days === 1 ? '1 day' : `${days} days`
+                              try {
+                                if (!task.startDate) return 'No date'
+                                const start = new Date(task.startDate)
+                                const end = new Date(task.endDate || task.startDate)
+                                if (isNaN(start.getTime()) || isNaN(end.getTime())) return 'Invalid date'
+                                const days = Math.ceil((end.getTime() - start.getTime()) / (1000 * 3600 * 24))
+                                return days === 0 ? 'Same day' : days === 1 ? '1 day' : `${days} days`
+                              } catch {
+                                return 'Date error'
+                              }
                             })()}
                           </div>
                         </div>
@@ -813,7 +881,18 @@ const JobViewer: React.FC<JobViewerProps> = ({ className = "" }) => {
                   <div className="text-center py-8 text-gray-500">
                     <Calendar className="h-12 w-12 mx-auto mb-4 text-gray-300" />
                     <p>No tasks available for this job</p>
-                    <p className="text-sm">Tasks will appear here when available</p>
+                    <p className="text-sm text-gray-600 mb-2">
+                      {selectedJob.tasks ? 
+                        (Array.isArray(selectedJob.tasks) ? 
+                          'Tasks array is empty' : 
+                          `Tasks data type: ${typeof selectedJob.tasks}`
+                        ) : 
+                        'No tasks property found'
+                      }
+                    </p>
+                    <p className="text-xs text-gray-400">
+                      Expected format: Array of objects with taskName, startDate, endDate
+                    </p>
                   </div>
                 )}
                 
