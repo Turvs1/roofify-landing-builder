@@ -81,6 +81,154 @@ interface JobViewerProps {
   className?: string
 }
 
+// Helper function to format dates
+const formatDate = (dateString: string | Date) => {
+  if (!dateString) return 'N/A'
+  try {
+    const date = typeof dateString === 'string' ? new Date(dateString) : dateString
+    return date.toLocaleDateString('en-AU', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric'
+    })
+  } catch {
+    return 'Invalid Date'
+  }
+}
+
+// Calendar View Component
+const CalendarView: React.FC<{ tasks: any[] }> = ({ tasks }) => {
+  // Group tasks by month
+  const tasksByMonth = tasks.reduce((acc: any, task: any) => {
+    if (task.startDate) {
+      const date = new Date(task.startDate)
+      const monthKey = `${date.getFullYear()}-${date.getMonth() + 1}`
+      if (!acc[monthKey]) {
+        acc[monthKey] = []
+      }
+      acc[monthKey].push(task)
+    }
+    return acc
+  }, {})
+
+  return (
+    <div className="space-y-6">
+      {Object.entries(tasksByMonth).map(([monthKey, monthTasks]) => {
+        const [year, month] = monthKey.split('-')
+        const monthName = new Date(parseInt(year), parseInt(month) - 1).toLocaleDateString('en-AU', { month: 'long', year: 'numeric' })
+        
+        return (
+          <div key={monthKey} className="border border-gray-200 rounded-lg p-4">
+            <h4 className="font-semibold text-gray-900 mb-3">{monthName}</h4>
+            <div className="grid grid-cols-7 gap-1 text-xs">
+              {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => (
+                <div key={day} className="text-center font-medium text-gray-500 p-2">
+                  {day}
+                </div>
+              ))}
+              
+              {/* Calendar days */}
+              {(() => {
+                const firstDay = new Date(parseInt(year), parseInt(month) - 1, 1)
+                const lastDay = new Date(parseInt(year), parseInt(month), 0)
+                const startDate = new Date(firstDay)
+                startDate.setDate(startDate.getDate() - firstDay.getDay())
+                
+                const days = []
+                for (let i = 0; i < 42; i++) {
+                  const currentDate = new Date(startDate)
+                  currentDate.setDate(startDate.getDate() + i)
+                  
+                  if (currentDate.getMonth() === parseInt(month) - 1) {
+                    const dayTasks = (monthTasks as any[]).filter((task: any) => {
+                      const taskDate = new Date(task.startDate)
+                      return taskDate.getDate() === currentDate.getDate() && 
+                             taskDate.getMonth() === currentDate.getMonth() &&
+                             taskDate.getFullYear() === currentDate.getFullYear()
+                    })
+                    
+                    days.push(
+                      <div key={i} className="min-h-[60px] border border-gray-100 p-1">
+                        <div className="text-right text-gray-400 text-xs mb-1">
+                          {currentDate.getDate()}
+                        </div>
+                        {dayTasks.map((task: any, taskIndex: number) => (
+                          <div key={taskIndex} className="text-xs bg-blue-100 text-blue-800 p-1 rounded mb-1 truncate">
+                            {task.taskName}
+                          </div>
+                        ))}
+                      </div>
+                    )
+                  } else {
+                    days.push(<div key={i} className="min-h-[60px] border border-gray-100 p-1 bg-gray-50"></div>)
+                  }
+                }
+                return days
+              })()}
+            </div>
+          </div>
+        )
+      })}
+    </div>
+  )
+}
+
+// Gantt View Component
+const GanttView: React.FC<{ tasks: any[] }> = ({ tasks }) => {
+  const sortedTasks = tasks
+    .filter((task: any) => task.startDate)
+    .sort((a: any, b: any) => new Date(a.startDate).getTime() - new Date(b.startDate).getTime())
+
+  if (sortedTasks.length === 0) return <div className="text-center text-gray-500">No tasks with dates</div>
+
+  const earliestDate = new Date(sortedTasks[0].startDate)
+  const latestDate = new Date(sortedTasks[sortedTasks.length - 1].endDate || sortedTasks[sortedTasks.length - 1].startDate)
+  const totalDays = Math.ceil((latestDate.getTime() - earliestDate.getTime()) / (1000 * 3600 * 24)) + 1
+
+  return (
+    <div className="space-y-3">
+      <div className="text-sm text-gray-600 mb-4">
+        Timeline: {formatDate(earliestDate.toISOString())} to {formatDate(latestDate.toISOString())} ({totalDays} days)
+      </div>
+      
+      {sortedTasks.map((task: any, index: number) => {
+        const startDate = new Date(task.startDate)
+        const endDate = new Date(task.endDate || task.startDate)
+        const daysFromStart = Math.ceil((startDate.getTime() - earliestDate.getTime()) / (1000 * 3600 * 24))
+        const duration = Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 3600 * 24)) + 1
+        
+        return (
+          <div key={task.taskId || index} className="flex items-center gap-4 p-3 bg-gray-50 rounded-lg">
+            <div className="w-32 text-sm font-medium text-gray-900 truncate">
+              {task.taskName}
+            </div>
+            
+            <div className="flex-1 relative">
+              <div className="h-8 bg-gray-200 rounded relative">
+                <div 
+                  className="h-full bg-blue-500 rounded absolute top-0 left-0 transition-all duration-300"
+                  style={{
+                    left: `${(daysFromStart / totalDays) * 100}%`,
+                    width: `${(duration / totalDays) * 100}%`
+                  }}
+                >
+                  <div className="absolute inset-0 flex items-center justify-center text-white text-xs font-medium">
+                    {duration === 1 ? '1 day' : `${duration} days`}
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <div className="w-24 text-xs text-gray-600 text-right">
+              {formatDate(startDate.toISOString())}
+            </div>
+          </div>
+        )
+      })}
+    </div>
+  )
+}
+
 const JobViewer: React.FC<JobViewerProps> = ({ className = "" }) => {
   const [jobs, setJobs] = useState<Job[]>([])
   const [filteredJobs, setFilteredJobs] = useState<Job[]>([])
@@ -93,6 +241,7 @@ const JobViewer: React.FC<JobViewerProps> = ({ className = "" }) => {
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc')
   const [selectedJob, setSelectedJob] = useState<Job | null>(null)
   const [isModalOpen, setIsModalOpen] = useState(false)
+  const [viewMode, setViewMode] = useState<'list' | 'calendar' | 'gantt'>('list')
 
   // Fetch jobs from Google Sheets
   useEffect(() => {
@@ -100,54 +249,26 @@ const JobViewer: React.FC<JobViewerProps> = ({ className = "" }) => {
       try {
         setIsLoading(true)
         
-        // Test the API endpoint directly
-        console.log('🔍 Testing API endpoint...')
         const response = await fetch('https://script.googleusercontent.com/a/macros/arwc.com.au/echo?user_content_key=AehSKLg4x3SdAd8vXyliq0RjdM51narpacCFKMcCHhFPZgy8Mn400VhQsVM4_r2cyU9yZbIYUl42Dgv6nM8aJ-S5w8uYWpMLKB4w5LG9U3ip6QwBmHJnyMeWkzhrezQ9GN8WvlpJxppFCulFwnAkvPF6IMTU601PHzr0Dmuez9vtQ3JG_kmdYmeG72lvBv2BiT1cHIW12FYhkDW5ugXa0I_FjqynR8idnbHE6jlDsSmfhQ_NcKnOEcuoV20MSc8otfBHJrjIKXOo1JyZyEB5QfQf1DAzUsdCzkPYhL322UaFLMPoQW-9hD8&lib=Mr_6vjm8FUyFK9RyrPAOaVwA6AJu5-yHf')
-        
-        console.log('📡 Response status:', response.status)
-        console.log('📡 Response headers:', Object.fromEntries(response.headers.entries()))
         
         if (!response.ok) {
           throw new Error(`Failed to fetch jobs: ${response.status}`)
         }
         
         const data = await response.json()
-        console.log('📊 Raw API response:', data) // Debug log
-        console.log('📊 Raw API response type:', typeof data)
         
         // Extract the actual rows from the sheets structure
         let rawRows = []
         if (data.sheets && data.sheets.length > 0 && data.sheets[0].rows) {
           rawRows = data.sheets[0].rows
-          console.log('📊 Extracted rows from sheets:', rawRows.length)
-          console.log('📊 First row sample:', rawRows[0])
         } else if (Array.isArray(data)) {
           rawRows = data
-          console.log('📊 Data is already an array:', rawRows.length)
         } else {
-          console.log('❌ Unexpected data structure:', data)
           throw new Error('Unexpected API response structure')
-        }
-        
-        console.log('📊 Raw rows length:', rawRows.length)
-        
-        // Check if data has the expected structure
-        if (rawRows.length > 0) {
-          console.log('🏗️ First row structure:', Object.keys(rawRows[0]))
-          console.log('🏗️ First row sample:', rawRows[0])
-          
-          // Check for tasks in the first row
-          if (rawRows[0].taskName !== undefined) {
-            console.log('✅ Task data found:', rawRows[0].taskName)
-            console.log('✅ Task type:', typeof rawRows[0].taskName)
-          } else {
-            console.log('❌ No task data found in first row')
-          }
         }
         
         // Process the data to group tasks with their main jobs
         const processedJobs = processJobData(rawRows)
-        console.log('🔄 Processed jobs:', processedJobs) // Debug log
         
         setJobs(processedJobs)
         setFilteredJobs(processedJobs)
@@ -225,37 +346,14 @@ const JobViewer: React.FC<JobViewerProps> = ({ className = "" }) => {
     return 'bg-slate-100 text-slate-800'
   }
 
-  // Format date for display
-  const formatDate = (dateString: string) => {
-    if (!dateString) return 'N/A'
-    try {
-      const date = new Date(dateString)
-      return date.toLocaleDateString('en-AU', {
-        day: '2-digit',
-        month: '2-digit',
-        year: 'numeric'
-      })
-    } catch {
-      return 'Invalid Date'
-    }
-  }
 
-  // Process raw API data with enhanced debugging and proper task grouping
+
+  // Process raw API data with proper task grouping
   const processJobData = (rawData: any[]) => {
-    console.log('Processing raw data:', rawData) // Debug log
-    
     // Group rows by jobId - some rows are jobs, some are tasks
     const jobMap = new Map()
     
-    rawData.forEach((row, index) => {
-      console.log(`Row ${index + 1}:`, {
-        jobId: row.jobId,
-        number: row.number,
-        taskName: row.taskName,
-        hasTaskData: !!(row.taskName && row.startDate),
-        rowType: row.taskName ? 'TASK' : 'JOB'
-      })
-      
+    rawData.forEach((row) => {
       const jobId = row.jobId
       
       if (!jobMap.has(jobId)) {
@@ -281,7 +379,6 @@ const JobViewer: React.FC<JobViewerProps> = ({ className = "" }) => {
         }
         
         existingJob.tasks.push(task)
-        console.log(`Added task "${row.taskName}" to job ${row.number}`)
       }
     })
     
@@ -290,12 +387,9 @@ const JobViewer: React.FC<JobViewerProps> = ({ className = "" }) => {
       // Sort tasks by sortOrder
       job.tasks.sort((a, b) => (a.sortOrder || 0) - (b.sortOrder || 0))
       
-      console.log(`Job ${job.number}: Final result with ${job.tasks.length} tasks:`, job.tasks.map(t => t.taskName))
-      
       return job
     })
     
-    console.log('Final processed data:', processedData)
     return processedData
   }
 
@@ -505,11 +599,9 @@ const JobViewer: React.FC<JobViewerProps> = ({ className = "" }) => {
             <Button
               variant="outline"
               onClick={async () => {
-                console.log('🧪 Testing API manually...')
                 try {
                   const response = await fetch('https://script.googleusercontent.com/a/macros/arwc.com.au/echo?user_content_key=AehSKLg4x3SdAd8vXyliq0RjdM51narpacCFKMcCHhFPZgy8Mn400VhQsVM4_r2cyU9yZbIYUl42Dgv6nM8aJ-S5w8uYWpMLKB4w5LG9U3ip6QwBmHJnyMeWkzhrezQ9GN8WvlpJxppFCulFwnAkvPF6IMTU601PHzr0Dmuez9vtQ3JG_kmdYmeG72lvBv2BiT1cHIW12FYhkDW5ugXa0I_FjqynR8idnbHE6jlDsSmfhQ_NcKnOEcuoV20MSc8otfBHJrjIKXOo1JyZyEB5QfQf1DAzUsdCzkPYhL322UaFLMPoQW-9hD8&lib=Mr_6vjm8FUyFK9RyrPAOaVwA6AJu5-yHf')
                   const data = await response.json()
-                  console.log('🧪 Manual API test result:', data)
                   
                   // Extract rows from the sheets structure
                   let rawRows = []
@@ -523,16 +615,9 @@ const JobViewer: React.FC<JobViewerProps> = ({ className = "" }) => {
                   const hasTaskData = rawRows.some(row => row.taskName && row.startDate)
                   const taskRows = rawRows.filter(row => row.taskName && row.startDate)
                   
-                  console.log('🔍 Task data analysis:')
-                  console.log('- Raw rows total:', rawRows.length)
-                  console.log('- Has task data:', hasTaskData)
-                  console.log('- Task rows found:', taskRows.length)
-                  console.log('- Sample task row:', taskRows[0])
-                  
                   alert(`API Test: ${rawRows.length} total rows\nTask rows: ${taskRows.length}`)
                 } catch (error) {
-                  console.error('🧪 Manual API test failed:', error)
-                  alert('API test failed - check console')
+                  alert('API test failed')
                 }
               }}
               className="flex items-center gap-2"
@@ -896,75 +981,124 @@ const JobViewer: React.FC<JobViewerProps> = ({ className = "" }) => {
                 </div>
               </div>
 
-                            {/* Task Timeline View */}
+                            {/* Dynamic Task Timeline View */}
               <div className="bg-white border border-gray-200 rounded-lg p-6">
-                <div className="flex items-center gap-2 mb-6">
-                  <Calendar className="h-5 w-5 text-blue-600" />
-                  <h3 className="text-xl font-semibold text-gray-900">Task Timeline</h3>
-                  <span className="ml-2 text-sm text-gray-500">
-                    {selectedJob.tasks && selectedJob.tasks.length > 0 ? `${selectedJob.tasks.length} tasks` : 'No tasks available'}
-                  </span>
-                </div>
-                
-                {/* Debug info - remove this in production */}
-                <div className="mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded text-xs text-yellow-800">
-                  <strong>Debug Info:</strong> Tasks data: {JSON.stringify(selectedJob.tasks, null, 2)}
-                </div>
-                
-                {selectedJob.tasks && Array.isArray(selectedJob.tasks) && selectedJob.tasks.length > 0 ? (
-                  <div className="space-y-3 max-h-96 overflow-y-auto">
-                    {selectedJob.tasks
-                      .filter(task => task && task.taskName && task.startDate) // Filter out invalid tasks
-                      .sort((a, b) => {
-                        try {
-                          const dateA = new Date(a.startDate).getTime()
-                          const dateB = new Date(b.startDate).getTime()
-                          return dateA - dateB
-                        } catch {
-                          return 0
-                        }
-                      })
-                      .map((task, index) => (
-                        <div key={`${task.taskId || index}-${task.taskName}`} className="flex items-center gap-4 p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
-                          <div className="w-3 h-3 bg-blue-500 rounded-full flex-shrink-0"></div>
-                          <div className="flex-1 min-w-0">
-                            <div className="text-sm font-medium text-gray-900 truncate">
-                              {task.taskName || 'Unnamed Task'}
-                            </div>
-                            <div className="text-xs text-gray-600">
-                              {task.startDate ? formatDate(task.startDate) : 'No start date'}
-                              {task.endDate && task.endDate !== task.startDate && (
-                                <span> - {formatDate(task.endDate)}</span>
-                              )}
-                            </div>
-                            {task.note && (
-                              <div className="text-xs text-gray-500 mt-1 italic">
-                                {task.note}
-                              </div>
-                            )}
-                          </div>
-                          <div className="text-right text-xs text-gray-500 flex-shrink-0">
-                            <div>
-                              {(() => {
-                                try {
-                                  if (!task.startDate) return 'No date'
-                                  const start = new Date(task.startDate)
-                                  const end = new Date(task.endDate || task.startDate)
-                                  if (isNaN(start.getTime()) || isNaN(end.getTime())) return 'Invalid date'
-                                  const days = Math.ceil((end.getTime() - start.getTime()) / (1000 * 3600 * 24))
-                                  return days === 0 ? 'Same day' : days === 1 ? '1 day' : `${days} days`
-                                } catch {
-                                  return 'Date error'
-                                }
-                              })()}
-                            </div>
-                            {task.sortOrder > 0 && (
-                              <div className="text-gray-400">Order: {task.sortOrder}</div>
-                            )}
-                          </div>
-                        </div>
-                      ))}
+                <div className="flex items-center justify-between mb-6">
+                  <div className="flex items-center gap-2">
+                    <Calendar className="h-5 w-5 text-blue-600" />
+                    <h3 className="text-xl font-semibold text-gray-900">Task Timeline</h3>
+                    <span className="ml-2 text-sm text-gray-500">
+                      {selectedJob.tasks && selectedJob.tasks.length > 0 ? `${selectedJob.tasks.length} tasks` : 'No tasks available'}
+                    </span>
                   </div>
+                  
+                  {/* View Toggle Buttons */}
+                  {selectedJob.tasks && selectedJob.tasks.length > 0 && (
+                    <div className="flex gap-2">
+                      <Button
+                        size="sm"
+                        variant={viewMode === 'list' ? 'default' : 'outline'}
+                        onClick={() => setViewMode('list')}
+                        className="text-xs"
+                      >
+                        📋 List
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant={viewMode === 'calendar' ? 'default' : 'outline'}
+                        onClick={() => setViewMode('calendar')}
+                        className="text-xs"
+                      >
+                        📅 Calendar
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant={viewMode === 'gantt' ? 'default' : 'outline'}
+                        onClick={() => setViewMode('gantt')}
+                        className="text-xs"
+                      >
+                        📊 Gantt
+                      </Button>
+                    </div>
+                  )}
+                </div>
+                
+
+                
+                {/* Dynamic Content Based on View Mode */}
+                {selectedJob.tasks && Array.isArray(selectedJob.tasks) && selectedJob.tasks.length > 0 ? (
+                  <>
+                    {/* List View */}
+                    {viewMode === 'list' && (
+                      <div className="space-y-3 max-h-96 overflow-y-auto">
+                        {selectedJob.tasks
+                          .filter(task => task && task.taskName && task.startDate)
+                          .sort((a, b) => {
+                            try {
+                              const dateA = new Date(a.startDate).getTime()
+                              const dateB = new Date(b.startDate).getTime()
+                              return dateA - dateB
+                            } catch {
+                              return 0
+                            }
+                          })
+                          .map((task, index) => (
+                            <div key={`${task.taskId || index}-${task.taskName}`} className="flex items-center gap-4 p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
+                              <div className="w-3 h-3 bg-blue-500 rounded-full flex-shrink-0"></div>
+                              <div className="flex-1 min-w-0">
+                                <div className="text-sm font-medium text-gray-900 truncate">
+                                  {task.taskName || 'Unnamed Task'}
+                                </div>
+                                <div className="text-xs text-gray-600">
+                                  {task.startDate ? formatDate(task.startDate) : 'No start date'}
+                                  {task.endDate && task.endDate !== task.startDate && (
+                                    <span> - {formatDate(task.endDate)}</span>
+                                  )}
+                                </div>
+                                {task.note && (
+                                  <div className="text-xs text-gray-500 mt-1 italic">
+                                    {task.note}
+                                  </div>
+                                )}
+                              </div>
+                              <div className="text-right text-xs text-gray-500 flex-shrink-0">
+                                <div>
+                                  {(() => {
+                                    try {
+                                      if (!task.startDate) return 'No date'
+                                      const start = new Date(task.startDate)
+                                      const end = new Date(task.endDate || task.startDate)
+                                      if (isNaN(start.getTime()) || isNaN(end.getTime())) return 'Invalid date'
+                                      const days = Math.ceil((end.getTime() - start.getTime()) / (1000 * 3600 * 24))
+                                      return days === 0 ? 'Same day' : days === 1 ? '1 day' : `${days} days`
+                                    } catch {
+                                      return 'Date error'
+                                    }
+                                  })()}
+                                </div>
+                                {task.sortOrder > 0 && (
+                                  <div className="text-gray-400">Order: {task.sortOrder}</div>
+                                )}
+                              </div>
+                            </div>
+                          ))}
+                      </div>
+                    )}
+                    
+                    {/* Calendar View */}
+                    {viewMode === 'calendar' && (
+                      <div className="max-h-96 overflow-y-auto">
+                        <CalendarView tasks={selectedJob.tasks} />
+                      </div>
+                    )}
+                    
+                    {/* Gantt View */}
+                    {viewMode === 'gantt' && (
+                      <div className="max-h-96 overflow-y-auto">
+                        <GanttView tasks={selectedJob.tasks} />
+                      </div>
+                    )}
+                  </>
                 ) : (
                   <div className="text-center py-8 text-gray-500">
                     <Calendar className="h-12 w-12 mx-auto mb-4 text-gray-300" />
