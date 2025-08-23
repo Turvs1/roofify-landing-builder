@@ -735,35 +735,7 @@ const JobViewer: React.FC<JobViewerProps> = ({ className = "" }) => {
               Export CSV
             </Button>
             
-            {/* Test API Button */}
-            <Button
-              variant="outline"
-              onClick={async () => {
-                try {
-                  const response = await fetch('https://script.googleusercontent.com/a/macros/arwc.com.au/echo?user_content_key=AehSKLg4x3SdAd8vXyliq0RjdM51narpacCFKMcCHhFPZgy8Mn400VhQsVM4_r2cyU9yZbIYUl42Dgv6nM8aJ-S5w8uYWpMLKB4w5LG9U3ip6QwBmHJnyMeWkzhrezQ9GN8WvlpJxppFCulFwnAkvPF6IMTU601PHzr0Dmuez9vtQ3JG_kmdYmeG72lvBv2BiT1cHIW12FYhkDW5ugXa0I_FjqynR8idnbHE6jlDsSmfhQ_NcKnOEcuoV20MSc8otfBHJrjIKXOo1JyZyEB5QfQf1DAzUsdCzkPYhL322UaFLMPoQW-9hD8&lib=Mr_6vjm8FUyFK9RyrPAOaVwA6AJu5-yHf')
-                  const data = await response.json()
-                  
-                  // Extract rows from the sheets structure
-                  let rawRows = []
-                  if (data.sheets && data.sheets.length > 0 && data.sheets[0].rows) {
-                    rawRows = data.sheets[0].rows
-                  } else if (Array.isArray(data)) {
-                    rawRows = data
-                  }
-                  
-                  // Check for task data
-                  const hasTaskData = rawRows.some(row => row.taskName && row.startDate)
-                  const taskRows = rawRows.filter(row => row.taskName && row.startDate)
-                  
-                  alert(`API Test: ${rawRows.length} total rows\nTask rows: ${taskRows.length}`)
-                } catch (error) {
-                  alert('API test failed')
-                }
-              }}
-              className="flex items-center gap-2"
-            >
-              🧪 Test API
-            </Button>
+
           </div>
         </CardContent>
       </Card>
