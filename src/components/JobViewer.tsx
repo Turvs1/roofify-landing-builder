@@ -745,11 +745,11 @@ const JobViewer: React.FC<JobViewerProps> = ({ className = "" }) => {
       <Card>
         <CardContent className="p-0">
           <div className="overflow-x-auto">
-            <Table className="w-full min-w-[1200px]">
+            <Table className="w-full table-fixed">
               <TableHeader>
                 <TableRow>
                   <TableHead 
-                    className="cursor-pointer hover:bg-gray-50 w-24"
+                    className="cursor-pointer hover:bg-gray-50 w-[8%]"
                     onClick={() => handleSort('number')}
                   >
                     <div className="flex items-center gap-2">
@@ -763,7 +763,7 @@ const JobViewer: React.FC<JobViewerProps> = ({ className = "" }) => {
                     </div>
                   </TableHead>
                   <TableHead 
-                    className="cursor-pointer hover:bg-gray-50 min-w-[200px]"
+                    className="cursor-pointer hover:bg-gray-50 w-[20%]"
                     onClick={() => handleSort('description')}
                   >
                     <div className="flex items-center gap-2">
@@ -777,7 +777,7 @@ const JobViewer: React.FC<JobViewerProps> = ({ className = "" }) => {
                     </div>
                   </TableHead>
                   <TableHead 
-                    className="cursor-pointer hover:bg-gray-50 w-32"
+                    className="cursor-pointer hover:bg-gray-50 w-[12%]"
                     onClick={() => handleSort('clientName')}
                   >
                     Client
@@ -787,9 +787,9 @@ const JobViewer: React.FC<JobViewerProps> = ({ className = "" }) => {
                       </span>
                     )}
                   </TableHead>
-                  <TableHead className="w-40">Location</TableHead>
+                  <TableHead className="w-[15%]">Location</TableHead>
                   <TableHead 
-                    className="cursor-pointer hover:bg-gray-50 w-32"
+                    className="cursor-pointer hover:bg-gray-50 w-[12%]"
                     onClick={() => handleSort('buildingType')}
                   >
                     <div className="flex items-center gap-2">
@@ -803,7 +803,7 @@ const JobViewer: React.FC<JobViewerProps> = ({ className = "" }) => {
                     </div>
                   </TableHead>
                   <TableHead 
-                    className="cursor-pointer hover:bg-gray-50 w-24"
+                    className="cursor-pointer hover:bg-gray-50 w-[8%]"
                     onClick={() => handleSort('status')}
                   >
                     <div className="flex items-center gap-2">
@@ -817,7 +817,7 @@ const JobViewer: React.FC<JobViewerProps> = ({ className = "" }) => {
                     </div>
                   </TableHead>
                   <TableHead 
-                    className="cursor-pointer hover:bg-gray-50 w-24"
+                    className="cursor-pointer hover:bg-gray-50 w-[8%]"
                     onClick={() => handleSort('progressPercent')}
                   >
                     <div className="flex items-center gap-2">
@@ -831,7 +831,7 @@ const JobViewer: React.FC<JobViewerProps> = ({ className = "" }) => {
                     </div>
                   </TableHead>
                   <TableHead 
-                    className="cursor-pointer hover:bg-gray-50 w-32"
+                    className="cursor-pointer hover:bg-gray-50 w-[10%]"
                     onClick={() => handleSort('contractTotal')}
                   >
                     <div className="flex items-center gap-2">
@@ -844,13 +844,13 @@ const JobViewer: React.FC<JobViewerProps> = ({ className = "" }) => {
                       )}
                     </div>
                   </TableHead>
-                  <TableHead className="w-32">
+                  <TableHead className="w-[10%]">
                     <div className="flex items-center gap-2">
                       <Calendar className="h-4 w-4" />
                       Contract Length
                     </div>
                   </TableHead>
-                  <TableHead className="w-24">Actions</TableHead>
+                  <TableHead className="w-[7%]">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -863,12 +863,12 @@ const JobViewer: React.FC<JobViewerProps> = ({ className = "" }) => {
                 ) : (
                   filteredJobs.map((job) => (
                     <TableRow key={job.jobId} className="hover:bg-gray-50">
-                      <TableCell className="font-mono font-medium w-24">
+                      <TableCell className="font-mono font-medium">
                         <Badge variant="outline" className="font-mono text-xs">
                           {job.number}
                         </Badge>
                       </TableCell>
-                      <TableCell className="min-w-[200px] max-w-[200px]">
+                      <TableCell>
                         <div className="space-y-1">
                           <p className="font-medium text-sm leading-tight truncate" title={job.description}>
                             {job.description}
@@ -878,7 +878,7 @@ const JobViewer: React.FC<JobViewerProps> = ({ className = "" }) => {
                           </p>
                         </div>
                       </TableCell>
-                      <TableCell className="w-32">
+                      <TableCell>
                         <div className="min-w-0">
                           <div className="text-sm font-medium leading-tight truncate" title={job.clientName}>
                             {job.clientName}
@@ -890,7 +890,7 @@ const JobViewer: React.FC<JobViewerProps> = ({ className = "" }) => {
                           )}
                         </div>
                       </TableCell>
-                      <TableCell className="w-40">
+                      <TableCell>
                         <div className="flex items-start gap-1 text-sm text-gray-600">
                           <MapPin className="h-3 w-3 flex-shrink-0 mt-0.5" />
                           <div className="min-w-0">
@@ -902,21 +902,21 @@ const JobViewer: React.FC<JobViewerProps> = ({ className = "" }) => {
                           </div>
                         </div>
                       </TableCell>
-                      <TableCell className="w-32">
+                      <TableCell>
                         <Badge className={getStatusColor(job.buildingType)}>
                           <span className="truncate block" title={job.buildingType}>
                             {job.buildingType}
                           </span>
                         </Badge>
                       </TableCell>
-                      <TableCell className="w-24">
+                      <TableCell>
                         <Badge variant={job.status === 'Not Started' ? 'secondary' : job.status === 'In Progress' ? 'default' : 'destructive'}>
-                          <span className="truncate block" title={job.status}>
+                          <span className="text-xs">
                             {job.status}
                           </span>
                         </Badge>
                       </TableCell>
-                      <TableCell className="w-24">
+                      <TableCell>
                         <div className="flex items-center gap-2">
                           <div className="w-16 bg-gray-200 rounded-full h-2">
                             <div 
@@ -929,7 +929,7 @@ const JobViewer: React.FC<JobViewerProps> = ({ className = "" }) => {
                           </span>
                         </div>
                       </TableCell>
-                      <TableCell className="w-32">
+                      <TableCell>
                         <div className="text-sm font-medium">
                           ${(job.contractTotal || 0).toLocaleString()}
                         </div>
@@ -939,7 +939,7 @@ const JobViewer: React.FC<JobViewerProps> = ({ className = "" }) => {
                           </div>
                         )}
                       </TableCell>
-                      <TableCell className="w-32">
+                      <TableCell>
                         <div className="text-sm">
                           <div className="font-medium text-blue-600">
                             {calculateContractLength(job)}
@@ -949,7 +949,7 @@ const JobViewer: React.FC<JobViewerProps> = ({ className = "" }) => {
                           </div>
                         </div>
                       </TableCell>
-                      <TableCell className="w-24">
+                      <TableCell>
                         <div className="flex items-center gap-2">
                           <Button 
                             size="sm" 
