@@ -70,6 +70,10 @@ interface Job {
     taskName: string
     startDate: string
     endDate?: string
+    sortOrder?: number
+    note?: string
+    estimatedCost?: number
+    actualCost?: number
   }>
 }
 
@@ -95,23 +99,46 @@ const JobViewer: React.FC<JobViewerProps> = ({ className = "" }) => {
     const fetchJobs = async () => {
       try {
         setIsLoading(true)
+        
+        // Test the API endpoint directly
+        console.log('🔍 Testing API endpoint...')
         const response = await fetch('https://script.google.com/macros/s/AKfycbzA_G5Qd9TEZDY_sf3iAFaZo4ZtU4EBG2FprwG3URIO_wxrdSQTmAvSGnCglU8WdWv2Vw/exec')
+        
+        console.log('📡 Response status:', response.status)
+        console.log('📡 Response headers:', Object.fromEntries(response.headers.entries()))
         
         if (!response.ok) {
           throw new Error(`Failed to fetch jobs: ${response.status}`)
         }
         
         const data = await response.json()
-        console.log('Raw API response:', data) // Debug log
+        console.log('📊 Raw API response:', data) // Debug log
+        console.log('📊 Raw API response type:', typeof data)
+        console.log('📊 Raw API response length:', Array.isArray(data) ? data.length : 'Not an array')
+        
+        // Check if data has the expected structure
+        if (Array.isArray(data) && data.length > 0) {
+          console.log('🏗️ First job structure:', Object.keys(data[0]))
+          console.log('🏗️ First job sample:', data[0])
+          
+          // Check for tasks in the first job
+          if (data[0].tasks !== undefined) {
+            console.log('✅ Tasks property found:', data[0].tasks)
+            console.log('✅ Tasks type:', typeof data[0].tasks)
+            console.log('✅ Tasks is array:', Array.isArray(data[0].tasks))
+          } else {
+            console.log('❌ No tasks property found in first job')
+          }
+        }
         
         // Process the data to group tasks with their main jobs
         const processedJobs = processJobData(data)
-        console.log('Processed jobs:', processedJobs) // Debug log
+        console.log('🔄 Processed jobs:', processedJobs) // Debug log
         
         setJobs(processedJobs)
         setFilteredJobs(processedJobs)
       } catch (error) {
-        console.error('Error fetching jobs:', error)
+        console.error('❌ Error fetching jobs:', error)
         // Set some sample data for development/testing
         setJobs([])
         setFilteredJobs([])
@@ -199,64 +226,62 @@ const JobViewer: React.FC<JobViewerProps> = ({ className = "" }) => {
     }
   }
 
-  // Process raw API data with enhanced debugging
+  // Process raw API data with enhanced debugging and proper task grouping
   const processJobData = (rawData: any[]) => {
     console.log('Processing raw data:', rawData) // Debug log
     
-    // Enhanced debugging - let's see what each job actually contains
-    rawData.forEach((job, index) => {
-      console.log(`Job ${index + 1}:`, {
-        number: job.number,
-        description: job.description,
-        jobId: job.jobId,
-        tasksCount: job.tasks ? job.tasks.length : 'No tasks array',
-        tasks: job.tasks,
-        tasksType: job.tasks ? typeof job.tasks : 'undefined',
-        isTasksArray: job.tasks ? Array.isArray(job.tasks) : false,
-        hasJobTaskId: !!job.jobTaskId,
-        hasTaskName: !!job.taskName,
-        hasStartDate: !!job.startDate,
-        // Check if tasks might be nested or have different structure
-        firstTask: job.tasks && job.tasks.length > 0 ? job.tasks[0] : 'No first task',
-        taskKeys: job.tasks && job.tasks.length > 0 ? Object.keys(job.tasks[0]) : 'No task keys'
-      })
-    })
+    // Group rows by jobId - some rows are jobs, some are tasks
+    const jobMap = new Map()
     
-    // Process and validate tasks data
-    const processedData = rawData.map(job => {
-      if (job.tasks && Array.isArray(job.tasks)) {
-        // Validate and clean tasks data
-        const validTasks = job.tasks.filter(task => 
-          task && 
-          typeof task === 'object' && 
-          (task.taskName || task.name) && 
-          (task.startDate || task.start)
-        ).map(task => ({
-          taskId: task.taskId || task.id || `task-${Math.random().toString(36).substr(2, 9)}`,
-          taskName: task.taskName || task.name || 'Unnamed Task',
-          startDate: task.startDate || task.start || null,
-          endDate: task.endDate || task.end || null
-        }))
-        
-        console.log(`Job ${job.number}: Processed ${validTasks.length} valid tasks from ${job.tasks.length} total`)
-        return { ...job, tasks: validTasks }
-      } else if (job.tasks && typeof job.tasks === 'object' && !Array.isArray(job.tasks)) {
-        // Handle case where tasks might be a single object instead of array
-        console.log(`Job ${job.number}: Tasks is object, converting to array`)
-        const task = job.tasks
-        const validTask = {
-          taskId: task.taskId || task.id || `task-${Math.random().toString(36).substr(2, 9)}`,
-          taskName: task.taskName || task.name || 'Unnamed Task',
-          startDate: task.startDate || task.start || null,
-          endDate: task.endDate || task.end || null
+    rawData.forEach((row, index) => {
+      console.log(`Row ${index + 1}:`, {
+        jobId: row.jobId,
+        number: row.number,
+        taskName: row.taskName,
+        hasTaskData: !!(row.taskName && row.startDate),
+        rowType: row.taskName ? 'TASK' : 'JOB'
+      })
+      
+      const jobId = row.jobId
+      
+      if (!jobMap.has(jobId)) {
+        // Initialize job entry
+        jobMap.set(jobId, {
+          ...row,
+          tasks: []
+        })
+      }
+      
+      // If this row has task data, add it to the job's tasks array
+      if (row.taskName && row.startDate) {
+        const existingJob = jobMap.get(jobId)
+        const task = {
+          taskId: row.jobTaskId || `task-${Math.random().toString(36).substr(2, 9)}`,
+          taskName: row.taskName,
+          startDate: row.startDate,
+          endDate: row.endDate || row.startDate,
+          sortOrder: row.sortOrder || 0,
+          note: row.note || '',
+          estimatedCost: row.estimatedCost || 0,
+          actualCost: row.actualCost || 0
         }
-        return { ...job, tasks: [validTask] }
-      } else {
-        console.log(`Job ${job.number}: No valid tasks data found`)
-        return { ...job, tasks: [] }
+        
+        existingJob.tasks.push(task)
+        console.log(`Added task "${row.taskName}" to job ${row.number}`)
       }
     })
     
+    // Convert map to array and sort tasks by sortOrder
+    const processedData = Array.from(jobMap.values()).map(job => {
+      // Sort tasks by sortOrder
+      job.tasks.sort((a, b) => (a.sortOrder || 0) - (b.sortOrder || 0))
+      
+      console.log(`Job ${job.number}: Final result with ${job.tasks.length} tasks:`, job.tasks.map(t => t.taskName))
+      
+      return job
+    })
+    
+    console.log('Final processed data:', processedData)
     return processedData
   }
 
@@ -460,6 +485,26 @@ const JobViewer: React.FC<JobViewerProps> = ({ className = "" }) => {
             >
               <Filter className="h-4 w-4" />
               Clear Filters
+            </Button>
+            
+            {/* Test API Button */}
+            <Button
+              variant="outline"
+              onClick={async () => {
+                console.log('🧪 Testing API manually...')
+                try {
+                  const response = await fetch('https://script.google.com/macros/s/AKfycbzA_G5Qd9TEZDY_sf3iAFaZo4ZtU4EBG2FprwG3URIO_wxrdSQTmAvSGnCglU8WdWv2Vw/exec')
+                  const data = await response.json()
+                  console.log('🧪 Manual API test result:', data)
+                  alert(`API Test: ${Array.isArray(data) ? data.length : 'Not array'} items returned`)
+                } catch (error) {
+                  console.error('🧪 Manual API test failed:', error)
+                  alert('API test failed - check console')
+                }
+              }}
+              className="flex items-center gap-2"
+            >
+              🧪 Test API
             </Button>
           </div>
         </CardContent>
@@ -859,20 +904,30 @@ const JobViewer: React.FC<JobViewerProps> = ({ className = "" }) => {
                                 <span> - {formatDate(task.endDate)}</span>
                               )}
                             </div>
+                            {task.note && (
+                              <div className="text-xs text-gray-500 mt-1 italic">
+                                {task.note}
+                              </div>
+                            )}
                           </div>
-                          <div className="text-xs text-gray-500 flex-shrink-0">
-                            {(() => {
-                              try {
-                                if (!task.startDate) return 'No date'
-                                const start = new Date(task.startDate)
-                                const end = new Date(task.endDate || task.startDate)
-                                if (isNaN(start.getTime()) || isNaN(end.getTime())) return 'Invalid date'
-                                const days = Math.ceil((end.getTime() - start.getTime()) / (1000 * 3600 * 24))
-                                return days === 0 ? 'Same day' : days === 1 ? '1 day' : `${days} days`
-                              } catch {
-                                return 'Date error'
-                              }
-                            })()}
+                          <div className="text-right text-xs text-gray-500 flex-shrink-0">
+                            <div>
+                              {(() => {
+                                try {
+                                  if (!task.startDate) return 'No date'
+                                  const start = new Date(task.startDate)
+                                  const end = new Date(task.endDate || task.startDate)
+                                  if (isNaN(start.getTime()) || isNaN(end.getTime())) return 'Invalid date'
+                                  const days = Math.ceil((end.getTime() - start.getTime()) / (1000 * 3600 * 24))
+                                  return days === 0 ? 'Same day' : days === 1 ? '1 day' : `${days} days`
+                                } catch {
+                                  return 'Date error'
+                                }
+                              })()}
+                            </div>
+                            {task.sortOrder > 0 && (
+                              <div className="text-gray-400">Order: {task.sortOrder}</div>
+                            )}
                           </div>
                         </div>
                       ))}
