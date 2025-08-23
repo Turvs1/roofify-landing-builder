@@ -168,9 +168,9 @@ const CalendarView: React.FC<{ tasks: Task[] }> = ({ tasks }) => {
         return (
           <div key={monthKey} className="border border-gray-200 rounded-lg p-4">
             <h4 className="font-semibold text-gray-900 mb-3">{monthName}</h4>
-            <div className="grid grid-cols-7 gap-1 text-xs">
+            <div className="grid grid-cols-7 gap-1 text-xs min-w-0">
               {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => (
-                <div key={day} className="text-center font-medium text-gray-500 p-2">
+                <div key={day} className="text-center font-medium text-gray-500 p-1 text-xs">
                   {day}
                 </div>
               ))}
@@ -196,19 +196,19 @@ const CalendarView: React.FC<{ tasks: Task[] }> = ({ tasks }) => {
                     })
                     
                     days.push(
-                      <div key={i} className="min-h-[60px] border border-gray-100 p-1">
+                      <div key={i} className="min-h-[60px] border border-gray-100 p-1 min-w-0">
                         <div className="text-right text-gray-400 text-xs mb-1">
                           {currentDate.getDate()}
                         </div>
                         {dayTasks.map((task: Task, taskIndex: number) => (
-                          <div key={taskIndex} className="text-xs bg-blue-100 text-blue-800 p-1 rounded mb-1 truncate">
+                          <div key={taskIndex} className="text-xs bg-blue-100 text-blue-800 p-1 rounded mb-1 truncate min-w-0" title={task.taskName}>
                             {task.taskName}
                           </div>
                         ))}
                       </div>
                     )
                   } else {
-                    days.push(<div key={i} className="min-h-[60px] border border-gray-100 p-1 bg-gray-50"></div>)
+                    days.push(<div key={i} className="min-h-[60px] border border-gray-100 p-1 bg-gray-50 min-w-0"></div>)
                   }
                 }
                 return days
@@ -246,12 +246,12 @@ const GanttView: React.FC<{ tasks: Task[] }> = ({ tasks }) => {
         const duration = Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 3600 * 24)) + 1
         
         return (
-          <div key={task.taskId || index} className="flex items-center gap-4 p-3 bg-gray-50 rounded-lg">
-            <div className="w-32 text-sm font-medium text-gray-900 truncate">
+          <div key={task.taskId || index} className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg min-w-0">
+            <div className="w-28 text-sm font-medium text-gray-900 truncate min-w-0" title={task.taskName}>
               {task.taskName}
             </div>
             
-            <div className="flex-1 relative">
+            <div className="flex-1 relative min-w-0">
               <div className="h-8 bg-gray-200 rounded relative">
                 <div 
                   className="h-full bg-blue-500 rounded absolute top-0 left-0 transition-all duration-300"
@@ -267,7 +267,7 @@ const GanttView: React.FC<{ tasks: Task[] }> = ({ tasks }) => {
               </div>
             </div>
             
-            <div className="w-24 text-xs text-gray-600 text-right">
+            <div className="w-20 text-xs text-gray-600 text-right flex-shrink-0">
               {formatDate(startDate.toISOString())}
             </div>
           </div>
@@ -1099,7 +1099,7 @@ const JobViewer: React.FC<JobViewerProps> = ({ className = "" }) => {
               </div>
 
                             {/* Dynamic Task Timeline View */}
-              <div className="bg-white border border-gray-200 rounded-lg p-6">
+              <div className="bg-white border border-gray-200 rounded-lg p-6 overflow-hidden">
                 <div className="flex items-center justify-between mb-6">
                   <div className="flex items-center gap-2">
                     <Calendar className="h-5 w-5 text-blue-600" />
@@ -1204,14 +1204,14 @@ const JobViewer: React.FC<JobViewerProps> = ({ className = "" }) => {
                     
                     {/* Calendar View */}
                     {viewMode === 'calendar' && (
-                      <div className="max-h-96 overflow-y-auto">
+                      <div className="max-h-96 overflow-y-auto overflow-x-hidden">
                         <CalendarView tasks={selectedJob.tasks} />
                       </div>
                     )}
                     
                     {/* Gantt View */}
                     {viewMode === 'gantt' && (
-                      <div className="max-h-96 overflow-y-auto">
+                      <div className="max-h-96 overflow-y-auto overflow-x-hidden">
                         <GanttView tasks={selectedJob.tasks} />
                       </div>
                     )}
