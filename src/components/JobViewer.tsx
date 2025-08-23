@@ -19,7 +19,7 @@ import {
   SelectTrigger, 
   SelectValue 
 } from './ui/select'
-import { Activity, BarChart3, DollarSign, Search, Filter, MapPin, Building, Calendar, Hash, X, Download, RefreshCw } from 'lucide-react'
+import { Activity, BarChart3, DollarSign, Search, Filter, MapPin, Building, Calendar, Hash, X, Download, RefreshCw, Menu, Smartphone } from 'lucide-react'
 
 // Enhanced TypeScript interfaces
 interface Task {
@@ -109,6 +109,24 @@ const useDebounce = <T,>(value: T, delay: number): T => {
   }, [value, delay])
 
   return debouncedValue
+}
+
+// Mobile detection hook
+const useIsMobile = () => {
+  const [isMobile, setIsMobile] = useState(false)
+
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768)
+    }
+    
+    checkMobile()
+    window.addEventListener('resize', checkMobile)
+    
+    return () => window.removeEventListener('resize', checkMobile)
+  }, [])
+
+  return isMobile
 }
 
 // Loading skeleton component
@@ -291,6 +309,9 @@ const JobViewer: React.FC<JobViewerProps> = ({ className = "" }) => {
   const [selectedJob, setSelectedJob] = useState<Job | null>(null)
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [viewMode, setViewMode] = useState<ViewMode>('list')
+
+  // Mobile detection
+  const isMobile = useIsMobile()
 
   // Debounce search term to avoid excessive filtering
   const debouncedSearchTerm = useDebounce(searchTerm, 300)
@@ -592,6 +613,90 @@ const JobViewer: React.FC<JobViewerProps> = ({ className = "" }) => {
     return lines.length > 0 ? lines : ['Location not specified']
   }
 
+  // Mobile-optimized job card component
+  const MobileJobCard = ({ job, onView }: { job: Job; onView: (job: Job) => void }) => (
+    <Card className="mb-4 hover:shadow-md transition-shadow">
+      <CardContent className="p-4">
+        {/* Header Row */}
+        <div className="flex items-start justify-between mb-3">
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2 mb-2">
+              <Badge variant="outline" className="font-mono text-xs">
+                {job.number}
+              </Badge>
+              <Badge className={getStatusColor(job.buildingType)}>
+                {job.buildingType}
+              </Badge>
+            </div>
+            <h3 className="font-semibold text-sm text-gray-900 leading-tight mb-1">
+              {job.description}
+            </h3>
+            <p className="text-sm text-gray-600">
+              {job.clientName}
+            </p>
+          </div>
+          <Button 
+            size="sm" 
+            variant="outline"
+            onClick={() => onView(job)}
+            className="flex-shrink-0 ml-2"
+          >
+            View
+          </Button>
+        </div>
+
+        {/* Location */}
+        <div className="flex items-start gap-2 text-sm text-gray-600 mb-3">
+          <MapPin className="h-4 w-4 flex-shrink-0 mt-0.5" />
+          <div className="min-w-0">
+            {getLocationDisplay(job).map((line, index) => (
+              <div key={index} className="leading-tight">
+                {line}
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Status and Progress Row */}
+        <div className="flex items-center justify-between mb-3">
+          <Badge variant={job.status === 'Not Started' ? 'secondary' : job.status === 'In Progress' ? 'default' : 'destructive'}>
+            {job.status}
+          </Badge>
+          <div className="flex items-center gap-2">
+            <div className="w-16 bg-gray-200 rounded-full h-2">
+              <div 
+                className="bg-blue-600 h-2 rounded-full transition-all duration-300"
+                style={{ width: `${job.progressPercent || 0}%` }}
+              />
+            </div>
+            <span className="text-xs text-gray-600">
+              {job.progressPercent || 0}%
+            </span>
+          </div>
+        </div>
+
+        {/* Financial and Timeline Row */}
+        <div className="flex items-center justify-between text-sm">
+          <div className="text-gray-600">
+            <span className="font-medium">${(job.contractTotal || 0).toLocaleString()}</span>
+          </div>
+          <div className="text-gray-600">
+            <span className="font-medium">{calculateContractLength(job)}</span>
+          </div>
+        </div>
+
+        {/* Task Count */}
+        {job.tasks && job.tasks.length > 0 && (
+          <div className="mt-3 pt-3 border-t border-gray-100">
+            <Badge variant="secondary" className="text-xs">
+              {job.tasks.length} task{job.tasks.length !== 1 ? 's' : ''}
+            </Badge>
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  )
+
   if (isLoading) {
     return (
       <div className={`space-y-6 ${className}`}>
@@ -658,86 +763,183 @@ const JobViewer: React.FC<JobViewerProps> = ({ className = "" }) => {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4 mb-4">
-            {/* Search - Full width on larger screens */}
-            <div className="relative lg:col-span-2 xl:col-span-1">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-              <Input
-                placeholder="Search jobs..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10"
-              />
+          {/* Mobile-optimized filter layout */}
+          {isMobile ? (
+            <div className="space-y-4">
+              {/* Search - Full width on mobile */}
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                <Input
+                  placeholder="Search jobs..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-10"
+                />
+              </div>
+
+              {/* Filter Row 1 */}
+              <div className="grid grid-cols-2 gap-3">
+                <Select value={statusFilter} onValueChange={setStatusFilter}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Statuses</SelectItem>
+                    <SelectItem value="active">Active Jobs</SelectItem>
+                    <SelectItem value="template">Templates</SelectItem>
+                  </SelectContent>
+                </Select>
+
+                <Select value={buildingTypeFilter} onValueChange={setBuildingTypeFilter}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Building Type" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {buildingTypes.map(type => (
+                      <SelectItem key={type} value={type}>
+                        {type === 'all' ? 'All Types' : type}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Filter Row 2 */}
+              <div className="grid grid-cols-2 gap-3">
+                <Select value={jobStatusFilter} onValueChange={setJobStatusFilter}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Job Status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Job Statuses</SelectItem>
+                    <SelectItem value="Not Started">Not Started</SelectItem>
+                    <SelectItem value="In Progress">In Progress</SelectItem>
+                    <SelectItem value="Completed">Completed</SelectItem>
+                  </SelectContent>
+                </Select>
+
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={fetchJobs}
+                  className="flex items-center gap-2"
+                >
+                  <RefreshCw className="h-4 w-4" />
+                  Refresh
+                </Button>
+              </div>
+
+              {/* Action buttons - Stacked on mobile */}
+              <div className="grid grid-cols-2 gap-3">
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setSearchTerm('')
+                    setStatusFilter('all')
+                    setBuildingTypeFilter('all')
+                    setJobStatusFilter('all')
+                  }}
+                  className="flex items-center gap-2"
+                >
+                  <Filter className="h-4 w-4" />
+                  Clear Filters
+                </Button>
+                
+                <Button
+                  variant="outline"
+                  onClick={exportToCSV}
+                  className="flex items-center gap-2"
+                  disabled={filteredJobs.length === 0}
+                >
+                  <Download className="h-4 w-4" />
+                  Export CSV
+                </Button>
+              </div>
             </div>
+          ) : (
+            <>
+              <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4 mb-4">
+                {/* Search - Full width on larger screens */}
+                <div className="relative lg:col-span-2 xl:col-span-1">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                  <Input
+                    placeholder="Search jobs..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="pl-10"
+                  />
+                </div>
 
-            {/* Status Filter */}
-            <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger>
-                <SelectValue placeholder="Filter by status" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Statuses</SelectItem>
-                <SelectItem value="active">Active Jobs</SelectItem>
-                <SelectItem value="template">Templates</SelectItem>
-              </SelectContent>
-            </Select>
+                {/* Status Filter */}
+                <Select value={statusFilter} onValueChange={setStatusFilter}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Filter by status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Statuses</SelectItem>
+                    <SelectItem value="active">Active Jobs</SelectItem>
+                    <SelectItem value="template">Templates</SelectItem>
+                  </SelectContent>
+                </Select>
 
-            {/* Building Type Filter */}
-            <Select value={buildingTypeFilter} onValueChange={setBuildingTypeFilter}>
-              <SelectTrigger>
-                <SelectValue placeholder="Filter by type" />
-              </SelectTrigger>
-              <SelectContent>
-                {buildingTypes.map(type => (
-                  <SelectItem key={type} value={type}>
-                    {type === 'all' ? 'All Types' : type}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+                {/* Building Type Filter */}
+                <Select value={buildingTypeFilter} onValueChange={setBuildingTypeFilter}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Filter by type" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {buildingTypes.map(type => (
+                      <SelectItem key={type} value={type}>
+                        {type === 'all' ? 'All Types' : type}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
 
-            {/* Job Status Filter */}
-            <Select value={jobStatusFilter} onValueChange={setJobStatusFilter}>
-              <SelectTrigger>
-                <SelectValue placeholder="Filter by job status" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Job Statuses</SelectItem>
-                <SelectItem value="Not Started">Not Started</SelectItem>
-                <SelectItem value="In Progress">In Progress</SelectItem>
-                <SelectItem value="Completed">Completed</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-          
-          {/* Action buttons in separate row */}
-          <div className="flex flex-wrap gap-3">
-            {/* Clear Filters */}
-            <Button
-              variant="outline"
-              onClick={() => {
-                setSearchTerm('')
-                setStatusFilter('all')
-                setBuildingTypeFilter('all')
-                setJobStatusFilter('all')
-              }}
-              className="flex items-center gap-2"
-            >
-              <Filter className="h-4 w-4" />
-              Clear Filters
-            </Button>
-            
-            {/* Export Button */}
-            <Button
-              variant="outline"
-              onClick={exportToCSV}
-              className="flex items-center gap-2"
-              disabled={filteredJobs.length === 0}
-            >
-              <Download className="h-4 w-4" />
-              Export CSV
-            </Button>
-          </div>
+                {/* Job Status Filter */}
+                <Select value={jobStatusFilter} onValueChange={setJobStatusFilter}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Filter by job status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Job Statuses</SelectItem>
+                    <SelectItem value="Not Started">Not Started</SelectItem>
+                    <SelectItem value="In Progress">In Progress</SelectItem>
+                    <SelectItem value="Completed">Completed</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              
+              {/* Action buttons in separate row */}
+              <div className="flex flex-wrap gap-3">
+                {/* Clear Filters */}
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setSearchTerm('')
+                    setStatusFilter('all')
+                    setBuildingTypeFilter('all')
+                    setJobStatusFilter('all')
+                  }}
+                  className="flex items-center gap-2"
+                >
+                  <Filter className="h-4 w-4" />
+                  Clear Filters
+                </Button>
+                
+                {/* Export Button */}
+                <Button
+                  variant="outline"
+                  onClick={exportToCSV}
+                  className="flex items-center gap-2"
+                  disabled={filteredJobs.length === 0}
+                >
+                  <Download className="h-4 w-4" />
+                  Export CSV
+                </Button>
+              </div>
+            </>
+          )}
         </CardContent>
       </Card>
 
@@ -1044,15 +1246,23 @@ const JobViewer: React.FC<JobViewerProps> = ({ className = "" }) => {
 
       {/* Task Calendar Modal */}
       {isModalOpen && selectedJob && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-hidden">
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-2 sm:p-4">
+          <div className={`bg-white rounded-lg shadow-xl w-full max-h-[95vh] overflow-hidden ${
+            isMobile ? 'max-w-full mx-2' : 'max-w-4xl'
+          }`}>
             {/* Modal Header */}
-            <div className="flex items-center justify-between p-6 border-b border-gray-200">
-              <div>
-                <h2 className="text-2xl font-bold text-gray-900">
+            <div className={`flex items-center justify-between border-b border-gray-200 ${
+              isMobile ? 'p-4' : 'p-6'
+            }`}>
+              <div className="min-w-0 flex-1">
+                <h2 className={`font-bold text-gray-900 truncate ${
+                  isMobile ? 'text-lg' : 'text-2xl'
+                }`}>
                   {selectedJob.number} - {selectedJob.description}
                 </h2>
-                <p className="text-gray-600 mt-1">
+                <p className={`text-gray-600 mt-1 truncate ${
+                  isMobile ? 'text-sm' : 'text-base'
+                }`}>
                   {selectedJob.clientName} • {selectedJob.buildingType}
                 </p>
               </div>
@@ -1060,16 +1270,22 @@ const JobViewer: React.FC<JobViewerProps> = ({ className = "" }) => {
                 variant="ghost"
                 size="sm"
                 onClick={closeJobModal}
-                className="h-8 w-8 p-0"
+                className={`flex-shrink-0 ${
+                  isMobile ? 'h-8 w-8 p-0 ml-2' : 'h-8 w-8 p-0'
+                }`}
               >
                 <X className="h-4 w-4" />
               </Button>
             </div>
 
             {/* Modal Content */}
-            <div className="p-6 overflow-y-auto max-h-[calc(90vh-120px)]">
+            <div className={`overflow-y-auto ${
+              isMobile ? 'p-4 max-h-[calc(95vh-80px)]' : 'p-6 max-h-[calc(90vh-120px)]'
+            }`}>
               {/* Job Summary */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+              <div className={`grid gap-4 mb-6 ${
+                isMobile ? 'grid-cols-1' : 'grid-cols-1 md:grid-cols-3 gap-6'
+              }`}>
                 <div className="bg-gray-50 p-4 rounded-lg">
                   <h3 className="font-semibold text-gray-900 mb-2">Job Details</h3>
                   <div className="space-y-1 text-sm">
@@ -1082,8 +1298,10 @@ const JobViewer: React.FC<JobViewerProps> = ({ className = "" }) => {
                 <div className="bg-gray-50 p-4 rounded-lg">
                   <h3 className="font-semibold text-gray-900 mb-2">Location</h3>
                   <div className="space-y-1 text-sm">
-                    <p>{selectedJob.worksLocationAddress}</p>
-                    <p>{selectedJob.worksLocationSuburb}, {selectedJob.worksLocationState} {selectedJob.worksLocationPostcode}</p>
+                    <p className="truncate" title={selectedJob.worksLocationAddress}>{selectedJob.worksLocationAddress}</p>
+                    <p className="truncate" title={`${selectedJob.worksLocationSuburb}, ${selectedJob.worksLocationState} ${selectedJob.worksLocationPostcode}`}>
+                      {selectedJob.worksLocationSuburb}, {selectedJob.worksLocationState} {selectedJob.worksLocationPostcode}
+                    </p>
                   </div>
                 </div>
                 
@@ -1099,49 +1317,63 @@ const JobViewer: React.FC<JobViewerProps> = ({ className = "" }) => {
               </div>
 
                             {/* Dynamic Task Timeline View */}
-              <div className="bg-white border border-gray-200 rounded-lg p-6 overflow-hidden">
-                <div className="flex items-center justify-between mb-6">
-                  <div className="flex items-center gap-2">
-                    <Calendar className="h-5 w-5 text-blue-600" />
-                    <h3 className="text-xl font-semibold text-gray-900">Task Timeline</h3>
-                    <span className="ml-2 text-sm text-gray-500">
-                      {selectedJob.tasks && selectedJob.tasks.length > 0 ? `${selectedJob.tasks.length} tasks` : 'No tasks available'}
-                    </span>
-                  </div>
-                  
-                  {/* View Toggle Buttons */}
-                  {selectedJob.tasks && selectedJob.tasks.length > 0 && (
-                    <div className="flex gap-2">
-                      <Button
-                        size="sm"
-                        variant={viewMode === 'list' ? 'default' : 'outline'}
-                        onClick={() => setViewMode('list')}
-                        className="text-xs"
-                      >
-                        📋 List
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant={viewMode === 'calendar' ? 'default' : 'outline'}
-                        onClick={() => setViewMode('calendar')}
-                        className="text-xs"
-                      >
-                        📅 Calendar
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant={viewMode === 'gantt' ? 'default' : 'outline'}
-                        onClick={() => setViewMode('gantt')}
-                        className="text-xs"
-                      >
-                        📊 Gantt
-                      </Button>
+              <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
+                <div className={`${
+                  isMobile ? 'p-4' : 'p-6'
+                }`}>
+                  <div className={`flex items-center justify-between mb-4 ${
+                    isMobile ? 'flex-col items-start gap-3' : 'mb-6'
+                  }`}>
+                    <div className="flex items-center gap-2">
+                      <Calendar className="h-5 w-5 text-blue-600" />
+                      <h3 className={`font-semibold text-gray-900 ${
+                        isMobile ? 'text-lg' : 'text-xl'
+                      }`}>Task Timeline</h3>
+                      <span className="ml-2 text-sm text-gray-500">
+                        {selectedJob.tasks && selectedJob.tasks.length > 0 ? `${selectedJob.tasks.length} tasks` : 'No tasks available'}
+                      </span>
                     </div>
-                  )}
+                    
+                    {/* View Toggle Buttons */}
+                    {selectedJob.tasks && selectedJob.tasks.length > 0 && (
+                      <div className={`flex gap-2 ${
+                        isMobile ? 'w-full justify-center' : ''
+                      }`}>
+                        <Button
+                          size="sm"
+                          variant={viewMode === 'list' ? 'default' : 'outline'}
+                          onClick={() => setViewMode('list')}
+                          className={`${
+                            isMobile ? 'flex-1 text-xs' : 'text-xs'
+                          }`}
+                        >
+                          📋 List
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant={viewMode === 'calendar' ? 'default' : 'outline'}
+                          onClick={() => setViewMode('calendar')}
+                          className={`${
+                            isMobile ? 'flex-1 text-xs' : 'text-xs'
+                          }`}
+                        >
+                          📅 Calendar
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant={viewMode === 'gantt' ? 'default' : 'outline'}
+                          onClick={() => setViewMode('gantt')}
+                          className={`${
+                            isMobile ? 'flex-1 text-xs' : 'text-xs'
+                          }`}
+                        >
+                          📊 Gantt
+                        </Button>
+                      </div>
+                    )}
+                  </div>
                 </div>
-                
 
-                
                 {/* Dynamic Content Based on View Mode */}
                 {selectedJob.tasks && Array.isArray(selectedJob.tasks) && selectedJob.tasks.length > 0 ? (
                   <>
@@ -1253,9 +1485,13 @@ const JobViewer: React.FC<JobViewerProps> = ({ className = "" }) => {
               </div>
 
               {/* Client Information */}
-              <div className="mt-8 bg-gray-50 p-6 rounded-lg">
+              <div className={`mt-8 bg-gray-50 rounded-lg ${
+                isMobile ? 'p-4' : 'p-6'
+              }`}>
                 <h3 className="font-semibold text-gray-900 mb-4">Client Information</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                <div className={`grid gap-4 text-sm ${
+                  isMobile ? 'grid-cols-1' : 'grid-cols-1 md:grid-cols-2'
+                }`}>
                   <div>
                     <p><span className="font-medium">Name:</span> {selectedJob.clientName}</p>
                     <p><span className="font-medium">City:</span> {selectedJob.clientCityTown}</p>
