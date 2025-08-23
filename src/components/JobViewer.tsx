@@ -102,7 +102,7 @@ const JobViewer: React.FC<JobViewerProps> = ({ className = "" }) => {
         
         // Test the API endpoint directly
         console.log('🔍 Testing API endpoint...')
-        const response = await fetch('https://script.google.com/macros/s/AKfycbzA_G5Qd9TEZDY_sf3iAFaZo4ZtU4EBG2FprwG3URIO_wxrdSQTmAvSGnCglU8WdWv2Vw/exec')
+        const response = await fetch('https://script.googleusercontent.com/a/macros/arwc.com.au/echo?user_content_key=AehSKLg4x3SdAd8vXyliq0RjdM51narpacCFKMcCHhFPZgy8Mn400VhQsVM4_r2cyU9yZbIYUl42Dgv6nM8aJ-S5w8uYWpMLKB4w5LG9U3ip6QwBmHJnyMeWkzhrezQ9GN8WvlpJxppFCulFwnAkvPF6IMTU601PHzr0Dmuez9vtQ3JG_kmdYmeG72lvBv2BiT1cHIW12FYhkDW5ugXa0I_FjqynR8idnbHE6jlDsSmfhQ_NcKnOEcuoV20MSc8otfBHJrjIKXOo1JyZyEB5QfQf1DAzUsdCzkPYhL322UaFLMPoQW-9hD8&lib=Mr_6vjm8FUyFK9RyrPAOaVwA6AJu5-yHf')
         
         console.log('📡 Response status:', response.status)
         console.log('📡 Response headers:', Object.fromEntries(response.headers.entries()))
@@ -493,10 +493,20 @@ const JobViewer: React.FC<JobViewerProps> = ({ className = "" }) => {
               onClick={async () => {
                 console.log('🧪 Testing API manually...')
                 try {
-                  const response = await fetch('https://script.google.com/macros/s/AKfycbzA_G5Qd9TEZDY_sf3iAFaZo4ZtU4EBG2FprwG3URIO_wxrdSQTmAvSGnCglU8WdWv2Vw/exec')
+                  const response = await fetch('https://script.googleusercontent.com/a/macros/arwc.com.au/echo?user_content_key=AehSKLg4x3SdAd8vXyliq0RjdM51narpacCFKMcCHhFPZgy8Mn400VhQsVM4_r2cyU9yZbIYUl42Dgv6nM8aJ-S5w8uYWpMLKB4w5LG9U3ip6QwBmHJnyMeWkzhrezQ9GN8WvlpJxppFCulFwnAkvPF6IMTU601PHzr0Dmuez9vtQ3JG_kmdYmeG72lvBv2BiT1cHIW12FYhkDW5ugXa0I_FjqynR8idnbHE6jlDsSmfhQ_NcKnOEcuoV20MSc8otfBHJrjIKXOo1JyZyEB5QfQf1DAzUsdCzkPYhL322UaFLMPoQW-9hD8&lib=Mr_6vjm8FUyFK9RyrPAOaVwA6AJu5-yHf')
                   const data = await response.json()
                   console.log('🧪 Manual API test result:', data)
-                  alert(`API Test: ${Array.isArray(data) ? data.length : 'Not array'} items returned`)
+                  
+                  // Check for task data
+                  const hasTaskData = data.some(row => row.taskName && row.startDate)
+                  const taskRows = data.filter(row => row.taskName && row.startDate)
+                  
+                  console.log('🔍 Task data analysis:')
+                  console.log('- Has task data:', hasTaskData)
+                  console.log('- Task rows found:', taskRows.length)
+                  console.log('- Sample task row:', taskRows[0])
+                  
+                  alert(`API Test: ${Array.isArray(data) ? data.length : 'Not array'} items returned\nTask rows: ${taskRows.length}`)
                 } catch (error) {
                   console.error('🧪 Manual API test failed:', error)
                   alert('API test failed - check console')
