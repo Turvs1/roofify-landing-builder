@@ -1,8 +1,9 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useCallback, useMemo } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card'
 import { Input } from './ui/input'
 import { Button } from './ui/button'
 import { Badge } from './ui/badge'
+import { Skeleton } from './ui/skeleton'
 import { 
   Table, 
   TableBody, 
@@ -18,16 +19,27 @@ import {
   SelectTrigger, 
   SelectValue 
 } from './ui/select'
-import { Activity, BarChart3, DollarSign, Search, Filter, MapPin, Building, Calendar, Hash, X } from 'lucide-react'
+import { Activity, BarChart3, DollarSign, Search, Filter, MapPin, Building, Calendar, Hash, X, Download, RefreshCw } from 'lucide-react'
 
-// Types based on the updated Google Apps Script response
+// Enhanced TypeScript interfaces
+interface Task {
+  taskId: string
+  taskName: string
+  startDate: string
+  endDate?: string
+  sortOrder?: number
+  note?: string
+  estimatedCost?: number
+  actualCost?: number
+}
+
 interface Job {
   // Basic Job Info
   jobId: string
   number: string
   description: string
   buildingType: string
-  status: string
+  status: 'Not Started' | 'In Progress' | 'Completed' | string
   
   // Client Information
   clientName: string
@@ -64,22 +76,58 @@ interface Job {
   isCompleted: boolean
   "Form 43 Created": string
   
-  // Task Information (for contract length calculation)
-  tasks?: Array<{
-    taskId: string
-    taskName: string
-    startDate: string
-    endDate?: string
-    sortOrder?: number
-    note?: string
-    estimatedCost?: number
-    actualCost?: number
-  }>
+  // Task Information
+  tasks?: Task[]
 }
+
+interface JobFilters {
+  search: string
+  status: string
+  buildingType: string
+  jobStatus: string
+}
+
+type ViewMode = 'list' | 'calendar' | 'gantt'
+type SortDirection = 'asc' | 'desc'
 
 interface JobViewerProps {
   className?: string
 }
+
+// Custom hook for debouncing values
+const useDebounce = <T,>(value: T, delay: number): T => {
+  const [debouncedValue, setDebouncedValue] = useState(value)
+
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedValue(value)
+    }, delay)
+
+    return () => {
+      clearTimeout(handler)
+    }
+  }, [value, delay])
+
+  return debouncedValue
+}
+
+// Loading skeleton component
+const JobTableSkeleton = () => (
+  <div className="space-y-3">
+    {Array.from({ length: 5 }).map((_, index) => (
+      <div key={index} className="flex space-x-4">
+        <Skeleton className="h-12 w-20" />
+        <Skeleton className="h-12 flex-1" />
+        <Skeleton className="h-12 w-32" />
+        <Skeleton className="h-12 w-24" />
+        <Skeleton className="h-12 w-20" />
+        <Skeleton className="h-12 w-16" />
+        <Skeleton className="h-12 w-24" />
+        <Skeleton className="h-12 w-20" />
+      </div>
+    ))}
+  </div>
+)
 
 // Helper function to format dates
 const formatDate = (dateString: string | Date) => {
@@ -97,9 +145,9 @@ const formatDate = (dateString: string | Date) => {
 }
 
 // Calendar View Component
-const CalendarView: React.FC<{ tasks: any[] }> = ({ tasks }) => {
+const CalendarView: React.FC<{ tasks: Task[] }> = ({ tasks }) => {
   // Group tasks by month
-  const tasksByMonth = tasks.reduce((acc: any, task: any) => {
+  const tasksByMonth = tasks.reduce((acc: Record<string, Task[]>, task: Task) => {
     if (task.startDate) {
       const date = new Date(task.startDate)
       const monthKey = `${date.getFullYear()}-${date.getMonth() + 1}`
@@ -140,7 +188,7 @@ const CalendarView: React.FC<{ tasks: any[] }> = ({ tasks }) => {
                   currentDate.setDate(startDate.getDate() + i)
                   
                   if (currentDate.getMonth() === parseInt(month) - 1) {
-                    const dayTasks = (monthTasks as any[]).filter((task: any) => {
+                    const dayTasks = monthTasks.filter((task: Task) => {
                       const taskDate = new Date(task.startDate)
                       return taskDate.getDate() === currentDate.getDate() && 
                              taskDate.getMonth() === currentDate.getMonth() &&
@@ -152,7 +200,7 @@ const CalendarView: React.FC<{ tasks: any[] }> = ({ tasks }) => {
                         <div className="text-right text-gray-400 text-xs mb-1">
                           {currentDate.getDate()}
                         </div>
-                        {dayTasks.map((task: any, taskIndex: number) => (
+                        {dayTasks.map((task: Task, taskIndex: number) => (
                           <div key={taskIndex} className="text-xs bg-blue-100 text-blue-800 p-1 rounded mb-1 truncate">
                             {task.taskName}
                           </div>
@@ -174,10 +222,10 @@ const CalendarView: React.FC<{ tasks: any[] }> = ({ tasks }) => {
 }
 
 // Gantt View Component
-const GanttView: React.FC<{ tasks: any[] }> = ({ tasks }) => {
+const GanttView: React.FC<{ tasks: Task[] }> = ({ tasks }) => {
   const sortedTasks = tasks
-    .filter((task: any) => task.startDate)
-    .sort((a: any, b: any) => new Date(a.startDate).getTime() - new Date(b.startDate).getTime())
+    .filter((task: Task) => task.startDate)
+    .sort((a: Task, b: Task) => new Date(a.startDate).getTime() - new Date(b.startDate).getTime())
 
   if (sortedTasks.length === 0) return <div className="text-center text-gray-500">No tasks with dates</div>
 
@@ -191,7 +239,7 @@ const GanttView: React.FC<{ tasks: any[] }> = ({ tasks }) => {
         Timeline: {formatDate(earliestDate.toISOString())} to {formatDate(latestDate.toISOString())} ({totalDays} days)
       </div>
       
-      {sortedTasks.map((task: any, index: number) => {
+      {sortedTasks.map((task: Task, index: number) => {
         const startDate = new Date(task.startDate)
         const endDate = new Date(task.endDate || task.startDate)
         const daysFromStart = Math.ceil((startDate.getTime() - earliestDate.getTime()) / (1000 * 3600 * 24))
@@ -233,69 +281,74 @@ const JobViewer: React.FC<JobViewerProps> = ({ className = "" }) => {
   const [jobs, setJobs] = useState<Job[]>([])
   const [filteredJobs, setFilteredJobs] = useState<Job[]>([])
   const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
   const [searchTerm, setSearchTerm] = useState('')
   const [statusFilter, setStatusFilter] = useState<string>('all')
   const [buildingTypeFilter, setBuildingTypeFilter] = useState<string>('all')
   const [jobStatusFilter, setJobStatusFilter] = useState<string>('all')
   const [sortField, setSortField] = useState<keyof Job>('number')
-  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc')
+  const [sortDirection, setSortDirection] = useState<SortDirection>('asc')
   const [selectedJob, setSelectedJob] = useState<Job | null>(null)
   const [isModalOpen, setIsModalOpen] = useState(false)
-  const [viewMode, setViewMode] = useState<'list' | 'calendar' | 'gantt'>('list')
+  const [viewMode, setViewMode] = useState<ViewMode>('list')
 
-  // Fetch jobs from Google Sheets
-  useEffect(() => {
-    const fetchJobs = async () => {
-      try {
-        setIsLoading(true)
-        
-        const response = await fetch('https://script.googleusercontent.com/a/macros/arwc.com.au/echo?user_content_key=AehSKLg4x3SdAd8vXyliq0RjdM51narpacCFKMcCHhFPZgy8Mn400VhQsVM4_r2cyU9yZbIYUl42Dgv6nM8aJ-S5w8uYWpMLKB4w5LG9U3ip6QwBmHJnyMeWkzhrezQ9GN8WvlpJxppFCulFwnAkvPF6IMTU601PHzr0Dmuez9vtQ3JG_kmdYmeG72lvBv2BiT1cHIW12FYhkDW5ugXa0I_FjqynR8idnbHE6jlDsSmfhQ_NcKnOEcuoV20MSc8otfBHJrjIKXOo1JyZyEB5QfQf1DAzUsdCzkPYhL322UaFLMPoQW-9hD8&lib=Mr_6vjm8FUyFK9RyrPAOaVwA6AJu5-yHf')
-        
-        if (!response.ok) {
-          throw new Error(`Failed to fetch jobs: ${response.status}`)
-        }
-        
-        const data = await response.json()
-        
-        // Extract the actual rows from the sheets structure
-        let rawRows = []
-        if (data.sheets && data.sheets.length > 0 && data.sheets[0].rows) {
-          rawRows = data.sheets[0].rows
-        } else if (Array.isArray(data)) {
-          rawRows = data
-        } else {
-          throw new Error('Unexpected API response structure')
-        }
-        
-        // Process the data to group tasks with their main jobs
-        const processedJobs = processJobData(rawRows)
-        
-        setJobs(processedJobs)
-        setFilteredJobs(processedJobs)
-      } catch (error) {
-        console.error('❌ Error fetching jobs:', error)
-        // Set some sample data for development/testing
-        setJobs([])
-        setFilteredJobs([])
-      } finally {
-        setIsLoading(false)
+  // Debounce search term to avoid excessive filtering
+  const debouncedSearchTerm = useDebounce(searchTerm, 300)
+
+  // Fetch jobs from Google Sheets with improved error handling
+  const fetchJobs = useCallback(async () => {
+    try {
+      setIsLoading(true)
+      setError(null)
+      
+      const response = await fetch('https://script.googleusercontent.com/a/macros/arwc.com.au/echo?user_content_key=AehSKLg4x3SdAd8vXyliq0RjdM51narpacCFKMcCHhFPZgy8Mn400VhQsVM4_r2cyU9yZbIYUl42Dgv6nM8aJ-S5w8uYWpMLKB4w5LG9U3ip6QwBmHJnyMeWkzhrezQ9GN8WvlpJxppFCulFwnAkvPF6IMTU601PHzr0Dmuez9vtQ3JG_kmdYmeG72lvBv2BiT1cHIW12FYhkDW5ugXa0I_FjqynR8idnbHE6jlDsSmfhQ_NcKnOEcuoV20MSc8otfBHJrjIKXOo1JyZyEB5QfQf1DAzUsdCzkPYhL322UaFLMPoQW-9hD8&lib=Mr_6vjm8FUyFK9RyrPAOaVwA6AJu5-yHf')
+      
+      if (!response.ok) {
+        throw new Error(`Failed to fetch jobs: ${response.status} ${response.statusText}`)
       }
+      
+      const data = await response.json()
+      
+      // Extract the actual rows from the sheets structure
+      let rawRows: any[] = []
+      if (data.sheets && data.sheets.length > 0 && data.sheets[0].rows) {
+        rawRows = data.sheets[0].rows
+      } else if (Array.isArray(data)) {
+        rawRows = data
+      } else {
+        throw new Error('Unexpected API response structure')
+      }
+      
+      // Process the data to group tasks with their main jobs
+      const processedJobs = processJobData(rawRows)
+      
+      setJobs(processedJobs)
+      setFilteredJobs(processedJobs)
+    } catch (error) {
+      console.error('❌ Error fetching jobs:', error)
+      setError(error instanceof Error ? error.message : 'Failed to fetch jobs')
+      setJobs([])
+      setFilteredJobs([])
+    } finally {
+      setIsLoading(false)
     }
+  }, [])
 
+  useEffect(() => {
     fetchJobs()
   }, [])
 
-  // Filter and sort jobs
-  useEffect(() => {
+  // Filter and sort jobs with debounced search
+  const filteredAndSortedJobs = useMemo(() => {
     let filtered = jobs.filter(job => {
       const matchesSearch = 
-        job.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        job.number.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        job.clientName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        job.worksLocationSuburb.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        job.worksLocationAddress.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        job.status.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        job.buildingType.toLowerCase().includes(searchTerm.toLowerCase())
+        job.description.toLowerCase().includes(debouncedSearchTerm.toLowerCase()) ||
+        job.number.toLowerCase().includes(debouncedSearchTerm.toLowerCase()) ||
+        job.clientName.toLowerCase().includes(debouncedSearchTerm.toLowerCase()) ||
+        job.worksLocationSuburb.toLowerCase().includes(debouncedSearchTerm.toLowerCase()) ||
+        job.worksLocationAddress.toLowerCase().includes(debouncedSearchTerm.toLowerCase()) ||
+        job.status.toLowerCase().includes(debouncedSearchTerm.toLowerCase()) ||
+        job.buildingType.toLowerCase().includes(debouncedSearchTerm.toLowerCase())
 
       const matchesStatus = statusFilter === 'all' || 
         (statusFilter === 'active' && job.status !== 'Completed' && job.buildingType !== 'Blank Template') ||
@@ -320,21 +373,56 @@ const JobViewer: React.FC<JobViewerProps> = ({ className = "" }) => {
       return 0
     })
 
-    setFilteredJobs(filtered)
-  }, [jobs, searchTerm, statusFilter, buildingTypeFilter, jobStatusFilter, sortField, sortDirection])
+    return filtered
+  }, [jobs, debouncedSearchTerm, statusFilter, buildingTypeFilter, jobStatusFilter, sortField, sortDirection])
+
+  // Update filtered jobs when the memoized value changes
+  useEffect(() => {
+    setFilteredJobs(filteredAndSortedJobs)
+  }, [filteredAndSortedJobs])
 
   // Get unique building types for filter
-  const buildingTypes = ['all', ...Array.from(new Set(jobs.map(job => job.buildingType)))]
+  const buildingTypes = useMemo(() => 
+    ['all', ...Array.from(new Set(jobs.map(job => job.buildingType)))], 
+    [jobs]
+  )
 
   // Handle column sorting
-  const handleSort = (field: keyof Job) => {
+  const handleSort = useCallback((field: keyof Job) => {
     if (sortField === field) {
       setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc')
     } else {
       setSortField(field)
       setSortDirection('asc')
     }
-  }
+  }, [sortField, sortDirection])
+
+  // Export functionality
+  const exportToCSV = useCallback(() => {
+    const headers = ['Job Number', 'Description', 'Client', 'Location', 'Type', 'Status', 'Progress', 'Contract Value', 'Created Date']
+    const csvData = [
+      headers.join(','),
+      ...filteredJobs.map(job => [
+        job.number,
+        `"${job.description}"`,
+        `"${job.clientName}"`,
+        `"${job.worksLocationSuburb}"`,
+        `"${job.buildingType}"`,
+        job.status,
+        `${job.progressPercent || 0}%`,
+        job.contractTotal || 0,
+        job.creationDate
+      ].join(','))
+    ].join('\n')
+
+    const blob = new Blob([csvData], { type: 'text/csv' })
+    const url = window.URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `jobs-export-${new Date().toISOString().split('T')[0]}.csv`
+    a.click()
+    window.URL.revokeObjectURL(url)
+  }, [filteredJobs])
 
   // Get status badge color
   const getStatusColor = (buildingType: string) => {
@@ -506,11 +594,52 @@ const JobViewer: React.FC<JobViewerProps> = ({ className = "" }) => {
 
   if (isLoading) {
     return (
+      <div className={`space-y-6 ${className}`}>
+        <Card>
+          <CardHeader>
+            <div className="flex items-center gap-2">
+              <Skeleton className="h-5 w-5" />
+              <Skeleton className="h-6 w-32" />
+              <Skeleton className="h-5 w-20 ml-2" />
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 md:grid-cols-5 gap-4 mb-4">
+              {Array.from({ length: 5 }).map((_, i) => (
+                <Skeleton key={i} className="h-10 w-full" />
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-0">
+            <JobTableSkeleton />
+          </CardContent>
+        </Card>
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
       <div className={`flex items-center justify-center p-8 ${className}`}>
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading jobs...</p>
-        </div>
+        <Card className="w-full max-w-md">
+          <CardContent className="pt-6">
+            <div className="text-center">
+              <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-red-100">
+                <X className="h-6 w-6 text-red-600" />
+              </div>
+              <h3 className="mt-2 text-sm font-medium text-gray-900">Error Loading Jobs</h3>
+              <p className="mt-1 text-sm text-gray-500">{error}</p>
+              <div className="mt-6">
+                <Button onClick={fetchJobs} className="flex items-center gap-2">
+                  <RefreshCw className="h-4 w-4" />
+                  Try Again
+                </Button>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
       </div>
     )
   }
@@ -529,7 +658,7 @@ const JobViewer: React.FC<JobViewerProps> = ({ className = "" }) => {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-6 gap-4">
             {/* Search */}
             <div className="relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
@@ -593,6 +722,17 @@ const JobViewer: React.FC<JobViewerProps> = ({ className = "" }) => {
             >
               <Filter className="h-4 w-4" />
               Clear Filters
+            </Button>
+            
+            {/* Export Button */}
+            <Button
+              variant="outline"
+              onClick={exportToCSV}
+              className="flex items-center gap-2"
+              disabled={filteredJobs.length === 0}
+            >
+              <Download className="h-4 w-4" />
+              Export CSV
             </Button>
             
             {/* Test API Button */}
