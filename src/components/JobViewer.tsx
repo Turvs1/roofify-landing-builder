@@ -114,25 +114,39 @@ const JobViewer: React.FC<JobViewerProps> = ({ className = "" }) => {
         const data = await response.json()
         console.log('📊 Raw API response:', data) // Debug log
         console.log('📊 Raw API response type:', typeof data)
-        console.log('📊 Raw API response length:', Array.isArray(data) ? data.length : 'Not an array')
+        
+        // Extract the actual rows from the sheets structure
+        let rawRows = []
+        if (data.sheets && data.sheets.length > 0 && data.sheets[0].rows) {
+          rawRows = data.sheets[0].rows
+          console.log('📊 Extracted rows from sheets:', rawRows.length)
+          console.log('📊 First row sample:', rawRows[0])
+        } else if (Array.isArray(data)) {
+          rawRows = data
+          console.log('📊 Data is already an array:', rawRows.length)
+        } else {
+          console.log('❌ Unexpected data structure:', data)
+          throw new Error('Unexpected API response structure')
+        }
+        
+        console.log('📊 Raw rows length:', rawRows.length)
         
         // Check if data has the expected structure
-        if (Array.isArray(data) && data.length > 0) {
-          console.log('🏗️ First job structure:', Object.keys(data[0]))
-          console.log('🏗️ First job sample:', data[0])
+        if (rawRows.length > 0) {
+          console.log('🏗️ First row structure:', Object.keys(rawRows[0]))
+          console.log('🏗️ First row sample:', rawRows[0])
           
-          // Check for tasks in the first job
-          if (data[0].tasks !== undefined) {
-            console.log('✅ Tasks property found:', data[0].tasks)
-            console.log('✅ Tasks type:', typeof data[0].tasks)
-            console.log('✅ Tasks is array:', Array.isArray(data[0].tasks))
+          // Check for tasks in the first row
+          if (rawRows[0].taskName !== undefined) {
+            console.log('✅ Task data found:', rawRows[0].taskName)
+            console.log('✅ Task type:', typeof rawRows[0].taskName)
           } else {
-            console.log('❌ No tasks property found in first job')
+            console.log('❌ No task data found in first row')
           }
         }
         
         // Process the data to group tasks with their main jobs
-        const processedJobs = processJobData(data)
+        const processedJobs = processJobData(rawRows)
         console.log('🔄 Processed jobs:', processedJobs) // Debug log
         
         setJobs(processedJobs)
@@ -497,16 +511,25 @@ const JobViewer: React.FC<JobViewerProps> = ({ className = "" }) => {
                   const data = await response.json()
                   console.log('🧪 Manual API test result:', data)
                   
+                  // Extract rows from the sheets structure
+                  let rawRows = []
+                  if (data.sheets && data.sheets.length > 0 && data.sheets[0].rows) {
+                    rawRows = data.sheets[0].rows
+                  } else if (Array.isArray(data)) {
+                    rawRows = data
+                  }
+                  
                   // Check for task data
-                  const hasTaskData = data.some(row => row.taskName && row.startDate)
-                  const taskRows = data.filter(row => row.taskName && row.startDate)
+                  const hasTaskData = rawRows.some(row => row.taskName && row.startDate)
+                  const taskRows = rawRows.filter(row => row.taskName && row.startDate)
                   
                   console.log('🔍 Task data analysis:')
+                  console.log('- Raw rows total:', rawRows.length)
                   console.log('- Has task data:', hasTaskData)
                   console.log('- Task rows found:', taskRows.length)
                   console.log('- Sample task row:', taskRows[0])
                   
-                  alert(`API Test: ${Array.isArray(data) ? data.length : 'Not array'} items returned\nTask rows: ${taskRows.length}`)
+                  alert(`API Test: ${rawRows.length} total rows\nTask rows: ${taskRows.length}`)
                 } catch (error) {
                   console.error('🧪 Manual API test failed:', error)
                   alert('API test failed - check console')
