@@ -19,7 +19,7 @@ import {
   SelectTrigger, 
   SelectValue 
 } from './ui/select'
-import { Activity, BarChart3, DollarSign, Search, Filter, MapPin, Building, Calendar, Hash, X, Download, RefreshCw, Menu, Smartphone } from 'lucide-react'
+import { Activity, BarChart3, DollarSign, Search, Filter, MapPin, Building, Calendar, Hash, X, Download, RefreshCw, Menu } from 'lucide-react'
 
 // Enhanced TypeScript interfaces
 interface Task {
@@ -613,89 +613,7 @@ const JobViewer: React.FC<JobViewerProps> = ({ className = "" }) => {
     return lines.length > 0 ? lines : ['Location not specified']
   }
 
-  // Mobile-optimized job card component
-  const MobileJobCard = ({ job, onView }: { job: Job; onView: (job: Job) => void }) => (
-    <Card className="mb-3 hover:shadow-md transition-shadow">
-      <CardContent className="p-3 sm:p-4">
-        {/* Header Row */}
-        <div className="flex items-start justify-between mb-3">
-          <div className="flex-1 min-w-0 pr-2">
-            <div className="flex flex-wrap items-center gap-1 sm:gap-2 mb-2">
-              <Badge variant="outline" className="font-mono text-xs flex-shrink-0">
-                {job.number}
-              </Badge>
-              <Badge className={`${getStatusColor(job.buildingType)} text-xs flex-shrink-0`}>
-                {job.buildingType}
-              </Badge>
-            </div>
-            <h3 className="font-semibold text-sm text-gray-900 leading-tight mb-1 break-words">
-              {job.description}
-            </h3>
-            <p className="text-sm text-gray-600 truncate">
-              {job.clientName}
-            </p>
-          </div>
-          <Button 
-            size="sm" 
-            variant="outline"
-            onClick={() => onView(job)}
-            className="flex-shrink-0 ml-2"
-          >
-            View
-          </Button>
-        </div>
 
-        {/* Location */}
-        <div className="flex items-start gap-2 text-sm text-gray-600 mb-3">
-          <MapPin className="h-4 w-4 flex-shrink-0 mt-0.5" />
-          <div className="min-w-0 flex-1">
-            {getLocationDisplay(job).map((line, index) => (
-              <div key={index} className="leading-tight text-xs sm:text-sm break-words">
-                {line}
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Status and Progress Row */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-3">
-          <Badge variant={job.status === 'Not Started' ? 'secondary' : job.status === 'In Progress' ? 'default' : 'destructive'} className="self-start">
-            {job.status}
-          </Badge>
-          <div className="flex items-center gap-2">
-            <div className="w-16 bg-gray-200 rounded-full h-2">
-              <div 
-                className="bg-blue-600 h-2 rounded-full transition-all duration-300"
-                style={{ width: `${job.progressPercent || 0}%` }}
-              />
-            </div>
-            <span className="text-xs text-gray-600">
-              {job.progressPercent || 0}%
-            </span>
-          </div>
-        </div>
-
-        {/* Financial and Timeline Row */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 text-sm">
-          <div className="text-gray-600">
-            <span className="font-medium">${(job.contractTotal || 0).toLocaleString()}</span>
-          </div>
-          <div className="text-gray-600">
-            <span className="font-medium">{calculateContractLength(job)}</span>
-          </div>
-        </div>
-
-        {/* Task Count */}
-        {job.tasks && job.tasks.length > 0 && (
-          <div className="mt-3 pt-3 border-t border-gray-100">
-            <Badge variant="secondary" className="text-xs">
-              {job.tasks.length} task{job.tasks.length !== 1 ? 's' : ''}
-            </Badge>
-          </div>
-        )}
-      </CardContent>
-    </Card>
-  )
 
   if (isLoading) {
     return (
@@ -943,9 +861,240 @@ const JobViewer: React.FC<JobViewerProps> = ({ className = "" }) => {
         </CardContent>
       </Card>
 
-      {/* Jobs Table */}
+      {/* Jobs Display - Mobile Table vs Desktop Table */}
       <Card>
         <CardContent className="p-0">
+          {isMobile ? (
+            /* Mobile Table View - Stretched for readability */
+            <div className="overflow-x-auto">
+              <Table className="w-full min-w-[800px]">
+              <TableHeader>
+                <TableRow>
+                  <TableHead 
+                    className="cursor-pointer hover:bg-gray-50 w-[8%]"
+                    onClick={() => handleSort('number')}
+                  >
+                    <div className="flex items-center gap-2">
+                      <Hash className="h-4 w-4" />
+                      Job Code
+                      {sortField === 'number' && (
+                        <span className="text-blue-600">
+                          {sortDirection === 'asc' ? '↑' : '↓'}
+                        </span>
+                      )}
+                    </div>
+                  </TableHead>
+                  <TableHead 
+                    className="cursor-pointer hover:bg-gray-50 w-[20%]"
+                    onClick={() => handleSort('description')}
+                  >
+                    <div className="flex items-center gap-2">
+                      <MapPin className="h-4 w-4" />
+                      Job Description
+                      {sortField === 'description' && (
+                        <span className="text-blue-600">
+                          {sortDirection === 'asc' ? '↑' : '↓'}
+                        </span>
+                      )}
+                    </div>
+                  </TableHead>
+                  <TableHead 
+                    className="cursor-pointer hover:bg-gray-50 w-[12%]"
+                    onClick={() => handleSort('clientName')}
+                  >
+                    Client
+                    {sortField === 'clientName' && (
+                      <span className="text-blue-600">
+                        {sortDirection === 'asc' ? '↑' : '↓'}
+                      </span>
+                    )}
+                  </TableHead>
+                  <TableHead className="w-[15%]">Location</TableHead>
+                  <TableHead 
+                    className="cursor-pointer hover:bg-gray-50 w-[12%]"
+                    onClick={() => handleSort('buildingType')}
+                  >
+                    <div className="flex items-center gap-2">
+                      <Building className="h-4 w-4" />
+                      Type
+                      {sortField === 'buildingType' && (
+                        <span className="text-blue-600">
+                          {sortDirection === 'asc' ? '↑' : '↓'}
+                        </span>
+                      )}
+                    </div>
+                  </TableHead>
+                  <TableHead 
+                    className="cursor-pointer hover:bg-gray-50 w-[8%]"
+                    onClick={() => handleSort('status')}
+                  >
+                    <div className="flex items-center gap-2">
+                      <Activity className="h-4 w-4" />
+                      Status
+                      {sortField === 'status' && (
+                        <span className="text-blue-600">
+                          {sortDirection === 'asc' ? '↑' : '↓'}
+                        </span>
+                      )}
+                    </div>
+                  </TableHead>
+                  <TableHead 
+                    className="cursor-pointer hover:bg-gray-50 w-[8%]"
+                    onClick={() => handleSort('progressPercent')}
+                  >
+                    <div className="flex items-center gap-2">
+                      <BarChart3 className="h-4 w-4" />
+                      Progress
+                      {sortField === 'progressPercent' && (
+                        <span className="text-blue-600">
+                          {sortDirection === 'asc' ? '↑' : '↓'}
+                        </span>
+                      )}
+                    </div>
+                  </TableHead>
+                  <TableHead 
+                    className="cursor-pointer hover:bg-gray-50 w-[10%]"
+                    onClick={() => handleSort('contractTotal')}
+                  >
+                    <div className="flex items-center gap-2">
+                      <DollarSign className="h-4 w-4" />
+                      Contract Value
+                      {sortField === 'contractTotal' && (
+                        <span className="text-blue-600">
+                          {sortDirection === 'asc' ? '↑' : '↓'}
+                        </span>
+                      )}
+                    </div>
+                  </TableHead>
+                  <TableHead className="w-[10%]">
+                    <div className="flex items-center gap-2">
+                      <Calendar className="h-4 w-4" />
+                      Contract Length
+                    </div>
+                  </TableHead>
+                  <TableHead className="w-[7%]">Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {filteredJobs.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={12} className="text-center py-8 text-gray-500">
+                      No jobs found matching your criteria
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  filteredJobs.map((job) => (
+                    <TableRow key={job.jobId} className="hover:bg-gray-50">
+                      <TableCell className="font-mono font-medium">
+                        <Badge variant="outline" className="font-mono text-xs">
+                          {job.number}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        <div className="space-y-1">
+                          <p className="font-medium text-sm leading-tight truncate" title={job.description}>
+                            {job.description}
+                          </p>
+                          <p className="text-xs text-gray-500">
+                            ID: {job.jobId.slice(0, 8)}...
+                          </p>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="min-w-0">
+                          <div className="text-sm font-medium leading-tight truncate" title={job.clientName}>
+                            {job.clientName}
+                          </div>
+                          {job.clientCityTown && (
+                            <div className="text-xs text-gray-500 leading-tight truncate" title={job.clientCityTown}>
+                              {job.clientCityTown}
+                            </div>
+                          )}
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-start gap-1 text-sm text-gray-600">
+                          <MapPin className="h-3 w-3 flex-shrink-0 mt-0.5" />
+                          <div className="min-w-0">
+                            {getLocationDisplay(job).map((line, index) => (
+                              <div key={index} className="leading-tight truncate" title={line}>
+                                {line}
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <Badge className={getStatusColor(job.buildingType)}>
+                          <span className="truncate block" title={job.buildingType}>
+                            {job.buildingType}
+                          </span>
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant={job.status === 'Not Started' ? 'secondary' : job.status === 'In Progress' ? 'default' : 'destructive'}>
+                          <span className="text-xs">
+                            {job.status}
+                          </span>
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-2">
+                          <div className="w-16 bg-gray-200 rounded-full h-2">
+                            <div 
+                              className="bg-blue-600 h-2 rounded-full transition-all duration-300"
+                              style={{ width: `${job.progressPercent || 0}%` }}
+                            />
+                          </div>
+                          <span className="text-sm text-gray-600 min-w-[3rem]">
+                            {job.progressPercent || 0}%
+                          </span>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="text-sm font-medium">
+                          ${(job.contractTotal || 0).toLocaleString()}
+                        </div>
+                        {job.contractTotalIncTax && job.contractTotalIncTax !== job.contractTotal && (
+                          <div className="text-xs text-gray-500">
+                            +GST: ${job.contractTotalIncTax.toLocaleString()}
+                          </div>
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        <div className="text-sm">
+                          <div className="font-medium text-blue-600">
+                            {calculateContractLength(job)}
+                          </div>
+                          <div className="text-xs text-gray-500">
+                            {getDateRange(job)}
+                          </div>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-2">
+                          <Button 
+                            size="sm" 
+                            variant="outline"
+                            onClick={() => openJobModal(job)}
+                          >
+                            View
+                          </Button>
+                          {job.tasks && job.tasks.length > 0 && (
+                            <Badge variant="secondary" className="text-xs">
+                              {job.tasks.length} task{job.tasks.length !== 1 ? 's' : ''}
+                            </Badge>
+                          )}
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
+              </TableBody>
+            </Table>
+          </div>
+        ) : (
+          /* Desktop Table View - Fixed width, no horizontal scroll */
           <div className="overflow-x-auto">
             <Table className="w-full table-fixed">
               <TableHeader>
@@ -1173,6 +1322,7 @@ const JobViewer: React.FC<JobViewerProps> = ({ className = "" }) => {
               </TableBody>
             </Table>
           </div>
+        )}
         </CardContent>
       </Card>
 
