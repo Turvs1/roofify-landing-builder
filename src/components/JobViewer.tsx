@@ -615,23 +615,23 @@ const JobViewer: React.FC<JobViewerProps> = ({ className = "" }) => {
 
   // Mobile-optimized job card component
   const MobileJobCard = ({ job, onView }: { job: Job; onView: (job: Job) => void }) => (
-    <Card className="mb-4 hover:shadow-md transition-shadow">
-      <CardContent className="p-4">
+    <Card className="mb-3 hover:shadow-md transition-shadow">
+      <CardContent className="p-3 sm:p-4">
         {/* Header Row */}
         <div className="flex items-start justify-between mb-3">
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2 mb-2">
-              <Badge variant="outline" className="font-mono text-xs">
+          <div className="flex-1 min-w-0 pr-2">
+            <div className="flex flex-wrap items-center gap-1 sm:gap-2 mb-2">
+              <Badge variant="outline" className="font-mono text-xs flex-shrink-0">
                 {job.number}
               </Badge>
-              <Badge className={getStatusColor(job.buildingType)}>
+              <Badge className={`${getStatusColor(job.buildingType)} text-xs flex-shrink-0`}>
                 {job.buildingType}
               </Badge>
             </div>
-            <h3 className="font-semibold text-sm text-gray-900 leading-tight mb-1">
+            <h3 className="font-semibold text-sm text-gray-900 leading-tight mb-1 break-words">
               {job.description}
             </h3>
-            <p className="text-sm text-gray-600">
+            <p className="text-sm text-gray-600 truncate">
               {job.clientName}
             </p>
           </div>
@@ -648,9 +648,9 @@ const JobViewer: React.FC<JobViewerProps> = ({ className = "" }) => {
         {/* Location */}
         <div className="flex items-start gap-2 text-sm text-gray-600 mb-3">
           <MapPin className="h-4 w-4 flex-shrink-0 mt-0.5" />
-          <div className="min-w-0">
+          <div className="min-w-0 flex-1">
             {getLocationDisplay(job).map((line, index) => (
-              <div key={index} className="leading-tight">
+              <div key={index} className="leading-tight text-xs sm:text-sm break-words">
                 {line}
               </div>
             ))}
@@ -658,8 +658,8 @@ const JobViewer: React.FC<JobViewerProps> = ({ className = "" }) => {
         </div>
 
         {/* Status and Progress Row */}
-        <div className="flex items-center justify-between mb-3">
-          <Badge variant={job.status === 'Not Started' ? 'secondary' : job.status === 'In Progress' ? 'default' : 'destructive'}>
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-3">
+          <Badge variant={job.status === 'Not Started' ? 'secondary' : job.status === 'In Progress' ? 'default' : 'destructive'} className="self-start">
             {job.status}
           </Badge>
           <div className="flex items-center gap-2">
@@ -676,7 +676,7 @@ const JobViewer: React.FC<JobViewerProps> = ({ className = "" }) => {
         </div>
 
         {/* Financial and Timeline Row */}
-        <div className="flex items-center justify-between text-sm">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 text-sm">
           <div className="text-gray-600">
             <span className="font-medium">${(job.contractTotal || 0).toLocaleString()}</span>
           </div>
@@ -765,7 +765,7 @@ const JobViewer: React.FC<JobViewerProps> = ({ className = "" }) => {
         <CardContent>
           {/* Mobile-optimized filter layout */}
           {isMobile ? (
-            <div className="space-y-4">
+            <div className="space-y-3">
               {/* Search - Full width on mobile */}
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
@@ -777,8 +777,8 @@ const JobViewer: React.FC<JobViewerProps> = ({ className = "" }) => {
                 />
               </div>
 
-              {/* Filter Row 1 */}
-              <div className="grid grid-cols-2 gap-3">
+              {/* Filter Row 1 - Single column on very small screens */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3">
                 <Select value={statusFilter} onValueChange={setStatusFilter}>
                   <SelectTrigger>
                     <SelectValue placeholder="Status" />
@@ -804,8 +804,8 @@ const JobViewer: React.FC<JobViewerProps> = ({ className = "" }) => {
                 </Select>
               </div>
 
-              {/* Filter Row 2 */}
-              <div className="grid grid-cols-2 gap-3">
+              {/* Filter Row 2 - Single column on very small screens */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3">
                 <Select value={jobStatusFilter} onValueChange={setJobStatusFilter}>
                   <SelectTrigger>
                     <SelectValue placeholder="Job Status" />
@@ -829,8 +829,8 @@ const JobViewer: React.FC<JobViewerProps> = ({ className = "" }) => {
                 </Button>
               </div>
 
-              {/* Action buttons - Stacked on mobile */}
-              <div className="grid grid-cols-2 gap-3">
+              {/* Action buttons - Single column on very small screens */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3">
                 <Button
                   variant="outline"
                   onClick={() => {
@@ -1246,22 +1246,22 @@ const JobViewer: React.FC<JobViewerProps> = ({ className = "" }) => {
 
       {/* Task Calendar Modal */}
       {isModalOpen && selectedJob && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-2 sm:p-4">
-          <div className={`bg-white rounded-lg shadow-xl w-full max-h-[95vh] overflow-hidden ${
-            isMobile ? 'max-w-full mx-2' : 'max-w-4xl'
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-1 sm:p-2 md:p-4">
+          <div className={`bg-white rounded-lg shadow-xl w-full max-h-[98vh] overflow-hidden ${
+            isMobile ? 'max-w-full mx-1' : 'max-w-4xl'
           }`}>
             {/* Modal Header */}
             <div className={`flex items-center justify-between border-b border-gray-200 ${
-              isMobile ? 'p-4' : 'p-6'
+              isMobile ? 'p-3' : 'p-6'
             }`}>
-              <div className="min-w-0 flex-1">
-                <h2 className={`font-bold text-gray-900 truncate ${
-                  isMobile ? 'text-lg' : 'text-2xl'
+              <div className="min-w-0 flex-1 pr-2">
+                <h2 className={`font-bold text-gray-900 break-words ${
+                  isMobile ? 'text-base' : 'text-2xl'
                 }`}>
                   {selectedJob.number} - {selectedJob.description}
                 </h2>
-                <p className={`text-gray-600 mt-1 truncate ${
-                  isMobile ? 'text-sm' : 'text-base'
+                <p className={`text-gray-600 mt-1 break-words ${
+                  isMobile ? 'text-xs' : 'text-base'
                 }`}>
                   {selectedJob.clientName} • {selectedJob.buildingType}
                 </p>
@@ -1271,7 +1271,7 @@ const JobViewer: React.FC<JobViewerProps> = ({ className = "" }) => {
                 size="sm"
                 onClick={closeJobModal}
                 className={`flex-shrink-0 ${
-                  isMobile ? 'h-8 w-8 p-0 ml-2' : 'h-8 w-8 p-0'
+                  isMobile ? 'h-8 w-8 p-0 ml-1' : 'h-8 w-8 p-0'
                 }`}
               >
                 <X className="h-4 w-4" />
@@ -1280,13 +1280,15 @@ const JobViewer: React.FC<JobViewerProps> = ({ className = "" }) => {
 
             {/* Modal Content */}
             <div className={`overflow-y-auto ${
-              isMobile ? 'p-4 max-h-[calc(95vh-80px)]' : 'p-6 max-h-[calc(90vh-120px)]'
+              isMobile ? 'p-3 max-h-[calc(98vh-70px)]' : 'p-6 max-h-[calc(90vh-120px)]'
             }`}>
               {/* Job Summary */}
-              <div className={`grid gap-4 mb-6 ${
+              <div className={`grid gap-3 mb-4 ${
                 isMobile ? 'grid-cols-1' : 'grid-cols-1 md:grid-cols-3 gap-6'
               }`}>
-                <div className="bg-gray-50 p-4 rounded-lg">
+                <div className={`bg-gray-50 rounded-lg ${
+                  isMobile ? 'p-3' : 'p-4'
+                }`}>
                   <h3 className="font-semibold text-gray-900 mb-2">Job Details</h3>
                   <div className="space-y-1 text-sm">
                     <p><span className="font-medium">Status:</span> {selectedJob.status}</p>
@@ -1295,17 +1297,21 @@ const JobViewer: React.FC<JobViewerProps> = ({ className = "" }) => {
                   </div>
                 </div>
                 
-                <div className="bg-gray-50 p-4 rounded-lg">
+                <div className={`bg-gray-50 rounded-lg ${
+                  isMobile ? 'p-3' : 'p-4'
+                }`}>
                   <h3 className="font-semibold text-gray-900 mb-2">Location</h3>
                   <div className="space-y-1 text-sm">
-                    <p className="truncate" title={selectedJob.worksLocationAddress}>{selectedJob.worksLocationAddress}</p>
-                    <p className="truncate" title={`${selectedJob.worksLocationSuburb}, ${selectedJob.worksLocationState} ${selectedJob.worksLocationPostcode}`}>
+                    <p className="break-words" title={selectedJob.worksLocationAddress}>{selectedJob.worksLocationAddress}</p>
+                    <p className="break-words" title={`${selectedJob.worksLocationSuburb}, ${selectedJob.worksLocationState} ${selectedJob.worksLocationPostcode}`}>
                       {selectedJob.worksLocationSuburb}, {selectedJob.worksLocationState} {selectedJob.worksLocationPostcode}
                     </p>
                   </div>
                 </div>
                 
-                <div className="bg-gray-50 p-4 rounded-lg">
+                <div className={`bg-gray-50 rounded-lg ${
+                  isMobile ? 'p-3' : 'p-4'
+                }`}>
                   <h3 className="font-semibold text-gray-900 mb-2">Timeline</h3>
                   <div className="space-y-1 text-sm">
                     <p><span className="font-medium">Created:</span> {formatDate(selectedJob.creationDate)}</p>
@@ -1319,15 +1325,15 @@ const JobViewer: React.FC<JobViewerProps> = ({ className = "" }) => {
                             {/* Dynamic Task Timeline View */}
               <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
                 <div className={`${
-                  isMobile ? 'p-4' : 'p-6'
+                  isMobile ? 'p-3' : 'p-6'
                 }`}>
-                  <div className={`flex items-center justify-between mb-4 ${
-                    isMobile ? 'flex-col items-start gap-3' : 'mb-6'
+                  <div className={`flex items-center justify-between mb-3 ${
+                    isMobile ? 'flex-col items-start gap-2' : 'mb-6'
                   }`}>
                     <div className="flex items-center gap-2">
                       <Calendar className="h-5 w-5 text-blue-600" />
                       <h3 className={`font-semibold text-gray-900 ${
-                        isMobile ? 'text-lg' : 'text-xl'
+                        isMobile ? 'text-base' : 'text-xl'
                       }`}>Task Timeline</h3>
                       <span className="ml-2 text-sm text-gray-500">
                         {selectedJob.tasks && selectedJob.tasks.length > 0 ? `${selectedJob.tasks.length} tasks` : 'No tasks available'}
@@ -1336,7 +1342,7 @@ const JobViewer: React.FC<JobViewerProps> = ({ className = "" }) => {
                     
                     {/* View Toggle Buttons */}
                     {selectedJob.tasks && selectedJob.tasks.length > 0 && (
-                      <div className={`flex gap-2 ${
+                      <div className={`flex gap-1 sm:gap-2 ${
                         isMobile ? 'w-full justify-center' : ''
                       }`}>
                         <Button
@@ -1344,7 +1350,7 @@ const JobViewer: React.FC<JobViewerProps> = ({ className = "" }) => {
                           variant={viewMode === 'list' ? 'default' : 'outline'}
                           onClick={() => setViewMode('list')}
                           className={`${
-                            isMobile ? 'flex-1 text-xs' : 'text-xs'
+                            isMobile ? 'flex-1 text-xs px-2' : 'text-xs'
                           }`}
                         >
                           📋 List
@@ -1354,7 +1360,7 @@ const JobViewer: React.FC<JobViewerProps> = ({ className = "" }) => {
                           variant={viewMode === 'calendar' ? 'default' : 'outline'}
                           onClick={() => setViewMode('calendar')}
                           className={`${
-                            isMobile ? 'flex-1 text-xs' : 'text-xs'
+                            isMobile ? 'flex-1 text-xs px-2' : 'text-xs'
                           }`}
                         >
                           📅 Calendar
@@ -1364,7 +1370,7 @@ const JobViewer: React.FC<JobViewerProps> = ({ className = "" }) => {
                           variant={viewMode === 'gantt' ? 'default' : 'outline'}
                           onClick={() => setViewMode('gantt')}
                           className={`${
-                            isMobile ? 'flex-1 text-xs' : 'text-xs'
+                            isMobile ? 'flex-1 text-xs px-2' : 'text-xs'
                           }`}
                         >
                           📊 Gantt
@@ -1485,22 +1491,22 @@ const JobViewer: React.FC<JobViewerProps> = ({ className = "" }) => {
               </div>
 
               {/* Client Information */}
-              <div className={`mt-8 bg-gray-50 rounded-lg ${
-                isMobile ? 'p-4' : 'p-6'
+              <div className={`mt-6 bg-gray-50 rounded-lg ${
+                isMobile ? 'p-3' : 'p-6'
               }`}>
-                <h3 className="font-semibold text-gray-900 mb-4">Client Information</h3>
-                <div className={`grid gap-4 text-sm ${
+                <h3 className="font-semibold text-gray-900 mb-3">Client Information</h3>
+                <div className={`grid gap-3 text-sm ${
                   isMobile ? 'grid-cols-1' : 'grid-cols-1 md:grid-cols-2'
                 }`}>
                   <div>
-                    <p><span className="font-medium">Name:</span> {selectedJob.clientName}</p>
-                    <p><span className="font-medium">City:</span> {selectedJob.clientCityTown}</p>
-                    <p><span className="font-medium">State:</span> {selectedJob.clientState}</p>
+                    <p className="break-words"><span className="font-medium">Name:</span> {selectedJob.clientName}</p>
+                    <p className="break-words"><span className="font-medium">City:</span> {selectedJob.clientCityTown}</p>
+                    <p className="break-words"><span className="font-medium">State:</span> {selectedJob.clientState}</p>
                   </div>
                   <div>
-                    <p><span className="font-medium">Phone:</span> {selectedJob.clientPhone || 'Not provided'}</p>
-                    <p><span className="font-medium">Mobile:</span> {selectedJob.clientMobile || 'Not provided'}</p>
-                    <p><span className="font-medium">Email:</span> {selectedJob.clientEmail || 'Not provided'}</p>
+                    <p className="break-words"><span className="font-medium">Phone:</span> {selectedJob.clientPhone || 'Not provided'}</p>
+                    <p className="break-words"><span className="font-medium">Mobile:</span> {selectedJob.clientMobile || 'Not provided'}</p>
+                    <p className="break-words"><span className="font-medium">Email:</span> {selectedJob.clientEmail || 'Not provided'}</p>
                   </div>
                 </div>
               </div>
