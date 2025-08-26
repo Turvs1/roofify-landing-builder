@@ -613,6 +613,31 @@ const JobViewer: React.FC<JobViewerProps> = ({ className = "" }) => {
     return lines.length > 0 ? lines : ['Location not specified']
   }
 
+  // Helper function to get next payment date from tasks
+  const getNextPaymentDate = (job: Job) => {
+    if (!job.tasks || job.tasks.length === 0) return null
+    
+    // Find tasks with "Next Payment Date" in the name
+    const paymentTasks = job.tasks.filter(task => 
+      task.taskName && task.taskName.toLowerCase().includes('next payment date')
+    )
+    
+    if (paymentTasks.length === 0) return null
+    
+    // Get the earliest end date from payment tasks
+    const paymentDates = paymentTasks
+      .map(task => task.endDate)
+      .filter(date => date)
+      .map(date => new Date(date))
+      .filter(date => !isNaN(date.getTime()))
+    
+    if (paymentDates.length === 0) return null
+    
+    // Return the earliest date
+    const earliestDate = new Date(Math.min(...paymentDates.map(d => d.getTime())))
+    return earliestDate
+  }
+
 
 
   if (isLoading) {
@@ -972,7 +997,13 @@ const JobViewer: React.FC<JobViewerProps> = ({ className = "" }) => {
                       Contract Length
                     </div>
                   </TableHead>
-                  <TableHead className="w-[7%]">Actions</TableHead>
+                  <TableHead className="w-[12%]">
+                    <div className="flex items-center gap-2">
+                      <DollarSign className="h-4 w-4" />
+                      Next Payment Date
+                    </div>
+                  </TableHead>
+                  <TableHead className="w-[5%]">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -1069,6 +1100,34 @@ const JobViewer: React.FC<JobViewerProps> = ({ className = "" }) => {
                           <div className="text-xs text-gray-500">
                             {getDateRange(job)}
                           </div>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="text-sm">
+                          {(() => {
+                            const nextPaymentDate = getNextPaymentDate(job)
+                            if (!nextPaymentDate) {
+                              return (
+                                <div className="text-gray-400 text-xs">
+                                  No payment tasks
+                                </div>
+                              )
+                            }
+                            return (
+                              <div>
+                                <div className="font-medium text-green-600">
+                                  {formatDate(nextPaymentDate)}
+                                </div>
+                                <div className="text-xs text-gray-500">
+                                  {nextPaymentDate.toLocaleDateString('en-AU', { 
+                                    weekday: 'short',
+                                    month: 'short',
+                                    day: 'numeric'
+                                  })}
+                                </div>
+                              </div>
+                            )
+                          })()}
                         </div>
                       </TableCell>
                       <TableCell>
@@ -1201,7 +1260,13 @@ const JobViewer: React.FC<JobViewerProps> = ({ className = "" }) => {
                       Contract Length
                     </div>
                   </TableHead>
-                  <TableHead className="w-[7%]">Actions</TableHead>
+                  <TableHead className="w-[12%]">
+                    <div className="flex items-center gap-2">
+                      <DollarSign className="h-4 w-4" />
+                      Next Payment Date
+                    </div>
+                  </TableHead>
+                  <TableHead className="w-[5%]">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -1298,6 +1363,38 @@ const JobViewer: React.FC<JobViewerProps> = ({ className = "" }) => {
                           <div className="text-xs text-gray-500">
                             {getDateRange(job)}
                           </div>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="text-sm">
+                          {(() => {
+                            const nextPaymentDate = getNextPaymentDate(job)
+                            if (!nextPaymentDate) {
+                              return (
+                                <div className="text-gray-400 text-xs truncate" title="No payment tasks">
+                                  No payment tasks
+                                </div>
+                              )
+                            }
+                            return (
+                              <div className="min-w-0">
+                                <div className="font-medium text-green-600 truncate" title={formatDate(nextPaymentDate)}>
+                                  {formatDate(nextPaymentDate)}
+                                </div>
+                                <div className="text-xs text-gray-500 truncate" title={nextPaymentDate.toLocaleDateString('en-AU', { 
+                                  weekday: 'short',
+                                  month: 'short',
+                                  day: 'numeric'
+                                })}>
+                                  {nextPaymentDate.toLocaleDateString('en-AU', { 
+                                    weekday: 'short',
+                                    month: 'short',
+                                    day: 'numeric'
+                                  })}
+                                </div>
+                              </div>
+                            )
+                          })()}
                         </div>
                       </TableCell>
                       <TableCell>
