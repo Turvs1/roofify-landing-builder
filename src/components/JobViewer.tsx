@@ -624,7 +624,7 @@ const JobViewer: React.FC<JobViewerProps> = ({ className = "" }) => {
     
     if (paymentTasks.length === 0) return null
     
-    // Get the earliest end date from payment tasks
+    // Get all valid end dates from payment tasks
     const paymentDates = paymentTasks
       .map(task => task.endDate)
       .filter(date => date)
@@ -633,9 +633,25 @@ const JobViewer: React.FC<JobViewerProps> = ({ className = "" }) => {
     
     if (paymentDates.length === 0) return null
     
-    // Return the earliest date
-    const earliestDate = new Date(Math.min(...paymentDates.map(d => d.getTime())))
-    return earliestDate
+    const now = new Date()
+    now.setHours(0, 0, 0, 0) // Reset time to start of day for comparison
+    
+    // Find the next future payment date
+    const futurePaymentDates = paymentDates
+      .filter(date => date >= now)
+      .sort((a, b) => a.getTime() - b.getTime())
+    
+    if (futurePaymentDates.length > 0) {
+      // Return the next future payment date
+      return futurePaymentDates[0]
+    } else {
+      // If no future dates, return the most recent past date
+      const pastPaymentDates = paymentDates
+        .filter(date => date < now)
+        .sort((a, b) => b.getTime() - a.getTime())
+      
+      return pastPaymentDates.length > 0 ? pastPaymentDates[0] : null
+    }
   }
 
 
@@ -1113,17 +1129,23 @@ const JobViewer: React.FC<JobViewerProps> = ({ className = "" }) => {
                                 </div>
                               )
                             }
+                            
+                            const now = new Date()
+                            now.setHours(0, 0, 0, 0)
+                            const isPast = nextPaymentDate < now
+                            
                             return (
                               <div>
-                                <div className="font-medium text-green-600">
+                                <div className={`font-medium ${isPast ? 'text-red-600' : 'text-green-600'}`}>
                                   {formatDate(nextPaymentDate)}
                                 </div>
-                                <div className="text-xs text-gray-500">
+                                <div className={`text-xs ${isPast ? 'text-red-500' : 'text-gray-500'}`}>
                                   {nextPaymentDate.toLocaleDateString('en-AU', { 
                                     weekday: 'short',
                                     month: 'short',
                                     day: 'numeric'
                                   })}
+                                  {isPast && ' (Overdue)'}
                                 </div>
                               </div>
                             )
@@ -1376,21 +1398,27 @@ const JobViewer: React.FC<JobViewerProps> = ({ className = "" }) => {
                                 </div>
                               )
                             }
+                            
+                            const now = new Date()
+                            now.setHours(0, 0, 0, 0)
+                            const isPast = nextPaymentDate < now
+                            
                             return (
                               <div className="min-w-0">
-                                <div className="font-medium text-green-600 truncate" title={formatDate(nextPaymentDate)}>
+                                <div className={`font-medium truncate ${isPast ? 'text-red-600' : 'text-green-600'}`} title={formatDate(nextPaymentDate)}>
                                   {formatDate(nextPaymentDate)}
                                 </div>
-                                <div className="text-xs text-gray-500 truncate" title={nextPaymentDate.toLocaleDateString('en-AU', { 
+                                <div className={`text-xs truncate ${isPast ? 'text-red-500' : 'text-gray-500'}`} title={`${nextPaymentDate.toLocaleDateString('en-AU', { 
                                   weekday: 'short',
                                   month: 'short',
                                   day: 'numeric'
-                                })}>
+                                })}${isPast ? ' (Overdue)' : ''}`}>
                                   {nextPaymentDate.toLocaleDateString('en-AU', { 
                                     weekday: 'short',
                                     month: 'short',
                                     day: 'numeric'
                                   })}
+                                  {isPast && ' (Overdue)'}
                                 </div>
                               </div>
                             )
