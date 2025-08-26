@@ -78,6 +78,9 @@ interface Job {
   
   // Task Information
   tasks?: Task[]
+  
+  // Computed fields for sorting
+  nextPaymentDate?: Date
 }
 
 interface JobFilters {
@@ -386,8 +389,21 @@ const JobViewer: React.FC<JobViewerProps> = ({ className = "" }) => {
 
     // Sort jobs
     filtered.sort((a, b) => {
-      const aValue = a[sortField]
-      const bValue = b[sortField]
+      let aValue: any
+      let bValue: any
+      
+      if (sortField === 'nextPaymentDate') {
+        aValue = getNextPaymentDate(a)
+        bValue = getNextPaymentDate(b)
+      } else {
+        aValue = a[sortField]
+        bValue = b[sortField]
+      }
+      
+      // Handle null/undefined values
+      if (!aValue && !bValue) return 0
+      if (!aValue) return sortDirection === 'asc' ? 1 : -1
+      if (!bValue) return sortDirection === 'asc' ? -1 : 1
       
       if (aValue < bValue) return sortDirection === 'asc' ? -1 : 1
       if (aValue > bValue) return sortDirection === 'asc' ? 1 : -1
@@ -1000,11 +1016,11 @@ const JobViewer: React.FC<JobViewerProps> = ({ className = "" }) => {
                     <div className="flex items-center gap-2">
                       <DollarSign className="h-4 w-4" />
                       Contract Value
-                      {sortField === 'contractTotal' && (
-                        <span className="text-blue-600">
-                          {sortDirection === 'asc' ? '↑' : '↓'}
-                        </span>
-                      )}
+                                              {sortField === 'contractTotal' && (
+                          <span className="text-blue-600">
+                            {sortDirection === 'asc' ? '↑' : '↓'}
+                          </span>
+                        )}
                     </div>
                   </TableHead>
                   <TableHead className="w-[10%]">
@@ -1013,10 +1029,18 @@ const JobViewer: React.FC<JobViewerProps> = ({ className = "" }) => {
                       Contract Length
                     </div>
                   </TableHead>
-                  <TableHead className="w-[12%]">
+                  <TableHead 
+                    className="cursor-pointer hover:bg-gray-50 w-[12%]"
+                    onClick={() => handleSort('nextPaymentDate')}
+                  >
                     <div className="flex items-center gap-2">
                       <DollarSign className="h-4 w-4" />
                       Next Payment Date
+                      {sortField === 'nextPaymentDate' && (
+                        <span className="text-blue-600">
+                          {sortDirection === 'asc' ? '↑' : '↓'}
+                        </span>
+                      )}
                     </div>
                   </TableHead>
                   <TableHead className="w-[5%]">Actions</TableHead>
@@ -1282,10 +1306,18 @@ const JobViewer: React.FC<JobViewerProps> = ({ className = "" }) => {
                       Contract Length
                     </div>
                   </TableHead>
-                  <TableHead className="w-[12%]">
+                  <TableHead 
+                    className="cursor-pointer hover:bg-gray-50 w-[12%]"
+                    onClick={() => handleSort('nextPaymentDate')}
+                  >
                     <div className="flex items-center gap-2">
                       <DollarSign className="h-4 w-4" />
                       Next Payment Date
+                      {sortField === 'nextPaymentDate' && (
+                        <span className="text-blue-600">
+                          {sortDirection === 'asc' ? '↑' : '↓'}
+                        </span>
+                      )}
                     </div>
                   </TableHead>
                   <TableHead className="w-[5%]">Actions</TableHead>
